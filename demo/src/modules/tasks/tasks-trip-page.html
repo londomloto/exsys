@@ -1,0 +1,21 @@
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+
+<dom-module id="tasks-trip-page">
+    <template>
+        <h3>Tasks</h3>
+    </template>
+    <script>
+        class TasksTripPage extends KctView {
+            static get is() {
+                return 'tasks-trip-page';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Tasks Advance', notify: true }
+                }
+            }
+        }
+        customElements.define(TasksTripPage.is, TasksTripPage);
+    </script>
+</dom-module>

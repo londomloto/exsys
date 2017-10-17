@@ -1,0 +1,723 @@
+<link rel="import" href="../../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../../../bower_components/paper-ripple/paper-ripple.html">
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../bower_components/paper-radio-group/paper-radio-group.html">
+<link rel="import" href="../../../bower_components/paper-radio-button/paper-radio-button.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../elements/kct-toast/kct-toast.html">
+<link rel="import" href="../../elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../elements/kct-message/kct-confirm.html">
+<link rel="import" href="../../mixins/resolver.html">
+
+<link rel="import" href="lib/graph-svg.html">
+<link rel="import" href="lib/graph-svg-fonts.html">
+<link rel="import" href="lib/graph-svg-styles.html">
+<link rel="import" href="dialogs/shape-editor.html">
+<link rel="import" href="dialogs/link-editor.html">
+
+<dom-module id="kct-bpmn">
+    <template>
+        <style include="graph-svg-fonts"></style>
+        <style include="graph-svg-styles"></style>
+        <style>
+            :host {
+                display: block;
+                height: 100%;
+            }
+            .panel {
+                background-color: #ffffff;
+                height: 100%;
+            }
+            .panel-header {
+                height: 60px;
+                background-color: var(--paper-grey-100);
+                border-bottom: 1px solid var(--paper-grey-300);
+            }
+            .pallet-container {
+                width: 60px;
+                position: relative;
+                background-color: var(--paper-grey-100);
+            }
+            .paper-container {
+                position: relative;
+                width: 100%;
+                height: 100%;
+            }
+            #paper {
+                height: 100%;
+            }
+            #pallet {
+                height: 100%;
+            }
+            .graph-zoom-toolbox iron-icon {
+                position: relative;
+                top: -2px;
+            }
+            .logo-container {
+                
+                height: 100%;
+                background-color: var(--paper-grey-100);
+            }
+            .tools-container {
+                text-align: center;
+                position: relative;
+            }
+            .tools {
+                display: inline-block;
+                margin-top: 10px;
+                margin-left: 10px;
+                margin-right: 10px;
+            }
+            .tools-splitter {
+                display: inline-block;
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                width: 0;
+                border-right: 1px solid var(--paper-grey-300);
+            }
+            .tools a {
+                border-radius: 50%;
+                color: var(--paper-blue-grey-500);
+                display: inline-block;
+                height: 40px;
+                line-height: 32px;
+                margin: 0 3px;
+                text-align: center;
+                width: 40px;
+                font-size: 24px;
+                position: relative;
+            }
+            .tools a.iron-selected,
+            .tools a.iron-selected:hover {
+                color: #fff;
+                background-color: var(--paper-blue-grey-500);
+            }
+            .tools a:hover {
+                color: #ffffff;
+                background-color: var(--paper-blue-grey-500);
+            }
+
+            /** PALLET */
+
+            .graph-pallet path {
+                stroke: #30D0C6;
+                stroke-width: 0;
+            }
+            .graph-pallet-item {
+                cursor: -webkit-grab;
+                cursor: -moz-grab;
+            }
+
+            .graph-pallet-item.grabbing {
+                cursor: -webkit-grabbing;
+                cursor: -moz-grabbing;
+            }
+
+            .graph-pallet-item line,
+            .graph-pallet-item path,
+            .graph-pallet-item rect,
+            .graph-pallet-item polygon,
+            .graph-pallet-item circle {
+                stroke-width: 2;
+                stroke: var(--paper-blue-grey-600);
+            }
+
+            .graph-pallet-item rect,
+            .graph-pallet-item polygon {
+                fill: rgba(255, 255, 255, 0);
+            }
+
+            .graph-pallet-item rect.full {
+                stroke-width: 0;
+                fill: #FF4081;
+            }
+
+            .graph-pallet-item circle {
+                fill: rgba(255, 255, 255, 0);
+            }
+
+            .graph-pallet-item circle.full {
+                stroke-width: 0;
+                fill: var(--paper-blue-grey-600);
+            }
+
+            .graph-pallet-item text,
+            .graph-pallet-item text tspan {
+                stroke: #fff;
+                stroke-width: 0;
+                fill: #fff;
+                text-anchor: middle;
+                font-size: 12px;
+                pointer-events: none;
+            }
+
+            .graph-pallet-item:hover rect,
+            .graph-pallet-item:hover circle,
+            .graph-pallet-item:hover line {
+                stroke: var(--paper-blue-grey-500);
+            }
+
+            .graph-pallet-item:hover circle.full {
+                fill: var(--paper-blue-grey-500);
+            }
+
+            .page-header {
+                padding-right: 1rem;
+                padding-left: 1rem;
+                padding-top: 10px;
+            }
+
+            .page-header-meta { 
+                @apply --layout-horizontal; 
+                
+            }
+            
+            .page-header-text { 
+                @apply --layout-flex;  
+                padding: 0 10px; 
+                line-height: 18px;
+            }
+
+            .page-header-text h4 {
+                font-size: 12px;
+                text-transform: uppercase;
+                margin: 0;
+            }
+
+            .page-header-text h2 {
+                font-weight: 400;
+                font-size: 18px;
+                margin: 0;
+            }
+
+            .page-header-icon { 
+                text-align: center; 
+                color: #fff;
+                --iron-icon-width: 28px;
+                --iron-icon-height: 28px;   
+                width: 40px;
+                height: 40px;
+                background-color: var(--paper-amber-500);
+                border-radius: 50%;
+                line-height: 32px;
+            }
+
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <!-- PANEL -->
+        <kct-vbox id="panel" class="panel">
+            <div class="panel-header">
+                <kct-hbox fit>
+                    <div class="logo-container">
+                        
+                        <div class="page-header">
+                            <div class="page-header-meta">
+                                <div class="page-header-icon"">
+                                    <iron-icon icon="donut-large"></iron-icon>
+                                </div>
+                                <div class="page-header-text">
+                                    <h4>Workflow</h4>
+                                    <h2>[[ __title ]]</h2>    
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="flex tools-container">
+                        <div class="tools">
+                            <iron-selector selected="{{ tool }}" attr-for-selected="name">
+                                <template is="dom-repeat" items="[[ tools ]]">
+                                    <a name="[[ item.name ]]" href="#" on-click="__onToolClick" title="[[ item.text ]]">
+                                        <template is="dom-if" if="[[ item.iron ]]">
+                                            <iron-icon icon="[[ item.iron ]]"></iron-icon>
+                                        </template>
+                                        <template is="dom-if" if="[[ item.icon ]]">
+                                            <i class$="[[ item.icon ]]"></i>
+                                        </template>
+                                        <paper-ripple></paper-ripple>
+                                    </a>
+                                </template>
+                            </iron-selector>
+                            <a href="#" on-click="__onDeleteClick" title="Delete selected shape(s)"><iron-icon icon="delete-forever"></iron-icon><paper-ripple></paper-ripple></a>
+                            <a href="#" on-click="__onExportClick" title="Export diagram"><iron-icon icon="print"></iron-icon><paper-ripple></paper-ripple></a>
+                        </div>
+                        <div class="tools-splitter"></div>
+                        <div class="tools">
+                            <a href="#" on-click="__onAddClick"><iron-icon icon="add"></iron-icon><paper-ripple></paper-ripple></a>
+                            <template is="dom-if" if="[[ diagram ]]">
+                                <a href="#" on-click="__onEditClick"><iron-icon icon="create"></iron-icon><paper-ripple></paper-ripple></a>    
+                                <a href="#" on-click="__onSaveClick"><iron-icon icon="done-all"></iron-icon><paper-ripple></paper-ripple></a>
+                            </template>
+                        </div>
+                        <div class="tools-splitter"></div>
+                        <div class="tools">
+                            <a href="#" on-click="__onBrowseClick"><iron-icon icon="folder-open"></iron-icon><paper-ripple></paper-ripple></a>
+                        </div>
+                    </div>
+                </kct-hbox>
+            </div>
+            <div class="flex panel-body">
+                <kct-hbox fit>
+                    <div class="pallet-container">
+                        <div id="pallet"></div>
+                    </div>
+                    <div class="flex paper-container">
+                        <div id="paper"></div>        
+                    </div>
+                </kct-hbox>
+            </div>
+        </kct-vbox>
+        <!-- /PANEL -->
+
+        <!-- DIALOG -->
+        <kct-dialog id="diagram-browser" title="Diagram Browser" width="100%" height="100%">
+            <template preserve-content>
+                <style>
+                    .card-header h3 {
+                        margin: 0;
+                        font-size: 18px;
+                        font-weight: 400;
+                        text-transform: uppercase;
+                        color: var(--paper-indigo-500);
+                    }
+                    .card-header p {
+                        margin: 0;
+                        font-size: 14px;
+                    }
+                    .card-body {
+                        font-size: 15px;
+                        margin-top: 0.8rem;
+                    }
+                </style>
+                <div slot="dialog-body">
+                    <kct-column columns="5">
+                        <template is="dom-repeat" items="[[ diagrams ]]">
+                            <paper-card image$="[[ item.cover_thumb ]]&w=180&h=180">
+                                <div class="card-content">
+                                    <div class="card-header">
+                                        <h3 class="card-title" on-tap="__onOpenDiagramTap">[[ item.name ]]</h3>
+                                        <p>( [[ item.slug ]] )</p>
+                                    </div>
+                                    <div class="card-body">
+                                        [[ item.description ]] 
+                                    </div>
+                                </div>
+                                <div class="card-actions">
+                                    <div class="horizontal justified">
+                                        <paper-button on-tap="__onOpenDiagramTap" class="btn-mini">Open</paper-button>
+                                        <paper-button on-tap="__onDeleteDiagramTap" class="btn-mini">Delete</paper-button>
+                                    </div>
+                                </div>
+                            </paper-card>
+                        </template>
+                    </kct-column>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onDiagramBrowserCloseTap">Close</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+        <kct-dialog id="diagram-editor" title="Diagram Editor" width="400" height="100%">
+            <template preserve-content>
+                <div slot="dialog-body">
+                    <paper-input value="{{ diagram.props.name }}" label="Diagram name" autofocus></paper-input>    
+                    <paper-input value="{{ diagram.props.description }}" label="Description"></paper-input>    
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSaveTap">Save</paper-button>
+                    <paper-button on-tap="__onEditorCloseTap">Close</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+        <kct-dialog id="diagram-exporter" title="Diagram Exporter" width="400" height="100%">
+            <template preserve-content>
+                <div slot="dialog-body">
+                    <div>
+                        <label>Format</label>
+                        <paper-radio-group selected="{{ __download.format }}" attr-for-selected="name">
+                            <paper-radio-button name="png">Image PNG</paper-radio-button>
+                            <paper-radio-button name="jpg">Image JPEG</paper-radio-button>
+                            <paper-radio-button name="svg">SVG (Vector)</paper-radio-button>
+                        </paper-radio-group>
+                    </div>
+                    <div>
+                        <paper-input value="{{ __download.name }}" label="File name"></paper-input>
+                    </div>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onExporterExportTap">Export</paper-button>
+                    <paper-button on-tap="__onExporterCloseTap">Close</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+        <shape-editor id="shape-editor" shape="{{ shape }}"></shape-editor>
+        <link-editor id="link-editor" link="{{ link }}"></link-editor>
+        <!-- /DIALOG -->
+
+        <kct-confirm id="delete-diagram-confirm">
+            <p>Are you sure want to delete this diagram?</p>
+        </kct-confirm>
+    </template>
+    <script>
+
+        class KctBpmn extends Mixins(Polymer.Element).use(Mixins.Resolver) {
+            static get is() {
+                return 'kct-bpmn';
+            }
+
+            static get properties() {
+                return {
+                    tools: {
+                        type: Array,
+                        value: () => {
+                            return [
+                                { name: 'panzoom',  icon: 'bpmn-icon-hand-tool',  text: 'Activate hand tool' },
+                                { name: 'collector', icon: 'bpmn-icon-lasso-tool', text: 'Activate lasso tool' },
+                                { name: 'linker', icon: 'bpmn-icon-connection-multi', text: 'Activate link tool' },
+                                { name: 'pencil', iron: 'communication:message', text: 'Add label' }
+                            ];
+                        }
+                    },
+                    tool: { type: String },
+                    paper: { type: Object },
+                    diagrams: { type: Array },
+                    diagram: { type: Object, notify: true },
+                    shape: { type: Object, notify: true },
+                    link: { type: Object, notify: true },
+                    __download: { 
+                        type: Object, 
+                        value: () => ({ 
+                            name: '', 
+                            format: 'jpg' 
+                        })
+                    },
+                    __title: { 
+                        type: String, 
+                        value: 'Untitled Workflow', 
+                        computed: '__computeTitle(diagram.*)' 
+                    }
+                };
+            }
+
+            constructor() {
+                super();
+                this.__silent = false;
+            }
+
+            connectedCallback() {
+                super.connectedCallback();
+                Polymer.RenderStatus.afterNextRender(this, () => {
+                    this.__setup();
+                }); 
+            }
+
+            resize() {
+                if (this.paper) {
+                    this.paper.layout().invalidate();
+                }
+            }
+
+            __computeTitle() {
+                if (this.diagram && this.diagram.props.name) {
+                    return this.diagram.props.name;
+                }
+                return 'Untitled Workflow';
+            }
+
+            __setup() {
+                Graph.setup({
+                    dom: 'shadow',
+                    base: this.resolveUrl('../../../bower_components') + '/graph-svg/',
+                    icons: {
+                        ZOOM_RESET: '<iron-icon icon="maps:my-location"></iron-icon>',
+                        ZOOM_IN: '<iron-icon icon="add"></iron-icon>',
+                        ZOOM_OUT: '<iron-icon icon="remove"></iron-icon>',
+                        MOVE_UP: '<iron-icon icon="arrow-upward"></iron-icon>',
+                        MOVE_DOWN: '<iron-icon icon="arrow-downward"></iron-icon>'
+                    }
+                });
+
+                this.paper = Graph.paper().render(this.$.paper);
+                this.paper.diagram().addPallet(
+                    Graph.pallet('activity', {
+                        template: this.__createPallete()
+                    }).render(this.$.pallet)
+                );
+
+                this.paper.on({
+                    'activatetool': onActivateTool.bind(this),
+                    'deactivatetool': onDeactivateTool.bind(this),
+                    'shapetoolclick': onShapeToolClick.bind(this),
+                    'linktoolclick': onLinkToolClick.bind(this),
+                    'diagram.create': onDiagramCreate.bind(this),
+                    'diagram.destroy': onDiagramDestroy.bind(this)
+                });
+
+                function onActivateTool(e) {
+                    this.set('tool', e.name);
+                }
+
+                function onDeactivateTool(e) {
+                    this.set('tool', null);
+                }
+
+                function onShapeToolClick(e) {
+                    this.__openShapeEditor(e.shape);
+                }
+
+                function onLinkToolClick(e) {
+                    this.__openLinkEditor(e.link);
+                }
+
+                function onDiagramCreate(e) {
+                    this.set('diagram', e.diagram);
+                }
+
+                function onDiagramDestroy(e) {
+                    this.set('diagram', null);
+                }
+            }
+
+            __createPallete() {
+                return `
+                    <g class="graph-pallet-item" data-shape="Graph.shape.activity.Start" transform="matrix(1,0,0,1,10,0)">  
+                        <circle cx="20" cy="32" r="16"/>  
+                    </g>  
+                    <g class="graph-pallet-item" data-shape="Graph.shape.activity.Final" transform="matrix(1,0,0,1,10,46)">  
+                        <circle cx="20" cy="32" r="16"/>  
+                        <circle cx="20" cy="32" r="12" class="full"/>
+                    </g>  
+                    <g class="graph-pallet-item" data-shape="Graph.shape.activity.Action" transform="matrix(1,0,0,1,10,105)">  
+                        <rect x="4" y="4" width="32" height="32" rx="0" ry="0"/>
+                    </g>  
+                    <g class="graph-pallet-item" data-shape="Graph.shape.activity.Router" transform="matrix(1,0,0,1,10,160)">  
+                        <rect x="4" y="4" width="26" height="26" transform="rotate(45,20,20)"/>
+                    </g>  
+                    <g class="graph-pallet-item" data-shape="Graph.shape.activity.Lane" transform="matrix(1,0,0,1,10,208)">  
+                        <rect x="4" y="4" width="32" height="32" rx="0" ry="0"/>  
+                        <rect x="4" y="4" width="8" height="32" rx="0" ry="0"/>
+                    </g>
+                `;
+            }
+
+            __loadDiagrams() {
+                let ajax = this.$.ajax;
+                ajax.GET('/bpmn/diagrams').then((res) => {
+                    this.set('diagrams', res.data);
+                });
+            }
+
+            __openDiagram(id) {
+                if ( ! this.paper) {
+                    return;
+                }
+
+                this.$.ajax.GET('/bpmn/diagrams/expand/' + id).then((res) => {
+                    if (res.success) {
+                        this.paper.diagram().remove();
+
+                        let timer = setTimeout(() => {
+                            clearTimeout(timer);
+                            timer = null;
+
+                            let diagram = this.paper.diagram().create('activity', res.data.props, true);
+                            diagram.render(res.data);
+
+                            this.set('diagram', diagram);
+                        }, 0);
+                    }
+                });
+            }
+
+            __openShapeEditor(shape) {
+                this.set('shape', shape);
+                this.$['shape-editor'].open();
+            }
+
+            __openLinkEditor(link) {
+                this.set('link', link);
+                this.$['link-editor'].open();
+            }
+
+            __onToolClick(e) {
+                e.preventDefault();
+                let name = e.model.item.name;
+                if (this.paper) {
+                    if (['panzoom', 'linker', 'collector', 'pencil'].indexOf(name) !== -1) {
+                        this.paper.tool().activate(name);    
+                    }
+                }
+            }
+
+            __onAddClick(e) {
+                e.preventDefault();
+
+                if (this.paper) {
+                    if (this.paper.diagram().current()) {
+                        this.paper.diagram().remove();
+                    }
+                    
+                    let diagram = this.paper.diagram().create('activity');
+                    this.set('diagram', diagram);
+                    this.$['diagram-editor'].open();
+                }
+            }
+
+            __onEditClick(e) {
+                e.preventDefault();
+
+                if (this.diagram) {
+                    this.$['diagram-editor'].open();    
+                }
+            }
+
+            __onDeleteClick(e) {
+                e.preventDefault();
+                if (this.paper) {
+                    this.paper.diagram().removeSelection();
+                }
+            }
+
+            __onSaveClick(e) {
+                e.preventDefault();
+
+                if (this.diagram) {
+                    let paper = this.diagram.paper();
+                    paper.zoomable().zoomReset();
+                    
+                    let data = this.diagram.toJson();
+                    
+                    this.$.ajax.POST('/bpmn/diagrams/store', data).then(res => {
+                        this.__afterSave(res);
+                    });
+                }
+            }
+
+            __afterSave(res) {
+                if ( ! res.success || ! this.diagram) {
+                    return;
+                }
+
+                let data = res.data;
+                this.diagram.update(data);
+
+                // upload cover
+                this.paper.diagram().saveAsFile((file) => {
+                    var upload = {
+                        files: [{ name: 'cover', file: file }]
+                    };
+                    this.$.ajax.UPLOAD('/bpmn/diagrams/upload/' + data.props.id, upload).then(done);
+                });
+
+                function done(res) {
+                    if (res.success) {
+                        var toast = document.createElement('kct-toast');
+
+                        toast.type = 'info';
+                        toast.title = 'Succeeded';
+                        toast.message = 'Data has been saved';
+                        toast.duration = 3000;
+
+                        document.body.appendChild(toast);
+                        toast.open();
+                    }
+                }
+            }
+
+            __onExportClick(e) {
+                e.preventDefault();
+                // compute download name
+                if (this.diagram && this.__download.format) {
+                    let name = this.diagram.props.name;
+
+                    name = name.replace(/\s+/g, '-');
+                    name = name.toLowerCase();
+
+                    this.set('__download.name', name + '.' + this.__download.format);
+                }
+
+                this.$['diagram-exporter'].open();
+            }
+
+            __onBrowseClick(e) {
+                e.preventDefault();
+                this.__loadDiagrams();
+                this.$['diagram-browser'].open();
+            }
+
+            __onOpenDiagramTap(e) {
+                var diagram = e.model.item;
+                this.__openDiagram(diagram.id);
+                this.$['diagram-browser'].close();
+            }
+
+            __onDeleteDiagramTap(e) {
+                this.$['delete-diagram-confirm'].open().then(y => {
+                    if (y == 'yes') {
+                        let diagram = e.model.item,
+                            index = e.model.index;
+
+                        this.$.ajax.DELETE('/bpmn/diagrams/' + diagram.id).then(res => {
+                            if (res.success) {
+                                if (this.paper) {
+                                    let currentDiagram = this.paper.diagram().current();
+                                    if (currentDiagram && (currentDiagram.props.id == diagram.id)) {
+                                        this.paper.diagram().remove();
+                                    }
+                                }
+                                this.splice('diagrams', index, 1);
+                            }
+                        });
+                    }
+                });
+            }
+
+            __onDiagramBrowserCloseTap() {
+                this.$['diagram-browser'].close();
+            }
+
+            __onEditorSaveTap() {
+                if (this.diagram) {
+                    let paper = this.diagram.paper();
+                    paper.zoomable().zoomReset();
+                    
+                    let data = this.diagram.toJson();
+                    
+                    this.$.ajax.POST('/bpmn/diagrams/store', data).then(res => {
+                        this.__afterSave(res);
+                        this.$['diagram-editor'].close();
+                    });
+                }
+            }
+
+            __onEditorCloseTap() {
+                this.$['diagram-editor'].close();
+            }
+
+            __onExporterCloseTap() {
+                this.$['diagram-exporter'].close();
+            }
+
+            __onExporterExportTap() {
+                if (this.paper && this.diagram && this.__download.name) {
+                    var type = this.__download.format == 'jpg' ? 'jpeg' : this.__download.format;    
+                    this.paper.diagram().saveAsImage(type, this.__download.name);
+                }
+            }
+        }
+
+        customElements.define(KctBpmn.is, KctBpmn);
+    </script>
+</dom-module>

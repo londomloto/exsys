@@ -1,0 +1,84 @@
+<link rel="import" href="../../../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../elements/kct-role/kct-role.html">
+<link rel="import" href="../../elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
+
+<dom-module id="home-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                background-image: var(--homepage-background, url(../../../images/welcome-2.jpg));
+                background-size: cover; 
+                height: var(--home-page-height, 582px);
+            }
+            paper-fab { 
+                display: inline-block;  
+            }
+            .welcome {
+                color: #fff;
+                max-width: 50%;
+            }
+            .welcome-title {
+                font-size: 60px;
+            }
+            .welcome-title b {
+                font-weight: 600;
+            }
+            .welcome-desc {
+                font-size: 28px;
+            }
+            page-header-block {
+                border-bottom: none;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-vbox >
+            <page-header-block icon="home" description="Application Homepage" accent="var(--paper-green-500)"></page-header-block>
+            <div class="flex">
+                <div class="p-a-lg">
+                    <div class="welcome">
+                        <!-- <h2 class="welcome-title f-300">[[ config.app_title ]]</h2> -->
+                        <h2 class="welcome-title f-300"><b>expense</b>system</h2>
+                        <p class="welcome-desc f-300">[[ config.app_description ]]</p> 
+                    </div>
+                    <div class="m-t-lg">
+                        <paper-button class="btn-lime btn-raised" on-tap="download" data-perm="update@home">Documentation</paper-button>    
+                    </div>
+                </div>
+            </div>
+        </kct-vbox>
+
+        
+
+    </template>
+
+    <script>
+        class HomePage extends KctView {
+            static get is() {
+                return 'home-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, notify: true, value: 'Homepage' },
+                    inputs: { type: Array, value: [{ name: 'A' }, {name: 'B'}] }
+                }
+            }
+
+            download() {
+                this.$.ajax.DOWNLOAD('/home/download', {user: 1, type: 'jpeg', items: ['A', 'B']});
+            }
+
+            handleResizing(width, height) {
+                this.updateStyles({ '--home-page-height': height + 'px' });
+            }
+        }
+
+        customElements.define(HomePage.is, HomePage);
+    </script>    
+</dom-module>

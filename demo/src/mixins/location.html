@@ -1,0 +1,60 @@
+<link rel="import" href="mixins.html">
+<script>
+    Mixins.Location = Polymer.dedupingMixin((superclass) => {
+        return class extends superclass {
+
+            _protocol() {
+                return window.location.protocol;
+            }
+
+            _hostname() {
+                return window.location.hostname;
+            }
+
+            _baseuri(trail = true) {
+                let host = this._hostname();
+                let path = (window.location.pathname || '');
+                let info, base;
+
+                if (/\.d/.test(host) || host == 'localhost') {
+                    info = path.match(/^\/([^/]+)\/([^/]+)/);
+                    if (info) {
+                        base = '/' + info[1] + '/' + info[2] + (trail ? '/' : '');
+                    }
+                } else {
+                    info = path.match(/^\/([^/]+)/);
+                    if (info) {
+                        base = '/' + info[1] + (trail ? '/' : '');
+                    }
+                }
+
+                if ( ! base) {
+                    base = trail ? '/' : '';
+                }
+
+                return base;
+            }
+
+            _siteurl(path) {
+                let http, host, base;
+                http = this._protocol();
+
+                if (this.config) {
+                    host = this.config.app_host;
+                    base = this.config.app_base;
+                }
+
+                host = host || this._hostname();
+                base = base || this._baseuri();
+
+                path = path.replace(/^\//, '');
+                return http + '//' + host + base + path;
+            }
+
+            _import(path, done, fail) {
+                path = this.resolveUrl(path);
+                Polymer.importHref(path, done, fail);
+            }
+        };
+    });
+</script>

@@ -1,0 +1,309 @@
+<link rel="import" href="../../../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../bower_components/vaadin-combo-box/vaadin-combo-box.html">
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../elements/kct-checkbox/kct-checkbox.html">
+<link rel="import" href="../../elements/kct-icon-picker/kct-icon-picker.html">
+<link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
+<link rel="import" href="../../mixins/theme.html">
+
+<dom-module id="menus-page">
+
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: var(--menus-page-height, 500px);
+            }
+            .icon-item {
+                display: inline-block;
+                width: 64px;
+                height: 64px;
+                color: #666;
+                --iron-icon-width: 100%;
+                --iron-icon-height: 100%;
+            }
+        </style>
+
+        <kct-ajax id="ajax1"></kct-ajax>
+        <kct-ajax id="ajax2"></kct-ajax>
+        <kct-ajax id="ajax3"></kct-ajax>
+
+        <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue" icon="reply" title="Back to setting" on-tap="__onBackTap"></paper-fab>
+        </div>
+
+        <kct-vbox>
+            <page-header-block icon="settings" title="Application" description="Menu Settings" accent="--paper-pink-500">
+                <paper-icon-button on-tap="__onRefreshTap" icon="refresh"></paper-icon-button>
+                <div class="separator"></div>
+                <paper-button on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Add</paper-button>
+                <paper-button on-tap="__onEditTap"><iron-icon icon="done"></iron-icon>&nbsp;Edit</paper-button>
+                <paper-button on-tap="__onDeleteTap"><iron-icon icon="clear"></iron-icon>&nbsp;Delete</paper-button>    
+            </page-header-block>
+
+            <div class="flex">
+                <kct-grid 
+                    id="grid" 
+                    url="/menus?display=grid" 
+                    columns="{{ columns }}" 
+                    selected="{{ selected }}" 
+                    page-size="100" 
+                    hide-header 
+                    autoload></kct-grid>
+            </div>
+        </kct-vbox>
+        
+        <kct-dialog id="editor" title="Menu Editor" width="400" height="100%">
+            <template preserve-content>
+                <div slot="dialog-body">
+                    <vaadin-combo-box 
+                        id="combo-parents" 
+                        label="Parent"
+                        items="[[ parents ]]" 
+                        value="{{ selected.smn_parent_id }}"
+                        item-value-path="smn_id" 
+                        item-label-path="smn_title"></vaadin-combo-box>
+
+                    <paper-input label="Caption" value="{{ selected.smn_title }}"></paper-input>
+                    <kct-icon-picker label="Icon" value="{{ selected.smn_icon }}"></kct-icon-picker>
+                    <!-- <paper-input label="Icon" value="{{ selected.smn_icon }}"></paper-input> -->
+                    <!-- <paper-input label="Path" value="{{ selected.smn_path }}"></paper-input> -->
+
+                    <vaadin-combo-box 
+                        id="combo-modules" 
+                        label="Modules"
+                        items="[[ modules ]]" 
+                        value="{{ selected.smn_path }}"
+                        item-value-path="sm_api" 
+                        item-label-path="sm_title"></vaadin-combo-box>
+
+                    <paper-input label="Order" value="{{ selected.smn_order }}"></paper-input>
+                    <kct-checkbox value="{{ selected.smn_visible }}" true-value="1" false-value="0">
+                        <label>Check to toggle visibility</label>
+                    </kct-checkbox>
+                    
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onSaveEditorTap">SAVE</paper-button>
+                    <paper-button on-tap="__onCloseEditorTap">CLOSE</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+
+    <script>
+        class MenusPage extends Mixins(KctView).use(Mixins.Theme) {
+            static get is() {
+                return 'menus-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, notify: true, value: 'Menus' },
+                    columns: {
+                        type: Array,
+                        value: () => {
+                            return [
+                                { type: 'rownumber' },
+                                { 
+                                    text: 'Caption', 
+                                    dataIndex: 'smn_title', 
+                                    width: 300,
+                                    renderer: function(e) {
+                                        return e.data ? '<span class="elbow" style="width: '+ e.data.smn_pad +'"></span><span>'+ e.data.smn_title +'<span>' : '';
+                                    }
+                                },
+                                { 
+                                    text: 'Icon', 
+                                    dataIndex: 'smn_icon',
+                                    width: 80,
+                                    align: 'center',
+                                    renderer: function(e) {
+                                        return e.data ? '<iron-icon icon="' + e.data.smn_icon + '"></iron-icon>' : '';
+                                    }
+                                },
+                                { 
+                                    text: 'Module', 
+                                    dataIndex: 'sm_title', 
+                                    width: 300,
+                                    renderer: function(e) {
+                                        return e.data ? (e.data.sm_title || '-') : '-';
+                                    }
+                                },
+                                { 
+                                    text: 'Order', 
+                                    align: 'center',
+                                    dataIndex: 'smn_order', 
+                                    width: 80 
+                                },
+                                { 
+                                    text: 'Visible',
+                                    width: 80, 
+                                    align: 'center',
+                                    dataIndex: 'smn_visible',
+                                    renderer: e => {
+                                        return e.data ? (e.data.smn_visible == 1 ? '<iron-icon icon="done"></iron-icon>' : '-') : '-';
+                                    }
+                                }
+                            ];
+                        }
+                    },
+                    selected: { type: Object },
+                    parents: { type: Array, value: () => ([]) },
+                    modules: { type: Array, value: () => ([]) }
+                }
+            }
+
+            static get observers() {
+                return [
+                    '__heightChanged(height)'
+                ];
+            }
+
+            constructor() {
+                super();
+                this.__parents = [];
+            }   
+
+            ready() {
+                super.ready();
+                this.__setupEditor();
+            }
+
+            activate() {
+                if (this.$.grid) {
+                    if ( ! this.__gridResized) {
+                        this.__gridResized = true;
+                        this.$.grid.resize();
+                    }
+                }
+            }
+
+            __heightChanged(height) {
+                this.updateStyles({
+                    '--menus-page-height': height + 'px'
+                }); 
+
+                this.$.grid && this.$.grid.resize();
+            }
+
+            __loadParents() {
+                let ajax = this.$.ajax2;
+
+                return ajax.GET('/menus?display=grid').then(res => {
+                    this.__parents = res.data;
+                    this.__parents.unshift({ smn_id: '0', smn_title: 'No Parent' });
+                    this.set('parents', this.__parents);
+                });
+            }
+
+            __loadModules() {
+                let ajax = this.$.ajax3;
+                
+                return ajax.GET('/modules').then(res => {
+                    this.set('modules', res.data);
+                });
+            }
+
+            __setupEditor() {
+                return Promise.all([
+                    this.__loadParents(),
+                    this.__loadModules()
+                ]);
+            }
+
+            __onAddTap() {
+                this.__setupEditor().then(() => {
+                    this.set('parents', this.__parents);
+                });
+
+                this.set('selected', {});
+                this.$.editor.open();
+            }
+
+            __onEditTap(e) {
+                if ( ! this.selected) {
+                    this.toast('Warning', 'No record selected', 'warn');
+                    return;
+                }
+
+                this.mask('Opening editor...');
+
+                this.__setupEditor().then(() => {
+                    let parents = this.__parents.filter(elem => {
+                        return elem.smn_id != this.selected.smn_id;
+                    });    
+
+                    this.set('parents', parents);
+                    this.$['editor'].open();
+
+                    this.unmask();
+                });
+                
+            }
+
+            __onEditorClose(e) {
+                if (e.detail.reload) {
+                    this.__loadRecords();
+                }
+            }
+
+            __onDeleteTap(e) {
+                if ( ! this.selected || ! this.selected.smn_id) {
+                    this.toast('Warning', 'No record(s) selected', 'warn');
+                    return;
+                }
+
+                this.confirm('Confirm', 'Are you sure want to delete this menu?').then(y => {
+                    if (y) {
+                        this.$.ajax1.DELETE('/menus/' + this.selected.smn_id).then(() => {
+                            this.$.grid.load();
+                            this.__loadParents();
+                        });
+                    }
+                });
+            }
+
+            __onSaveEditorTap() {
+                let data = this.selected,
+                    ajax = this.$.ajax1;
+
+                if (data.smn_id) {
+                    ajax.PUT('/menus/' + data.smn_id, data).then(done.bind(this));
+                } else {
+                    ajax.POST('/menus', data).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.$.editor.close();
+                        this.$.grid.load();
+                        this.__loadParents();
+
+                        this.set('selected', null);
+                    }
+                }
+            }
+
+            __onRefreshTap() {
+                this.$.grid.load();
+            }
+
+            __onCloseEditorTap() {
+                this.$.editor.close();
+            }
+
+            __onBackTap() {
+                this.set('route.path', '/settings');
+            }
+        }
+
+        customElements.define(MenusPage.is, MenusPage);
+    </script>
+
+</dom-module>

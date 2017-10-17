@@ -1,0 +1,100 @@
+<link rel="import" href="../../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+
+<dom-module id="datagrid-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                display: block;
+                height: var(--datagrid-page-height, 582px);
+            }
+            #grid {
+                height: 100%;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-grid 
+            id="grid" 
+            url="/users" 
+            page-size="2" 
+            columns="{{ columns }}" 
+            selection="{{ selection }}" 
+            selected="{{ selected }}" 
+            title="Component" 
+            description="Datagrid Component"
+            autoload>
+            
+            <paper-button on-tap="__onAddTap"    slot="primary-toolbar"><iron-icon icon="add"></iron-icon>&nbsp;New</paper-button>
+            <paper-button on-tap="__onEditTap"   slot="primary-toolbar"><iron-icon icon="done"></iron-icon>&nbsp;Edit</paper-button>
+            <paper-button on-tap="__onDeleteTap" slot="primary-toolbar"><iron-icon icon="clear"></iron-icon>&nbsp;Delete</paper-button>
+            
+        </kct-grid>
+
+    </template>
+    <script>
+        class DatagridPage extends KctView {
+            static get is() {
+                return 'datagrid-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, notify: true, value: 'Datagrid' },
+                    selected: { type: Object },
+                    selection: { type: Array },
+                    columns: {
+                        type: Array,
+                        value: () => {
+                            return [
+                                { type: 'rownumber' },
+                                { text: 'Email Address', dataIndex: 'su_email' },
+                                { text: 'Full Name', dataIndex: 'su_fullname' },
+                                { text: 'Gender', dataIndex: 'su_sex', width: 120 },
+                                { text: 'Date of Birth', dataIndex: 'su_dob' },
+                                { text: 'Jobs Title', dataIndex: 'su_job_title' }
+                            ];
+                        }
+                    }
+                };
+            }
+
+            handleResizing(width, height) {
+                this.updateStyles({ '--datagrid-page-height': height + 'px' });
+                this.$.grid.resize();
+            }
+
+            __onAddTap() {
+
+            }
+
+            __onEditTap() {
+                if ( ! this.selected) {
+                    this.toast('Warning', 'No record selected', 'warn');
+                    return;
+                }
+            }
+
+            __onDeleteTap() {
+                if ( ! this.selected) {
+                    this.toast('Warning', 'No record selected', 'warn');
+                    return;
+                }
+
+                this.confirm('Confirm', 'Are you sure want to delete this record?').then(y => {
+                    if (y) {
+                        this.$.ajax.DELETE_BATCH('/users').then(res => {
+                            
+                        });
+                    }
+                });
+            }
+        }
+
+        customElements.define(DatagridPage.is, DatagridPage);
+    </script>
+</dom-module>

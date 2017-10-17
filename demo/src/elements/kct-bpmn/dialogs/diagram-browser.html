@@ -1,0 +1,260 @@
+<link rel="import" href="../../../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../../elements/kct-date/kct-dateformat.html">
+<link rel="import" href="../../../elements/kct-media/kct-media.html">
+<link rel="import" href="../../../elements/kct-message/kct-confirm.html">
+<link rel="import" href="../../../mixins/dialog.html">
+<link rel="import" href="../../../mixins/resolver.html">
+
+<dom-module id="diagram-browser">
+    <template>
+        <style include="theme-helper">
+            .vbox {
+                margin-top: 0;
+                padding: 0;
+            }
+            .vbox > .flex {
+                overflow-y: auto;
+                position: relative;
+            }
+            .content {
+                padding: 0 24px;
+            }
+            .header {
+                padding: 24px;
+            }
+            .tools {
+                position: absolute;
+                right: 10px;
+                top: 10px;
+            }
+            .actions {
+                background-color: var(--app-danger);
+                padding: 8px;
+                text-align: center;
+                margin-bottom: 0;
+            }
+            .actions paper-button {
+                color: #ffffff;
+                height: 40px;
+            }
+            #dialog {
+                width: 90%;
+                height: 80%;
+            }
+            .grid.sm { --grid-columns: 1; }
+            .grid.md { --grid-columns: 2; }
+            .grid.lg { --grid-columns: 3; }
+            .grid.xl { --grid-columns: 5; }
+            
+            paper-card {
+                width: 100%;
+                border: 1px solid #ccc;
+                box-shadow: none;
+            }
+            .card-header h3 {
+                font-size: 20px;
+                font-weight: 300;
+                color: var(--paper-teal-500);
+            }
+            .card-header p {
+                font-size: 13px;
+                font-weight: 300;
+            }
+            .search {
+                position: relative;
+                top: -15px;
+            }
+            .search paper-input {
+                --paper-input-container: {
+                    padding: 0;
+                };
+            }
+            .card-body {
+                font-size: 15px;
+                font-weight: 300;
+            }
+            .card-meta {
+                font-size: 13px;
+                font-weight: 300;
+                color: var(--paper-grey-500);
+                --iron-icon-width: 18px;
+                --iron-icon-height: 18px;
+            }
+            .card-meta iron-icon {
+                position: relative;
+                top: -1px;
+            }
+            .card-title {
+                cursor: pointer;
+            }
+            .card-actions {
+                text-align: center;
+            }
+            .btn-mini {
+                /*font-size: 12px;*/
+                padding-top: 6px;
+                padding-bottom: 6px;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-media size="{{ __responsive }}"></kct-media>
+        
+        <paper-dialog id="dialog" on-iron-overlay-closed="__onClose" modal>
+            <div class="vbox">
+                <div class="header">
+                    <h2 class="f-300" hidden$="[[ searching ]]">List of Diagrams</h2>
+                    <div class="search" hidden$="[[ ! searching ]]">
+                        <paper-input value="{{ query }}" label="Search for..." no-label-float>
+                            <iron-icon icon="search" slot="prefix"></iron-icon>
+                            <paper-icon-button on-tap="__onClearSearchTap" icon="clear" slot="suffix"></paper-icon-button>
+                        </paper-input>
+                    </div>
+                    <div class="tools" hidden$="[[ searching ]]" >
+                        <paper-icon-button on-tap="__onToolSearchTap" icon="search"></paper-icon-button>
+                    </div>
+                </div>
+                <div class="flex">
+                    <div class="content">
+                        <div class$="grid [[ __responsive ]]">
+                            <template is="dom-repeat" items="[[ diagrams ]]">
+                                <div>
+                                    <paper-card image="[[ __computeImage(item.cover_thumb) ]]">
+                                        <div class="card-content">
+                                            <div class="card-header">
+                                                <h3 class="card-title" on-tap="__onOpenTap">[[ item.name ]]</h3>
+                                                <p>( [[ item.slug ]] )</p>
+                                            </div>
+                                            <div class="card-meta m-t">
+                                                <span class="m-r">
+                                                    <iron-icon icon="today"></iron-icon> 
+                                                    <kct-dateformat date="[[ item.created_date ]]"></kct-dateformat>
+                                                </span>
+                                            </div>
+                                            <div class="card-body m-t">
+                                                [[ item.description ]] 
+                                            </div>
+                                        </div>
+                                        <div class="card-actions">
+                                            <div class="horizontal justified">
+                                                <paper-button on-tap="__onOpenTap" class="btn-mini">Open</paper-button>
+                                                <paper-button on-tap="__onDeleteTap" class="btn-mini">Delete</paper-button>
+                                            </div>
+                                        </div>
+                                    </paper-card>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+                <div class="actions">
+                    <paper-button on-tap="__onButtonCloseTap">Close</paper-button>
+                </div>    
+            </div>
+        </paper-dialog>        
+
+        <kct-confirm id="delete-confirm">
+            <p slot="message">
+                Are you sure want to delete this diagram?
+            </p>
+        </kct-confirm>
+    </template>
+    <script>
+        class DiagramBrowser extends Mixins(Polymer.Element).use(Mixins.Dialog, Mixins.Resolver) {
+            static get is() {
+                return 'diagram-browser';
+            }
+            static get properties() {
+                return {
+                    paper: { type: Object },
+                    diagrams: { type: Array, value: () => [] },
+                    searching: { type: Boolean, value: false },
+                    query: { type: String }
+                };
+            }
+            static get observers() {
+                return [
+                    '__queryChanged(query)'
+                ];
+            }
+            open() {
+                this._relocate();
+                this.$.dialog.open();
+                this.__loadDiagrams();
+
+                this.__result = this._defer();
+                return this.__result.promise;
+            }
+            close() {
+                this.$.dialog.close();
+            }
+            __loadDiagrams(data = {}) {
+                this.$.ajax.GET('/bpmn/diagrams', data).then((res) => {
+                    this.set('diagrams', res.data);
+                });
+            }
+            __computeImage(url) {
+                return url + '&w=230&h=230';
+            }
+            __queryChanged(query) {
+                this._debounce(
+                    'query',
+                    () => {
+                        this.__loadDiagrams({
+                            query: query
+                        });
+                    },
+                    300
+                );
+            }
+            __onClearSearchTap(e) {
+                e.stopPropagation();
+                this.set('query', '');
+                this.set('searching', false);
+            }
+            __onToolSearchTap() {
+                this.set('searching', true);
+            }
+            __onClose() {
+                this._restore();
+            }
+            __onOpenTap(e) {
+                var diagram = e.model.item;
+                if (this.__result) {
+                    this.__result.resolve(diagram);
+                }
+                this.close();
+            }
+            __onDeleteTap(e) {
+                this.$['delete-confirm'].open().then((action) => {
+                    if (action == 'yes') {
+                        let diagram = e.model.item,
+                            index = e.model.index;
+
+                        this.$.ajax.DELETE('/bpmn/diagrams/' + diagram.id).then((res) => {
+                            if (res.success) {
+                                if (this.paper) {
+                                    let currentDiagram = this.paper.diagram().current();
+                                    if (currentDiagram && (currentDiagram.props.id == diagram.id)) {
+                                        this.paper.diagram().remove();
+                                    }
+                                }
+                                this.splice('diagrams', index, 1);
+                            }
+                        });
+                    }
+                });
+            }
+            __onButtonCloseTap() {
+                this.close();
+            }
+        }
+        customElements.define(DiagramBrowser.is, DiagramBrowser);
+    </script>
+</dom-module>

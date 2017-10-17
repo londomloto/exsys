@@ -1,0 +1,94 @@
+<dom-module id="kct-page">
+    <template>
+        <style>
+            :host { display: block; }
+        </style>
+    </template>
+    <script>
+
+        class KctPage extends Polymer.Element {
+            static get is() {
+                return 'kct-page';
+            }
+
+            static get properties() {
+                return {
+                    type: { type: String },
+                    name: { type: String, reflectToAttribute: true },
+                    title: { type: String, notify: true, reflectToAttribute: true },
+                    config: { type: Object, notify: true },
+                    route: { type: Object, notify: true },
+                    state: { type: Object },
+                    user: { type: Object, notify: true }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__nameChanged(name)'
+                ];
+            }
+
+            ready() {
+                super.ready();
+                this.__stampPage();
+            }
+
+            __nameChanged(name) {
+            }
+
+            __stampPage() {
+                let template = document.createElement('template');    
+
+                template.innerHTML = `
+                    <${this.type} 
+                        id="page" 
+                        name="[[ name ]]" 
+                        title="{{ title }}" 
+                        config="{{ config }}" 
+                        route="{{ route }}" 
+                        state="[[ state ]]" 
+                        user="{{ user }}"></${this.type}>
+                `;
+
+                let instance = this._stampTemplate(template);
+                this.shadowRoot.appendChild(instance);
+                this.$.page = this.shadowRoot.querySelector('#page');
+            }
+
+            connectedCallback() {
+                super.connectedCallback();
+                console.log('render: ', this.name);
+            }
+
+            disconnectedCallback() {
+                super.disconnectedCallback();
+                console.log('remove:', this.name);
+            }
+
+            activate() {
+                if (this.$.page && this.$.page.activate) {
+                    this.$.page.activate();
+                }
+            }
+
+            close() {
+                let evt = new CustomEvent('close', {
+                    detail: {},
+                    bubble: true,
+                    composed: true
+                });
+                this.dispatchEvent(evt);
+            }
+
+            handleResizing(width, height) {
+                if (this.$.page && this.$.page.handleResizing) {
+                    this.$.page.handleResizing(width, height);
+                } 
+            }
+
+        }
+
+        customElements.define(KctPage.is, KctPage);
+    </script>
+</dom-module>

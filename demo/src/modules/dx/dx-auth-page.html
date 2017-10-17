@@ -1,0 +1,38 @@
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+
+<dom-module id="dx-auth-page">
+    <template>
+        <style include="theme-helper">
+            
+        </style>
+
+        <div class="page-actions">
+            <paper-fab class="fab-raised" icon="add" title="Add new profile" on-tap="__onAddRecordTap"></paper-fab>
+            <paper-fab class="fab-raised fab-blue" icon="reply" title="Back to setting" on-tap="__onBackTap"></paper-fab>
+        </div>
+
+        <div class="module-header">
+            <div class="header-text">
+                <h3 class="f-300">Upload Authorization</h3>
+            </div>
+        </div>
+    </template>
+    <script>
+        class DxAuthPage extends KctView {
+
+            static get is() {
+                return 'dx-auth-page';
+            }
+
+            __onAddRecordTap() {
+
+            }
+
+            __onBackTap() {
+                this.set('route.path', '/settings');
+            }
+        }
+
+        customElements.define(DxAuthPage.is, DxAuthPage);
+    </script>
+</dom-module>

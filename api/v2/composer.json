@@ -1,0 +1,6 @@
+{
+    "require": {
+        "firebase/php-jwt": "^4.0",
+        "dapphp/securimage": "3.6.5"
+    }
+}

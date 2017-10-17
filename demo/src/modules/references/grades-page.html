@@ -1,0 +1,168 @@
+<link rel="import" href="../../../bower_components/paper-radio-group/paper-radio-group.html">
+<link rel="import" href="../../../bower_components/paper-radio-button/paper-radio-button.html">
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../elements/kct-dialog/kct-dialog.html">
+
+<dom-module id="grades-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: var(--grades-page-height, 500px);
+            }
+        </style>
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-grid 
+            id="grid" 
+            url="/grades" 
+            columns="[[ columns ]]" 
+            selection-model="cell" 
+            icon="trending-up" 
+            title="Datasheet" 
+            description="Grades Reference"
+            autoload>
+            
+            <template preserve-content>
+                <style include="theme-helper"></style>
+            </template>
+            
+            <paper-button on-tap="__onAddTap" class="btn-primary" slot="primary-toolbar"><iron-icon icon="add"></iron-icon>&nbsp;Add Grade</paper-button>
+
+        </kct-grid>
+
+        <kct-dialog id="editor" title="Grade Editor" width="400" height="100%">
+            <template preserve-content>
+                <div slot="dialog-body">
+                    <paper-input label="Grade" value="{{ selectedRecord.grade_code }}"></paper-input>
+                    <paper-input label="Description" value="{{ selectedRecord.grade_desc }}"></paper-input>
+                    <div>
+                        <label>Grade Type</label>
+                        <paper-radio-group selected="{{ selectedRecord.grade_type }}">
+                            <paper-radio-button name="verificator">Verificator</paper-radio-button>
+                            <paper-radio-button name="approver">Approver</paper-radio-button>
+                        </paper-radio-group>
+                    </div>
+                    <paper-input label="Limit (IDR)" value="{{ selectedRecord.grade_limit }}"></paper-input>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSaveTap">Save</paper-button>
+                    <paper-button on-tap="__onEditorCancelTap">Cancel</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class GradesPage extends KctView {
+            static get is() {
+                return 'grades-page';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Grades', notify: true },
+                    columns: {
+                        type: Array,
+                        value: [
+                            { type: 'rownumber' },
+                            { text: 'Grade', dataIndex: 'grade_code', width: 100, align: 'center' },
+                            { text: 'Description', dataIndex: 'grade_desc' },
+                            {
+                                text: 'Verificator',
+                                dataIndex: 'verificator',
+                                align: 'center',
+                                width: 100,
+                                renderer: (e) => {
+                                    return e.data ? (e.data.verificator == 1 ? '<iron-icon icon="done"></iron-icon>' : '-') : '-';
+                                }
+                            },
+                            {
+                                text: 'Approver',
+                                dataIndex: 'approver',
+                                align: 'center',
+                                width: 100,
+                                renderer: (e) => {
+                                    return e.data ? (e.data.approver == 1 ? '<iron-icon icon="done"></iron-icon>' : '-') : '-';
+                                }
+                            },
+                            { 
+                                text: 'Approval Limit (IDR)', 
+                                dataIndex: 'grade_limit', 
+                                align: 'right',
+                                renderer: (e) => {
+                                    return e.data ? (e.data.grade_limit ? e.data.grade_limit_formatted : '-')  : '-';
+                                }
+                            },
+                            {
+                                text: '',
+                                type: 'action',
+                                renderer: (e) => {
+                                    if (e.data) {
+                                        return `
+                                            <paper-button on-tap="__onEditTap" class="btn-amber"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>
+                                            <paper-button on-tap="__onDeleteTap" class="btn-danger"><iron-icon icon="close"></iron-icon>&nbsp;Delete</paper-button>
+                                        `;
+                                    }
+                                    return '';
+                                }
+                            }
+                        ]
+                    },
+                    selectedRecord: { type: Object, value: () => ({}) }
+                };
+            }
+            ready() {
+                super.ready();
+                this.$.grid.context = this;
+            }
+            handleResizing(width, height) {
+                this.updateStyles({ '--grades-page-height': height + 'px' });
+                this.$.grid && this.$.grid.resize();
+            }
+            __onAddTap() {
+                this.set('selectedRecord', {});
+                this.$.editor.open();
+            }
+            __onEditTap(e) {
+                console.log(e.data);
+                this.set('selectedRecord', e.data);
+                this.$.editor.open();
+            }
+            __onEditorSaveTap() {
+                this.$.editor.close();
+            }
+            __onEditorCancelTap() {
+                this.$.editor.close();
+            }
+            __onEditorSaveTap() {
+                this.$.editor.close();
+
+                let data = this.selectedRecord;
+
+                if (data.grade_id) {
+                    this.$.ajax.PUT('/grades/' + data.grade_id, data).then(done.bind(this));
+                } else {
+                    this.$.ajax.POST('/grades', data).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.toast('Success', 'Data has been saved');
+                        this.$.grid.load();
+                    }
+                }
+            }
+            __onDeleteTap(e) {
+                let record = e.data;
+                this.confirm('Confirm', `Are you sure you want to delete ${record.grade_code} ?`).then(y => {
+                    if (y) {
+                        this.$.ajax.DELETE('/grades/' + record.grade_id).then(() => {
+                            this.$.grid.load();
+                        });
+                    }
+                })
+            }
+        }
+        customElements.define(GradesPage.is, GradesPage);
+    </script>
+</dom-module>

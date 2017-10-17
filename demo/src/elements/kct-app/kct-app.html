@@ -1,0 +1,114 @@
+<link rel="import" href="../../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../elements/kct-config/kct-config.html">
+<link rel="import" href="../../elements/kct-router/kct-router.html">
+<link rel="import" href="../../elements/kct-pages/kct-pages.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../mixins/resolver.html">
+
+<dom-module id="kct-app">
+    
+    <template>
+        <style>
+            :host { display: block; height: 100%; }
+            kct-pages { height: 100%; }
+        </style>
+        
+        <kct-config id="config" config="{{ config }}"></kct-config>
+        <kct-ajax id="ajax" config="[[ config ]]"></kct-ajax>
+        <kct-router id="router" config="[[ config ]]" routes="[[ routes ]]" route="{{ route }}" state="{{ state }}" fallback="/home" on-authenticate="__onAuthenticate"></kct-router>
+
+        <template is="dom-if" if="[[ state.layout ]]">
+            <kct-pages selected="{{ state.layout }}" attr-for-selected="name" fallback-selection="error" lazy-load>
+                <main-layout  name="main"  config="{{ config }}" route="{{ route }}" state="[[ state ]]" import="layouts/main-layout.html"></main-layout>
+                <auth-layout  name="auth"  config="{{ config }}" route="{{ route }}" state="[[ state ]]" import="layouts/auth-layout.html"></auth-layout>
+                <error-layout name="error" config="{{ config }}" route="{{ route }}" state="[[ state ]]" import="layouts/error-layout.html"></error-layout>
+            </kct-pages>
+        </template>
+
+    </template>
+
+    <script>
+        class KctApp extends Mixins(Polymer.Element).use(Mixins.Resolver) {
+                
+            static get is() { 
+                return 'kct-app'; 
+            }
+
+            static get properties() {
+                return {
+                    debug: { type: String },
+                    routes: {
+                        type: Object,
+                        notify: true,
+                        value: {
+                            '/login': {
+                                layout: 'auth',
+                                module: 'auth',
+                                page: 'login-page',
+                                authentication: false
+                            },
+                            '/projects/:project': {
+                                module: 'projects',
+                                page: 'project-page'
+                            },
+                            '/settings/:setting/:params': {
+                                module: 'settings',
+                                page: 'settings-page'
+                            },
+                            '/settings/:setting': {
+                                module: 'settings',
+                                page: 'settings-page'
+                            }
+                        }
+                    }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__appTitleChanged(config.app_title)'
+                ];
+            }
+
+            ready() {
+                super.ready();
+                this.__loadConfig();
+            }
+
+            /**
+             * Load application config from server
+             */
+            __loadConfig() {
+                let config = Object.assign({}, this.config);
+
+                this.$.ajax.GET('/config/load').then(res => {
+                    for (let k in res.data) {
+                        config[k] = res.data[k];
+                    }
+                    this.set('config', config);
+                });
+
+            }
+
+            __appTitleChanged(title) {
+                this._debounce(
+                    'apptitle',
+                    () => {
+                        document.title = title;
+                    },
+                    1000
+                );
+            }
+
+            __onAuthenticate(e) {
+                if ( ! e.detail.success) {
+                    this.set('route.path', '/login');
+                }
+            }
+
+        }
+
+        customElements.define(KctApp.is, KctApp);
+    </script>
+
+</dom-module>

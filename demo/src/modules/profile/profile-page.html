@@ -1,0 +1,260 @@
+<link rel="import" href="../../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../elements/kct-file/kct-file.html">
+<link rel="import" href="../../elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
+
+<dom-module id="profile-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: var(--profile-page-height, 582px);
+            }
+            .col-left {
+                width: 260px;
+                margin-right: 15px;
+                position: relative;
+            }
+            .group-header {
+                color: #373737;
+            }
+            .group-header > *:not(.clearfix) {
+                float: left;
+            }
+            .group-header .group-icon {
+                position: relative;
+                margin-right: 15px;
+                top: 2px;
+            }
+            .group-body {
+                padding-left: 40px;
+            }
+            .profile-avatar {
+                height: 260px;
+                background-color: #dfdfdf;
+                overflow: hidden;
+            }
+            .profile-avatar img {
+                height: 100%;
+                display: block;
+            }
+            .profile-name {
+                background-color: var(--paper-blue-grey-500);
+                color: #fff;
+            }
+            .fab-camera {
+                position: absolute;
+                top: 232px;
+                left: 50%;
+                margin-left: -28px;
+            }
+            .sidebar {
+                width: 250px;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-vbox>
+            <page-header-block icon="face" title="Profile" description="[[ user.su_fullname ]]">
+                
+            </page-header-block>
+            <div class="flex scroll-y">
+                <kct-hbox> 
+                    <div class="sidebar">
+                        <div class="p-a">
+                            
+                            <div class="rel">
+                                <div class="profile-avatar">
+                                    <img src$="[[ user.su_avatar_thumb ]]&w=260&h=260">
+                                    <kct-file id="avatar" on-change="__onAvatarChange"></kct-file>
+                                </div>
+                                <div class="profile-name p-a text-center">
+                                    <div class="m-t"></div>
+                                    <h3 class="f-500">[[ user.su_fullname ]]</h3>
+                                    <small>[[ user.su_email ]]</small>
+                                </div>
+                                <paper-fab class="fab-raised fab-blue fab-camera" icon="image:camera-alt" title="Change photo" on-tap="__onAvatarTap"></paper-fab>
+                            </div>
+                            
+                        </div>
+                    </div>
+                    <div class="flex">
+                        <div class="p-a">
+                            <h3 class="f-500">Personal Information</h3>
+                            <paper-input label="Fullname" value="{{ user.su_fullname }}"></paper-input>
+                            <paper-input label="Gender" value="{{ user.su_sex }}"></paper-input>
+                            <paper-input label="Birthday" value="{{ user.su_dob }}"></paper-input>
+                            <paper-input label="Job Description" value="{{ user.su_job_title }}"></paper-input>
+                            <div class="m-t m-b">
+                                <paper-button class="btn-primary btn-md btn-raised" on-tap="__onSaveBasicTap">Save Changes</paper-button> 
+                                <paper-button class="btn-md" on-tap="__onResetBasicTap" link>Reset</paper-button>
+                            </div>
+                            <h3 class="f-500">Account Information</h3>
+                            <paper-input label="Email address" value="{{ user.su_email }}"></paper-input>
+                            <paper-input label="Password" type="password" value="{{ __account.password1 }}"></paper-input>
+                            <paper-input label="Password confirm" type="password" value="{{ __account.password2 }}"></paper-input>
+                            <div class="m-t">
+                                <paper-button class="btn-primary btn-md btn-raised" on-tap="__onSaveAccountTap">Save Changes</paper-button>
+                            </div>
+                        </div>
+                    </div>
+                </kct-hbox>
+            </div>
+        </kct-vbox>
+
+        <div class="container padding" style="display: none;">
+            <kct-hbox>
+                <div class="col-left">
+                    <div class="rel">
+                        <div class="profile-avatar">
+                            <img src$="[[ user.su_avatar_thumb ]]&w=260&h=260">
+                            <kct-file id="avatar" on-change="__onAvatarChange"></kct-file>
+                        </div>
+                        <div class="profile-name p-a text-center">
+                            <div class="m-t"></div>
+                            <h3 class="f-500">[[ user.su_fullname ]]</h3>
+                            <small>[[ user.su_email ]]</small>
+                        </div>
+                        <paper-fab class="fab-raised fab-blue fab-camera" icon="image:camera-alt" title="Change photo" on-tap="__onAvatarTap"></paper-fab>
+                    </div>
+                </div>
+                <div class="flex col-right">
+                    <div class="group m-b">
+                        <div class="group-header">
+                            <iron-icon class="group-icon" icon="face"></iron-icon>
+                            <div class="group-title">
+                                <h2 class="f-300">Basic Information</h2>
+                            </div>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="group-body">
+                            <paper-input label="Fullname" value="{{ user.su_fullname }}"></paper-input>
+                            <paper-input label="Gender" value="{{ user.su_sex }}"></paper-input>
+                            <paper-input label="Birthday" value="{{ user.su_dob }}"></paper-input>
+                            <paper-input label="Job Description" value="{{ user.su_job_title }}"></paper-input>
+                            <paper-input label="Company" value="{{ user.su_company }}"></paper-input>
+                            <div class="m-t">
+                                <paper-button class="btn-primary btn-raised" on-tap="__onSaveBasicTap">Save Changes</paper-button> 
+                                <paper-button on-tap="__onResetBasicTap" link>Reset</paper-button>
+                            </div>
+                            
+                        </div>    
+                    </div>
+
+                    <div class="group">
+                        <div class="group-header">
+                            <iron-icon class="group-icon" icon="lock"></iron-icon>
+                            <div class="group-title">
+                                <h2 class="f-300">Account Information</h2>
+                            </div>
+                            <div class="clearfix"></div>
+                        </div>    
+                        <div class="group-body">
+                            <paper-input label="Email address" value="{{ user.su_email }}"></paper-input>
+                            <paper-input label="Password" type="password" value="{{ __account.password1 }}"></paper-input>
+                            <paper-input label="Password confirm" type="password" value="{{ __account.password2 }}"></paper-input>
+                            <div class="m-t">
+                                <paper-button class="btn-primary btn-raised" on-tap="__onSaveAccountTap">Save Changes</paper-button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </kct-hbox>
+        </div>
+    </template>
+    <script>
+        class ProfilePage extends KctView {
+            static get is() {
+                return 'profile-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, notify: true, value: 'Profile' }
+                };
+            }
+
+            constructor() {
+                super();
+                this.__reset = {};
+
+                this.__account = {
+                    password1: null,
+                    password2: null
+                };
+            }
+
+            ready() {
+                super.ready();
+                this._resolve('user').then((user) => {
+                    this.__reset = Object.assign({}, this.user);
+                });
+            }
+
+            handleResizing(width, height) {
+                this.updateStyles({ '--profile-page-height': height + 'px' });
+            }
+
+            __uploadAvatar() {
+
+            }
+
+            __onSaveBasicTap() {
+                let data = Object.assign({}, this.user);
+
+                this.$.ajax.PUT('/profile/' + data.su_id, data).then(() => {
+                    this.__reset = Object.assign({}, this.user);
+                    this.toast('Save changed', 'Your basic information has been saved');
+                });
+            }
+
+            __onSaveAccountTap() {
+                if (this.__account.password1 && (this.__account.password1 == this.__account.password2)) {
+                    let data = { su_passwd: this.__account.password1 };
+                    this.$.ajax.PUT('/profile/' + this.user.su_id, data).then(() => {
+                        this.toast('Save changed', 'Your account information has been saved');     
+                    });
+                }
+            }
+
+            __onResetBasicTap() {
+                for(let key in this.__reset) {
+                    this.set('user.' + key, this.__reset[key]);
+                }
+            }
+
+            __onAvatarTap(e) {
+                this.shadowRoot.querySelector('#avatar').browse();
+            }
+
+            __onAvatarChange(e) {
+                let file = this.shadowRoot.querySelector('#avatar').file();
+
+                let data = {
+                    files: [
+                        { name: 'avatar', file: file }
+                    ]
+                };
+
+                this.$.ajax.UPLOAD('/profile/' + this.user.su_id + '/upload', data).then((res) => {
+                    if (res.data) {
+                        for (let key of ['su_avatar', 'su_avatar_url', 'su_avatar_thumb']) {
+                            this.set('user.' + key, res.data[key]);
+                        }
+                    }
+                });
+            }
+        }
+
+        customElements.define(ProfilePage.is, ProfilePage);
+    </script>
+</dom-module>

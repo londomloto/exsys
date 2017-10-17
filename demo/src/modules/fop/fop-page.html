@@ -1,0 +1,107 @@
+<link rel="import" href="../../../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../../bower_components/iron-ajax/iron-ajax.html">
+
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-grid/kct-grid.html">
+
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../elements/kct-file/kct-file.html">
+<link rel="import" href="../../elements/kct-message/kct-alert.html">
+<link rel="import" href="../../elements/kct-message/kct-confirm.html">
+
+<dom-module id="fop-page">
+
+    <template>
+
+        <style include="theme-helper"></style>
+        <style>
+            :host {
+                height: var(--datagrid-page-height, 582px);
+            }
+            #grid {
+                height: 100%;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-ajax id="ajax2"></kct-ajax>
+        
+
+        <kct-grid
+            id = "grid"
+            url = "{{url}}"
+            params = "{{params}}"
+            columns = "{{ columns }}"
+            selection = "{{ selection }}"
+            selected = "{{ selected }}">
+
+            <div class="kct-grid-toolbar" slot="grid-toolbar">
+                
+                <paper-button class="paper-button-icon" on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>New</paper-button>
+                <paper-button class="paper-button-icon" on-tap="__onEditTap"><iron-icon icon="done"></iron-icon>Edit</paper-button>
+                <paper-button class="paper-button-icon" on-tap="__onDeleteTap"><iron-icon icon="clear"></iron-icon>Delete</paper-button>
+
+            </div>
+
+        </kct-grid>
+
+        <kct-alert id="alert-empty">
+            <p slot="message">
+                No record(s) selected!
+            </p>
+        </kct-alert>
+
+        <kct-confirm id="confirm-delete">
+            <p slot="message">
+                <template is="dom-if" if="[[ selected ]]">
+                    Are you sure want to delete <b class="f-600">[[ selected.su_fullname ]]</b>    
+                </template>
+            </p>
+        </kct-confirm>
+
+    </template>
+
+    <script>
+        
+        class FopPage extends KctView {
+
+            static get is() {
+                return 'fop-page';
+            }
+
+            static get properties() {
+                return {
+                    url: { type: String, value: '/fop'},
+                    title: { type: String, notify: true, value: 'FOP'},
+                    params: { type: Object, value: {} },
+                    selected: { type: Object },
+                    selection: { type: Array },
+                    columns: {
+                        type: Array,
+                        value: () => {
+                            return [
+                                { 
+                                    type: 'rownumber',
+                                    text: 'No.'
+                                },
+                                {
+                                    text: 'Date',
+                                    dataIndex: 'tf_date'
+                                },
+                                {
+                                    text: 'Activity',
+                                    dataIndex: 'tf_activity'
+                                }
+                            ];
+                        }
+                    }
+                };
+            }
+        }
+
+        customElements.define(FopPage.is, FopPage);
+
+    </script>
+</dom-module>

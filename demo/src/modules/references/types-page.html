@@ -1,0 +1,183 @@
+<link rel="import" href="../../../bower_components/vaadin-combo-box/vaadin-combo-box.html">
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../elements/kct-dialog/kct-dialog.html">
+
+<dom-module id="types-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: var(--types-page-height, 500px);
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-grid 
+            id="grid" 
+            url="/types?display=grid" 
+            page-size="100" 
+            columns="[[ columns ]]" 
+            selection-model="cell" 
+            icon="label-outline" 
+            title="Datasheet" 
+            description="Types Reference"
+            autoload>
+            
+            <template preserve-content>
+                <style include="theme-helper"></style>
+            </template>
+
+            <paper-button on-tap="__onAddTap" class="btn-primary" slot="primary-toolbar"><iron-icon icon="add"></iron-icon>&nbsp;Add Type</paper-button>
+
+        </kct-grid>
+
+        <kct-dialog id="editor" title="Type Editor" width="400" height="100%">
+            <template preserve-content>
+                <div slot="dialog-body">
+                    <vaadin-combo-box 
+                        label="Parent" 
+                        value="{{ selectedRecord.parent_id }}" 
+                        items="[[ __parents ]]" 
+                        item-value-path="type_id" 
+                        item-label-path="type_name">
+                        
+                    </vaadin-combo-box>
+                    <paper-input label="Description" value="{{ selectedRecord.type_name }}"></paper-input>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSaveTap">Save</paper-button>
+                    <paper-button on-tap="__onEditorCancelTap">Cancel</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class TypesPage extends KctView {
+            static get is() {
+                return 'types-page';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Types', notify: true },
+                    selectedRecord: { type: Object },
+                    columns: {
+                        type: Array,
+                        value: [
+                            { type: 'rownumber' },
+                            { 
+                                text: 'Description', 
+                                dataIndex: 'type_name',
+                                renderer: (e) => {
+                                    if (e.data) {
+                                        return `<span class="elbow" style="width: ${e.data.type_pad}"></span><span>${e.data.type_name}<span>`;
+                                    }
+                                    return '';
+                                }
+                            },
+                            { text: 'Group', dataIndex: 'type_group', sorting: false, width: 100 },
+                            {
+                                text: '',
+                                type: 'action',
+                                renderer: (e) => {
+                                    if (e.data) {
+                                        return `
+                                            <paper-button on-tap="__onEditTap" class="btn-amber"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>
+                                            <paper-button on-tap="__onDeleteTap" class="btn-danger"><iron-icon icon="close"></iron-icon>&nbsp;Delete</paper-button>
+                                        `;
+                                    }
+                                    return '';
+                                }
+                            }
+                        ]
+                    }
+                };
+            }
+            constructor() {
+                super();
+                this.__parents = [];
+            }
+            ready() {
+                super.ready();
+                this.$.grid.context = this;
+
+                this.__loadParents();
+            }
+            handleResizing(width, height) {
+                this.updateStyles({ '--types-page-height': height + 'px' });
+                this.$.grid && this.$.grid.resize();
+            }
+            __loadParents() {
+                return this.$.ajax.GET('/types?display=root').then(res => {
+                    let parents = [
+                        { type_id: '', type_name: 'No Parent' }
+                    ];
+
+                    Array.prototype.push.apply(parents, res.data);
+                    this.set('__parents', parents);
+
+                    return parents;
+                });
+            }
+            __onAddTap() {
+                this.set('selectedRecord', {});
+
+                this.mask('Opening editor...');
+                
+                this.__loadParents().then(() => {
+                    this.unmask();
+                    this.$.editor.open();
+                });
+            }
+            __onEditTap(e) {
+                let record = e.data;
+                this.set('selectedRecord', record);
+
+                this.mask('Opening editor...');
+
+                this.__loadParents().then(parents => {
+                    parents = parents.slice().filter(elem => elem.type_id != record.type_id);
+                    this.set('__parents', parents);
+
+                    this.unmask();
+                    this.$.editor.open();
+                });
+                
+            }
+            __onDeleteTap(e) {
+                let record = e.data;
+                this.confirm('Confirm', `Are you sure you want to delete ${record.type_name} ?`).then(y => {
+                    if (y) {
+                        this.$.ajax.DELETE('/types/' + record.type_id).then(() => {
+                            this.$.grid.load();
+                        });
+                    }
+                })
+            }
+            __onEditorSaveTap() {
+                this.$.editor.close();
+
+                let data = this.selectedRecord;
+
+                if (data.type_id) {
+                    this.$.ajax.PUT('/types/' + data.type_id, data).then(done.bind(this));
+                } else {
+                    this.$.ajax.POST('/types', data).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.toast('Success', 'Data has been saved');
+                        this.$.grid.load();
+                    }
+                }
+            }
+            __onEditorCancelTap() {
+                this.$.editor.close();
+            }
+        }
+        customElements.define(TypesPage.is, TypesPage);
+    </script>
+</dom-module>

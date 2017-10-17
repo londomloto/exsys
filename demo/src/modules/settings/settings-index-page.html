@@ -1,0 +1,148 @@
+<link rel="import" href="../../../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
+<link rel="import" href="../../mixins/theme.html">
+
+<dom-module id="settings-index-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: var(--settings-page-height, 582px);
+            }
+            app-header-layout {
+                height: 100%;
+            }
+            .dker {
+                background-color: var(--paper-grey-100);
+            }
+            .item {
+                float: left;
+                margin-right: 15px;
+                width: 80px;
+            }
+            .item > .item-icon > paper-fab {
+                box-shadow: none;
+                position: absolute;
+                left: 50%;
+                margin-left: -28px;
+            }
+            .item > .item-icon {
+                text-align: center;
+                padding-bottom: 8px;
+                position: relative;
+                height: 56px;
+            }
+            .item > .item-text {
+                text-align: center;
+                /*white-space: nowrap;*/
+                /*overflow: hidden;
+                text-overflow: ellipsis;*/
+                font-size: 14px;
+            }
+        </style>
+
+        <kct-vbox>
+            <page-header-block icon="settings" description="Application Settings"></page-header-block>
+            <div class="flex scroll-y">
+                <div class="padding dker">
+                    <template is="dom-repeat" items="[[ links ]]" as="group">
+                        <div class="m-b">
+                            <h3 class="f-400">[[ group.text ]]</h3>
+                        </div>
+                        <div class="box box-shadow-z1">
+                            <div class="box-body">
+                                <template is="dom-repeat" items="[[ group.children ]]" as="menu">
+                                    <div class="item">
+                                        <div class="item-icon">
+                                            <paper-fab style$="background-color: [[ _accent() ]]" on-tap="__onMenuTap" data-path$="[[ menu.path ]]" icon="[[ menu.icon ]]" class="fab-raised"></paper-fab>
+                                        </div>
+                                        <div class="item-text">[[ menu.text ]]</div>
+                                    </div>
+                                </template>
+                                <div class="clearfix"></div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div> 
+        </kct-vbox>
+        
+    </template>
+    <script>
+        class SettingsIndexPage extends Mixins(KctView).use(Mixins.Theme) {
+            static get is() {
+                return 'settings-index-page';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, notify: true, value: 'Settings' },
+                    links: {
+                        type: Array,
+                        value: () => {
+                            return [
+                                {
+                                    text: 'Users & Roles',
+                                    children: [
+                                        { text: 'Roles', path: '/settings/roles', icon: 'verified-user' },
+                                        { text: 'Users', path: '/settings/users', icon: 'social:person-outline' },
+                                        { text: 'Role Permission', path: '/settings/roles-permissions', icon: 'lock-outline' },
+                                        { text: 'User Permission', path: '/settings/users-permissions', icon: 'lock-outline' }
+                                    ]
+                                },
+                                {
+                                    text: 'Business Process Model',
+                                    children: [
+                                        { text: 'Worksheet', path: '/settings/kanban-settings', icon: 'view-carousel' },
+                                        { text: 'Workflow', path: '/settings/bpmn', icon: 'donut-large' },
+                                        { text: 'Dynamic Form', path: '/settings/kanban-dynamic', icon: 'av:web' }
+                                    ]
+                                },
+                                {
+                                    text: 'Dynamic Upload',
+                                    children: [
+                                        { text: 'Profile', path: '/settings/dx-profile', icon: 'open-in-browser' },
+                                        { text: 'Mapping', path: '/settings/dx-mapping', icon: 'low-priority' },
+                                        { text: 'Authorization', path: '/settings/dx-auth', icon: 'done-all' }
+                                    ]
+                                },
+                                {
+                                    text: 'Application',
+                                    children: [
+                                        { text: 'General', path: '/settings/general/general', icon: 'settings' },
+                                        { text: 'Timezone', path: '/settings/timezone', icon: 'social:public' },
+                                        { text: 'Numbering', path: '/settings/autonumber', icon: 'image:filter-5' },
+                                        { text: 'Menus', path: '/settings/menus', icon: 'menu' },
+                                        { text: 'Modules', path: '/settings/modules', icon: 'code' }
+                                    ]
+                                }
+                            ];
+                        }
+                    }
+                }
+            }
+
+            static get observers() {
+                return [
+                    '__heightChanged(height)'
+                ];
+            }
+
+            activate() {
+                
+            }
+
+            __heightChanged(height) {
+                this.updateStyles({ '--settings-page-height': height + 'px' });
+            }
+            
+            __onMenuTap(e) {
+                let path = e.target.dataset.path;
+                if (path) {
+                    this.set('route.path', path);
+                }
+            }
+        }
+        customElements.define(SettingsIndexPage.is, SettingsIndexPage);
+    </script>
+</dom-module>

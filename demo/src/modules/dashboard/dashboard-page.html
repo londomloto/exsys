@@ -1,0 +1,114 @@
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../bower_components/vaadin-charts/vaadin-pie-chart.html">
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-kanban/kct-kanban.html">
+<link rel="import" href="../../elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
+<link rel="import" href="../../mixins/theme.html">
+
+<dom-module id="dashboard-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                display: block;
+                height: var(--dashboard-page-height, 582px);
+            }
+            .panel-content {
+                padding: 0.5rem;
+            }
+            .chart-wrapper {
+                width: var(--chart-width, auto);
+                height: var(--chart-height, auto);
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        
+        <kct-vbox>
+            <page-header-block icon="dashboard" title="Module" description="Dashboard Module">
+                <paper-button on-tap="__onReloadTap"><iron-icon icon="refresh"></iron-icon>&nbsp;Reload</paper-button>
+            </page-header-block>
+            <div class="flex">
+                <kct-kanban id="dashboard" columns="3">
+                    <template is="dom-repeat" items="[[ boards ]]">
+                        <kct-kanban-panel accent="[[ _accent() ]]" hide-secondary>
+                            <div slot="panel-title">
+                                <span class="f-400">[[ item.kanban.ks_name ]]</span>
+                            </div>
+                            <div class="chart-wrapper" style="width: 100%;">
+                                <vaadin-pie-chart class="chart">
+                                    <chart-title>[[ item.chart.title ]]</chart-title>
+                                    <tooltip point-format="{series.name}: <b>{point.percentage:.1f}%</b>"></tooltip>
+                                    <plot-options>
+                                        <pie allow-point-select="true" cursor="pointer">
+                                            <data-labels enabled="true" format="{point.percentage:.1f} %"></data-labels>
+                                        </pie>
+                                    </plot-options>
+                                    <data-series show-in-legend="true" name="Items" data="[[ item.chart.series ]]"></data-series>
+                                </vaadin-pie-chart>
+                            </div>
+                        </kct-kanban-panel>
+                    </template>
+                    
+                </kct-kanban>
+            </div>
+        </kct-vbox>
+
+    </template>
+    <script>
+        class DashboardPage extends Mixins(KctView).use(Mixins.Theme) {
+            static get is() {
+                return 'dashboard-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, notify: true, value: 'Dashboard' },
+                    boards: { type: Array }
+                };
+            }
+            
+            activate() {
+                this.__loadBoards();
+                this.$.dashboard && this.$.dashboard.resize();
+            }
+
+            handleResizing(width, height) {
+                this.updateStyles({ '--dashboard-page-height': height + 'px' });
+                this.$.dashboard && this.$.dashboard.resize();
+            }
+            
+            __loadBoards() {
+                let ajax = this.$.ajax;
+
+                return ajax.GET('/dashboard').then(res => {
+                    this.set('boards', res.data);
+                    return res.data;
+                });
+            }
+            __onButtonTap() {
+                this.$.dialog.open();
+            }
+            __onSubmitTap() {
+                this.$.dialog.close();
+            }
+            __onCloseTap() {
+                this.$.dialog.close();
+            }
+            __onPanelResize(e) {
+
+            }
+            __onReloadTap() {
+                this.__loadBoards().then(() => {
+                    this.shadowRoot.querySelectorAll('.chart').forEach(c => {
+                        c.reloadConfiguration();
+                    });
+                });
+            }
+        }
+        customElements.define(DashboardPage.is, DashboardPage);
+    </script>
+</dom-module>

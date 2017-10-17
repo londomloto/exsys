@@ -1,0 +1,106 @@
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../elements/kct-pages/kct-pages.html">
+<link rel="import" href="tasks-action-page.html">
+
+<dom-module id="tasks-advance-page">
+    <template>
+
+        <style include="theme-helper">
+            :host {
+                height: var(--tasks-advance-page-height, 600px);
+            }
+            kct-pages {
+                display: block;
+                height: 100%;
+            }
+        </style>
+        
+        <kct-pages selected="{{ page }}" attr-for-selected="id">
+            <kct-grid 
+                id="grid" 
+                url="/advance/tasks" 
+                page-size="25" 
+                name="list"
+                columns="[[ columns ]]" 
+                title="DATASHEET" 
+                description="Advance Tasklist" 
+                selection-model="cell" 
+                autoload>
+
+                    <template preserve-content>
+                        <style include="theme-helper"></style>
+                    </template>
+
+            </kct-grid>
+            <tasks-action-page id="action" task="[[ task ]]" on-back-tap="__onActionBackTap"></tasks-action-page>
+        </kct-pages>
+
+    </template>
+    <script>
+        class TasksAdvancePage extends KctView {
+            static get is() {
+                return 'tasks-advance-page';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Tasks Advance', notify: true },
+                    page: { type: String, value: 'grid' },
+                    task: { type: Object },
+                    columns: { 
+                        type: Array,
+                        value: [
+                            { type: 'rownumber' },
+                            { text: 'Advance No.', dataIndex: 'adv_no', width: 120, align: 'center' },
+                            { text: 'Subject', dataIndex: 'subject_adv' },
+                            { text: 'Proposed By', dataIndex: 'user_fullname' },
+                            { text: 'Date Created', dataIndex: 'date_short', width: 120, align: 'center' },
+                            { 
+                                text: 'Amounts (IDR)', 
+                                dataIndex: 'amounts', 
+                                align: 'right',
+                                renderer: (e) => {
+                                    return e.data ? e.data.amounts_formatted : '';
+                                }
+                            },
+                            { 
+                                text: '',
+                                type: 'action',
+                                renderer: (e) => {
+                                    if (e.data) {
+                                        return `<paper-button on-tap="__onViewTap" class="btn-amber">View</paper-button>`;
+                                    }
+                                    return '';
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+            constructor() {
+                super();
+            }
+            ready() {
+                super.ready();
+                this.$.grid.context = this;
+            }
+            handleResizing(width, height) {
+                this.updateStyles({'--tasks-advance-page-height': height + 'px'});
+                this.$.action.handleResizing(width, height);
+            }
+            handleRouteParams() {
+                
+            }
+            __onViewTap(e) {
+                this.set('task', e.data);
+                this.set('page', 'action');
+            }
+            __onActionBackTap() {
+                this.set('page', 'grid');
+                this.$.grid.load();
+            }
+        }
+        customElements.define(TasksAdvancePage.is, TasksAdvancePage);
+    </script>
+</dom-module>

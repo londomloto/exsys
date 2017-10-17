@@ -1,0 +1,39 @@
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+
+<dom-module id="todo-page">
+    <template>
+        <kct-ajax id="ajax"></kct-ajax>
+        <ul>
+            <template is="dom-repeat" items="[[ todos ]]">
+            <li>[[ item.su_fullname ]]</li>   
+            </template>
+        </ul>
+    </template>
+    <script>
+        class TodoPage extends KctView {
+            static get is() {
+                return 'todo-page';
+            }
+
+            static get properties() {
+                return {
+                    todos: { type: Array, value: [] }
+                }
+            }
+
+            connectedCallback() {
+                super.connectedCallback();
+                this.__load();
+            }
+
+            __load() {
+                this.$.ajax.GET('/users').then((res) => {
+                    this.set('todos', res.data);
+                });
+            }
+        }
+
+        customElements.define(TodoPage.is, TodoPage);
+    </script>
+</dom-module>

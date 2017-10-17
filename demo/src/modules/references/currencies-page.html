@@ -1,0 +1,131 @@
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../elements/kct-dialog/kct-dialog.html">
+
+<dom-module id="currencies-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: var(--currencies-page-height, 500px);
+            }
+        </style>
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-grid 
+            id="grid" 
+            url="/currencies" 
+            columns="[[ columns ]]" 
+            selection-model="cell" 
+            icon="editor:attach-money" 
+            title="Datasheet" 
+            description="Currencies Reference"
+            autoload>
+
+            <template preserve-content>
+                <style include="theme-helper"></style>
+            </template>
+            
+            <paper-button on-tap="__onAddTap" class="btn-primary" slot="primary-toolbar"><iron-icon icon="add"></iron-icon>&nbsp;Add Currency</paper-button>
+
+        </kct-grid>
+
+        <kct-dialog id="editor" title="Currency Editor" width="400" height="100%">
+            <template preserve-content>
+                <div slot="dialog-body">
+                    <paper-input label="Currency Name" value="{{ selectedRecord.currency_name }}"></paper-input>
+                    <paper-input label="Currency Code" value="{{ selectedRecord.currency_code }}"></paper-input>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSaveTap">Save</paper-button>
+                    <paper-button on-tap="__onEditorCancelTap">Cancel</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class CurrenciesPage extends KctView {
+            static get is() {
+                return 'currencies-page';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Currencies', notify: true },
+                    columns: {
+                        type: Array,
+                        value: [
+                            { type: 'rownumber' },
+                            { text: 'Currency Name', dataIndex: 'currency_name' },
+                            { text: 'Currency Code', dataIndex: 'currency_code' },
+                            {
+                                text: '',
+                                type: 'action',
+                                renderer: (e) => {
+                                    if (e.data) {
+                                        return `
+                                            <paper-button on-tap="__onEditTap" class="btn-amber"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>
+                                            <paper-button on-tap="__onDeleteTap" class="btn-danger"><iron-icon icon="close"></iron-icon>&nbsp;Delete</paper-button>
+                                        `;
+                                    }
+                                    return '';
+                                }
+                            }
+                        ]
+                    },
+                    selectedRecord: { type: Object }
+                };
+            }
+            handleResizing(width, height) {
+                this.updateStyles({ '--currencies-page-height': height + 'px' });
+                this.$.grid && this.$.grid.resize();
+            }
+            ready() {
+                super.ready();
+                this.$.grid.context = this;
+            }
+            __onAddTap() {
+                this.set('selectedRecord', {});
+                this.$.editor.open();
+            }
+            __onEditTap(e) {
+                this.set('selectedRecord', e.data);
+                this.$.editor.open();
+            }
+            __onEditorSaveTap() {
+                this.$.editor.close();
+            }
+            __onEditorCancelTap() {
+                this.$.editor.close();
+            }
+            __onEditorSaveTap() {
+                this.$.editor.close();
+
+                let data = this.selectedRecord;
+
+                if (data.currency_id) {
+                    this.$.ajax.PUT('/currencies/' + data.currency_id, data).then(done.bind(this));
+                } else {
+                    this.$.ajax.POST('/currencies', data).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.toast('Success', 'Data has been saved');
+                        this.$.grid.load();
+                    }
+                }
+            }
+            __onDeleteTap(e) {
+                let record = e.data;
+                this.confirm('Confirm', `Are you sure you want to delete ${record.currency_name} ?`).then(y => {
+                    if (y) {
+                        this.$.ajax.DELETE('/currencies/' + record.currency_id).then(() => {
+                            this.$.grid.load();
+                        });
+                    }
+                })
+            }
+        }
+        customElements.define(CurrenciesPage.is, CurrenciesPage);
+    </script>
+</dom-module>

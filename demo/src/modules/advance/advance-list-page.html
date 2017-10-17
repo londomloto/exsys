@@ -1,0 +1,131 @@
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../elements/kct-grid/kct-grid.html">
+
+<dom-module id="advance-list-page">
+    <template>
+        
+        <style include="theme-helper">
+            :host {
+                height: var(--advance-list-page-height, 600px);
+            }
+
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-grid 
+            id="grid" 
+            url="/advance" 
+            page-size="25" 
+            columns="[[ columns ]]" 
+            title="DATASHEET" 
+            description="List of Expense" 
+            selection-model="cell" 
+            autoload>
+
+                <template preserve-content>
+                    <style include="theme-helper"></style>
+                </template>
+
+            <paper-button class="btn-primary" slot="primary-toolbar" on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Advance Request</paper-button>
+
+        </kct-grid>
+
+    </template>
+    <script>
+        class AdvanceListPage extends KctView {
+            static get is() {
+                return 'advance-list-page';
+            }
+            static get properties() {
+                return {
+                    columns: { 
+                        type: Array,
+                        value: [
+                            { type: 'rownumber' },
+                            { text: 'Advance No.', dataIndex: 'adv_no', width: 120, align: 'center' },
+                            { text: 'Subject', dataIndex: 'subject_adv' },
+                            { 
+                                text: 'Date Created', 
+                                dataIndex: 'date', 
+                                width: 120,  
+                                align: 'center',
+                                renderer: (e) => {
+                                    return e.data ? e.data.date_short : '';
+                                }
+                            },
+                            { text: 'Status', dataIndex: 'status_name' },
+                            { 
+                                text: 'Action',
+                                type: 'action',
+                                width: 300,
+                                renderer: (e) => {
+                                    if (e.data) {
+                                        let status = e.data.status;
+                                        let buttons = `<paper-button on-tap="__onViewTap" class="btn-muted"><iron-icon icon="search"></iron-icon>&nbsp;View</paper-button>`;
+
+                                        if (status == 1 || status == 10) {
+                                            buttons += `
+                                                <paper-button on-tap="__onEditTap" class="btn-amber"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>
+                                                <paper-button on-tap="__onDeleteTap" class="btn-danger"><iron-icon icon="clear"></iron-icon>&nbsp;Delete</paper-button>
+                                            `;
+                                            if (e.data.has_items) {
+                                                buttons += `<paper-button on-tap="__onSubmitTap" class="btn-info"><iron-icon icon="done"></iron-icon>&nbsp;Submit</paper-button>`;
+                                            }
+                                        }
+                                        return buttons;
+                                    }
+                                    return '';
+                                }
+                            }
+                        ]
+                    }
+                };
+            }
+            ready() {
+                super.ready();
+                this.$.grid.context = this;
+            }
+            handleResizing(width, height) {
+                this.updateStyles({'--advance-list-page-height': height + 'px'});
+                if (this.$.grid) {
+                    this.$.grid.resize();    
+                }
+            }
+            __onAddTap() {
+                this.set('route.path', '/advance/advance/add');
+            }
+            __onEditTap(e) {
+                this.set('route.path', '/advance/advance/edit/' + e.data.id_adv);
+            }
+            __onDeleteTap(e) {
+                let data = e.data;
+                if (data.id_adv) {
+                    this.confirm('Confirm', `Are you sure you want to delete ${data.adv_no} ?`).then(b => {
+                        if (b) {
+                            this.$.ajax.DELETE('/advance/' + data.id_adv).then(() => {
+                                this.$.grid.load();
+                            });
+                        }
+                    });    
+                }
+                
+            }
+            __onViewTap(e) {
+                this.set('route.path', '/advance/advance/view/' + e.data.id_adv);
+            }
+            __onSubmitTap(e) {
+                this.confirm('Confirm', 'Are you sure?').then(b => {
+                    if (b) {
+                        this.$.ajax.POST('/advance/' + e.data.id_adv + '/submit').then(() => {
+                            this.$.grid.load();
+                        });
+                    }
+                });   
+            }
+        }
+        customElements.define(AdvanceListPage.is, AdvanceListPage);
+    </script>
+</dom-module>

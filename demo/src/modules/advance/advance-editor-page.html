@@ -1,0 +1,308 @@
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../../bower_components/vaadin-combo-box/vaadin-combo-box.html">
+<link rel="import" href="../../../bower_components/vaadin-material-theme/vaadin-date-picker.html">
+<link rel="import" href="../../../bower_components/vaadin-date-picker/vaadin-date-picker.html">
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../elements/kct-file/kct-file-input.html">
+<link rel="import" href="../../elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../elements/kct-pages/kct-pages.html">
+<link rel="import" href="../../elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
+
+<dom-module id="advance-editor-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: var(--advance-editor-page-height, 500px);
+                background-color: var(--paper-grey-100);
+            }
+            [hidden] {
+                display: none;
+            }
+            kct-grid {
+                height: 300px;
+            }
+        </style> 
+
+        <kct-ajax id="ajax1"></kct-ajax>
+        <kct-ajax id="ajax2"></kct-ajax>
+        <kct-ajax id="ajax3"></kct-ajax>
+
+        <kct-vbox>
+            <page-header-block title="EDITOR" description="Advance Request" icon="description">
+                <paper-button hidden="[[ record.id_adv ]]"  disabled="[[ __invalid ]]" class="btn-primary" on-tap="__onNextTap" slot="secondary-toolbar">Next&nbsp;<iron-icon icon="arrow-forward"></iron-icon></paper-button>
+            </page-header-block>
+            <div class="flex scroll-y padding">
+
+                <paper-card class="block">
+                    <div class="card-content">
+                        <h3 class="block-title">Advance Summary</h3>
+                        <paper-input label="Subject *" value="{{ record.subject_adv }}" required auto-validate></paper-input>
+                        <kct-hbox>
+                            <div class="flex p-r-sm">
+                                <vaadin-date-picker label="Start Date *" value="{{ record.date_start }}"></vaadin-date-picker>
+                            </div>
+                            <div class="flex p-l-sm">
+                                <vaadin-date-picker label="End Date *" value="{{ record.date_end }}"></vaadin-date-picker>
+                            </div>
+                        </kct-hbox>
+                            
+                        <vaadin-combo-box 
+                            label="Type *" 
+                            value="{{ record.type }}"
+                            items="[[ types ]]" 
+                            item-value-path="type_id" 
+                            item-label-path="type_name" 
+                            on-change="__onTypeChange" 
+                            required 
+                            auto-validate></vaadin-combo-box>
+                        <vaadin-combo-box 
+                            label="Purpose *" 
+                            value="{{ record.purpose }}" 
+                            items="[[ __purposes ]]" 
+                            item-value-path="type_id" 
+                            item-label-path="type_name" 
+                            hidden="[[ !__purposes.length ]]"></vaadin-combo-box>
+
+                        <paper-input label="Purpose *" value="{{ record.other_purpose }}" hidden="[[ __purposes.length ]]"></paper-input>
+
+                        <kct-file-input label="Attachment" value="{{ record.attachment }}" file="{{ attachment }}"></kct-file-input>
+
+                        <div class="m-t">
+                            <p class="text-muted">*) required field</p>
+                        </div>
+                    </div>
+                    
+                </paper-card>
+
+                <paper-card class="block" hidden="[[ ! record.id_adv ]]">
+                    <div class="card-content">
+                        <h3 class="block-title">Advance Items</h3>
+                        
+                        <div class="card-toolbar">
+                            <paper-fab on-tap="__onAddItemTap"  class="fab-primary" icon="add" title="Add item" mini></paper-fab>
+                        </div>
+                        <table class="striped">
+                            <thead>
+                                <tr>
+                                    <th width="50">No.</th>
+                                    <th>Description</th>
+                                    <th class="text-center" width="100">Currency</th>
+                                    <th class="text-right">Amounts</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template is="dom-repeat" items="[[ items ]]">
+                                    <tr>
+                                        <td>[[ __computeNo(index) ]]</td>
+                                        <td>[[ item.description ]]</td>
+                                        <td class="text-center">[[ item.currency_name ]]</td>
+                                        <td class="text-right">[[ item.amounts_formatted ]]</td>
+                                        <td class="text-right">
+                                            <paper-button on-tap="__onItemEditTap" class="btn-xs btn-amber">Edit</paper-button>
+                                            <paper-button on-tap="__onItemDeleteTap" class="btn-xs btn-danger">Delete</paper-button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                </paper-card>
+                
+            </div>
+        </kct-vbox>
+
+        <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to list" on-tap="__onBackTap"></paper-fab>
+        </div>
+
+        <kct-dialog id="item-editor" title="Item Editor" width="400" height="100%">
+            <template preserve-content>
+                <div slot="dialog-body">
+                    <paper-input label="Description" value="{{ item.description }}"></paper-input>
+                    <vaadin-combo-box 
+                        label="Currency" 
+                        value="{{ item.currency_id }}"
+                        items="[[ currencies ]]" 
+                        item-value-path="currency_id" 
+                        item-label-path="currency_name"></vaadin-combo-box>
+                    <paper-input label="Amounts" value="{{ item.amounts }}"></paper-input>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onItemEditorSaveTap">Save</paper-button>
+                    <paper-button on-tap="__onItemEditorCancelTap">Cancel</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class AdvanceEditorPage extends KctView {
+            static get is() {
+                return 'advance-editor-page';
+            }
+            static get properties() {
+                return {
+                    record: { type: Object },
+                    types: { type: Array },
+                    purposes: { type: Array },
+                    items: { type: Array, value: [] },
+                    item: { type: Object }
+                };
+            }
+            static get observers() {
+                return [
+                    '__recordChanged(record.*)'
+                ];
+            }
+            constructor() {
+                super();
+
+                this.__purposes = [];
+                this.__invalid = false;
+            }
+            ready() {
+                super.ready();
+            }
+            handleResizing(width, height) {
+                this.updateStyles({'--advance-editor-page-height': height + 'px'});
+            }
+            handleRouteParams(module, action, id) {
+                if (['add', 'edit'].indexOf(action) == -1) return;
+
+                if (action == 'edit') {
+                    this.mask('Loading...')
+
+                    this.__loadReferences().then(() => {
+                        this.$.ajax1.GET('/advance/' + id).then(res => {
+                            this.set('record', res.data);
+                            this.__loadItems();
+                            
+                            this.unmask();
+                        });
+                    });
+                } else {
+                    this.__loadReferences();    
+                    this.set('record', {});
+                }
+            }
+            __computeNo(index) {
+                return (index + 1);
+            }
+            __loadReferences() {
+
+                return this.$.ajax2.GET('/types').then(res => {
+                    this.set('types', res.data);
+
+                    this.$.ajax2.GET('/currencies').then(res => {
+                        this.set('currencies', res.data);
+                    });
+
+                    return this.$.ajax3.GET('/types/purposes').then(res => {
+                        this.set('purposes', res.data);
+                        this.set('__purposes', res.data);
+                    });
+                });
+            }
+            __loadItems() {
+                if ( ! this.record || ! this.record.id_adv) {
+                    return;
+                }
+
+                this.$.ajax3.GET('/advance/items', { advance: this.record.id_adv }).then(res => {
+                    this.set('items', res.data);
+                });
+            }
+            __onNextTap() {
+                let data = this.record;
+
+                if (data.id_adv) {
+                    this.$.ajax1.PUT('/advance/' + data.id_adv, data).then(done.bind(this));
+                } else {
+                    this.$.ajax1.POST('/advance', data).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        let id = res.data.id_adv;
+
+                        this.set('record.id_adv', id);
+
+                        if (this.attachment) {
+                            this.$.ajax1.UPLOAD('/advance/' + id + '/upload', {
+                                files: [
+                                    { name: this.attachment.name, file: this.attachment }
+                                ]
+                            }).then(() => {
+                                // this.toast('Success', 'Data has been saved');
+                            });
+                        } else {
+                            // this.toast('Success', 'Data has been saved');
+                        }
+                    }
+                }
+            }
+            __recordChanged() {
+                let valid = true;
+                
+                valid = valid && this.record.subject_adv;
+                valid = valid && this.record.type;
+                valid = valid && this.record.purpose;
+
+                this.set('__invalid', ! valid);
+            }
+            __onTypeChange(e) {
+                let type = e.target.value;
+                let purposes = this.purposes.filter(p => p.parent_id == type);
+                
+                this.set('__purposes', purposes);
+                this.set('record.purpose', '');
+            }
+            __onAttachTap() {
+                this.$.attachment.browse();
+            }
+            __onAddItemTap() {
+                this.set('item', {});
+                this.$['item-editor'].open();
+            }
+            __onItemEditorSaveTap() {
+                this.$['item-editor'].close();   
+
+                let data = this.item;
+                data.id_adv = this.record.id_adv;
+
+                this.$.ajax3.POST('/advance/items', data).then(() => {
+                    this.__loadItems();
+                });
+            }
+            __onItemEditorCancelTap() {
+                this.$['item-editor'].close();   
+            }
+            __onItemEditTap(e) {
+                let item = e.model.item;
+                this.set('item', item);
+                this.$['item-editor'].open();   
+            }
+            __onItemDeleteTap(e) {
+                let item = e.model.item;
+                this.confirm('Confirm', `Are you sure you want to delete ${item.description} ?`).then(b => {
+                    if (b) {
+                        this.$.ajax3.DELETE('/advance/items/' + item.advance_item_id).then(() => {
+                            this.__loadItems();
+                        });
+                    }
+                });    
+            }
+            __onBackTap() {
+                this.set('route.path', '/advance');
+            }
+        }
+        customElements.define(AdvanceEditorPage.is, AdvanceEditorPage);
+    </script>
+</dom-module>

@@ -1,0 +1,105 @@
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../bower_components/paper-icon-button/paper-icon-button.html">
+
+<dom-module id="kct-file-input">
+    <template>
+        <style>
+            :host {
+                display: block;
+                width: 100%;
+            }
+            .wrapper {
+                position: relative;
+            }
+            .actions {
+                position: absolute;
+                right: -2px;
+                top: 50%;
+                margin-top: -12px;
+            }
+            paper-icon-button {
+                color: var(--paper-grey-500);
+                margin-left: -8px;
+            }
+            .btn-clear {
+                width: 36px;
+                height: 36px;
+
+            }
+            .btn-browse {
+                width: 36px;
+                height: 36px;
+                padding: 6px;
+            }
+            [hidden] {
+                display: none;
+            }
+        </style>
+
+        <input type="file" on-change="__onInputChange" id="input" hidden>
+
+        <div class="wrapper">
+            <paper-input on-tap="__onTap" label="[[ label ]]" value="{{ value }}" no-label-float="[[ noLabelFloat ]]" readonly></paper-input>    
+            <div class="actions">
+                <paper-icon-button class="btn-clear" on-tap="__onClearTap" icon="close" hidden$="[[ __hideClear ]]"></paper-icon-button>    
+                <paper-icon-button class="btn-browse" on-tap="__onBrowseTap" icon="arrow-drop-down"></paper-icon-button>    
+            </div>
+        </div>
+
+    </template>
+    <script>
+        class KctFileInput extends Polymer.Element {
+
+            static get is() {
+                return 'kct-file-input';
+            }
+
+            static get properties() {
+                return {
+                    label: { type: String },
+                    value: { type: String, notify: true },
+                    noLabelFloat: { type: Boolean, value: false },
+                    file: { type: Object, notify: true }
+                };
+            }
+            static get observers() {
+                return [
+                    '__valueChanged(value)'
+                ];
+            }
+            constructor() {
+                super();
+                this.__hideClear = true;
+            }
+            browse() {
+                this.$.input.value = '';
+                this.$.input.click();
+            }
+            __valueChanged(value) {
+                this.set('__hideClear', !(!!value));
+            }
+            __onBrowseTap() {
+                this.browse();
+            }
+            __onClearTap() {
+                this.$.input.value = '';
+                this.set('value', '');
+            }
+
+            __onTap() {
+                this.browse();
+            }
+
+            __onInputChange(e) {
+                let file = this.$.input.files[0];
+
+                if (file) {
+                    this.set('value', file.name);
+                    this.set('file', file);
+                }
+            }
+        }
+
+        customElements.define(KctFileInput.is, KctFileInput);
+    </script>
+</dom-module>

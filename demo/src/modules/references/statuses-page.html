@@ -1,0 +1,128 @@
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../elements/kct-dialog/kct-dialog.html">
+
+<dom-module id="statuses-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: var(--statuses-page-height, 500px);
+            }
+        </style>
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-grid 
+            id="grid" 
+            url="/statuses" 
+            columns="[[ columns ]]" 
+            selection-model="cell" 
+            icon="done-all" 
+            title="Datasheet" 
+            description="Statuses Reference"
+            autoload>
+            
+            <template preserve-content>
+                <style include="theme-helper"></style>
+            </template>
+
+        </kct-grid>
+
+        <kct-dialog id="editor" title="Status Editor" width="400" height="100%">
+            <template preserve-content>
+                <div slot="dialog-body">
+                    <paper-input label="Status Code" value="{{ selectedRecord.status_id }}"></paper-input>
+                    <paper-input label="Status Name" value="{{ selectedRecord.status_name }}"></paper-input>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSaveTap">Save</paper-button>
+                    <paper-button on-tap="__onEditorCancelTap">Cancel</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class StatusesPage extends KctView {
+            static get is() {
+                return 'statuses-page';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Statuses', notify: true },
+                    columns: {
+                        type: Array,
+                        value: [
+                            { type: 'rownumber' },
+                            { text: 'Code', dataIndex: 'status_id', align: 'center', width: 80 },
+                            { text: 'Status Name', dataIndex: 'status_name' },
+                            {
+                                text: '',
+                                type: 'action',
+                                renderer: (e) => {
+                                    if (e.data) {
+                                        return `
+                                            <paper-button on-tap="__onEditTap" class="btn-amber"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>
+                                        `;
+                                    }
+                                    return '';
+                                }
+                            }
+                        ]
+                    },
+                    selectedRecord: { type: Object }
+                };
+            }
+            ready() {
+                super.ready();
+                this.$.grid.context = this;
+            }
+            handleResizing(width, height) {
+                this.updateStyles({ '--statuses-page-height': height + 'px' });
+                this.$.grid && this.$.grid.resize();
+            }
+            __onAddTap() {
+                this.set('selectedRecord', {});
+                this.$.editor.open();
+            }
+            __onEditTap(e) {
+                this.set('selectedRecord', e.data);
+                this.$.editor.open();
+            }
+            __onEditorSaveTap() {
+                this.$.editor.close();
+            }
+            __onEditorCancelTap() {
+                this.$.editor.close();
+            }
+            __onEditorSaveTap() {
+                this.$.editor.close();
+
+                let data = this.selectedRecord;
+
+                if (data.status_id) {
+                    this.$.ajax.PUT('/statuses/' + data.status_id, data).then(done.bind(this));
+                } else {
+                    this.$.ajax.POST('/statuses', data).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.toast('Success', 'Data has been saved');
+                        this.$.grid.load();
+                    }
+                }
+            }
+            __onDeleteTap(e) {
+                let record = e.data;
+                this.confirm('Confirm', `Are you sure you want to delete ${record.status_name} ?`).then(y => {
+                    if (y) {
+                        this.$.ajax.DELETE('/statuses/' + record.status_id).then(() => {
+                            this.$.grid.load();
+                        });
+                    }
+                })
+            }
+        }
+        customElements.define(StatusesPage.is, StatusesPage);
+    </script>
+</dom-module>

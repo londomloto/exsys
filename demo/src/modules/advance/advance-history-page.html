@@ -1,0 +1,158 @@
+
+<link rel="import" href="../../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
+
+<dom-module id="advance-history-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: var(--advance-history-page-height, 500px);
+                background-color: var(--paper-grey-100);
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-vbox>
+            <page-header-block icon="history" description="Advance History">
+                <paper-button class="btn-indigo"><iron-icon icon="print"></iron-icon>&nbsp;Print Document</paper-button>
+            </page-header-block>
+            <div class="flex scroll-y padding">
+
+                <paper-card class="block">
+                    <div class="card-content">
+                        <h3 class="block-title">[[ record.advance.adv_no ]]</h3>
+                        <kct-hbox>
+                            <div class="flex">
+                                <div class="display-field">
+                                    <label>Subject: </label>
+                                    <div>[[ record.advance.subject_adv ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Type: </label>
+                                    <div>[[ record.advance.type_name ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Purpose: </label>
+                                    <div>[[ record.advance.purpose_name ]]</div>
+                                </div>
+                            </div>
+                            <div class="flex">
+                                <div class="display-field">
+                                    <label>Proposed By: </label>
+                                    <div>[[ record.advance.user_fullname ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Start Date: </label>
+                                    <div>[[ record.advance.date_start_short ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>End Date: </label>
+                                    <div>[[ record.advance.date_end_short ]]</div>
+                                </div>
+                            </div>
+                        </kct-hbox>
+                    </div>
+                </paper-card>
+
+                <paper-card  class="block">
+                    <div class="card-content">
+                        <h3 class="block-title">Advance Items</h3>
+
+                        <table  class="striped">
+                            <thead>
+                                <th width="50">No.</th>
+                                <th>Description</th>
+                                <th width="100" class="text-center">Currency</th>
+                                <th width="150" class="text-right">Amounts</th>
+                            </thead>
+                            <tbody>
+                                <template is="dom-repeat" items="[[ record.items ]]">
+                                    <tr>
+                                        <td>[[ __computeNo(index) ]]</td>
+                                        <td>[[ item.description ]]</td>
+                                        <td class="text-center">[[ item.currency_name ]]</td>
+                                        <td class="text-right">[[ item.amounts_formatted ]]</td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </paper-card>
+
+                <paper-card class="block">
+                    <div class="card-content">
+                        <h3 class="block-title">Advance History</h3>
+
+                        <table class="striped">
+                            <thead>
+                                <th width="50">No.</th>
+                                <th width="120">Date</th>
+                                <th>Status</th>
+                                <th>User</th>
+                                <th>Notes</th>
+                            </thead>
+                            <tbody>
+                                <template is="dom-repeat" items="[[ record.history ]]">
+                                    <tr>
+                                        <td>[[ __computeNo(index) ]]</td>
+                                        <td>[[ item.date_short ]]</td>
+                                        <td>[[ item.status_name ]]</td>
+                                        <td>[[ item.user_act_name ]]</td>
+                                        <td>[[ item.notes ]]</td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+
+                    </div>
+                </paper-card>
+            </div>
+        </kct-vbox>
+
+        <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to list" on-tap="__onBackTap"></paper-fab>
+        </div>
+
+    </template>
+    <script>
+        class AdvanceHistoryPage extends KctView {
+            static get is() {
+                return 'advance-history-page';
+            }
+
+            static get properties() {
+                return {
+                    record: { type: Object }
+                };
+            }
+            ready() {
+                super.ready();
+            }
+            handleResizing(width, height) {
+                this.updateStyles({'--advance-history-page-height': height + 'px'});
+            }
+            handleRouteParams(module, action, id) {
+                if (action != 'view') return;
+
+                this.mask('Loading...');
+                this.$.ajax.GET('/advance/' + id + '/view').then(res => {
+                    this.set('record', res.data);
+                    this.unmask();
+                });
+            }
+            __computeNo(index) {
+                return index + 1;
+            }
+            __onBackTap() {
+                this.set('route.path', '/advance');
+            }
+        }
+        customElements.define(AdvanceHistoryPage.is, AdvanceHistoryPage);
+    </script>
+</dom-module>

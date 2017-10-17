@@ -1,0 +1,90 @@
+<link rel="import" href="../../../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../bower_components/paper-listbox/paper-listbox.html">
+
+<dom-module id="kct-icon-picker">
+    <template>
+        <style>
+            :host {
+                display: block;
+                width: 100%;
+            }
+            paper-dropdown-menu {
+                width: 100%;
+            }
+            .dropdown-content {
+                padding: 1rem;
+                width: calc(var(--dropdown-content-width, 300px) - 2rem);
+            }
+            paper-icon-button {
+                color: var(--paper-blue-grey-500);
+            }
+        </style>
+        <paper-dropdown-menu label="[[ label ]]" on-opened-changed="__onOpenToggle">
+            <paper-listbox class="dropdown-content" attr-for-selected="icon" selected="{{ value }}" slot="dropdown-content">
+                <template is="dom-repeat" items="{{ __icons }}">
+                    <paper-icon-button icon="[[ item ]]">[[ item ]]</paper-icon-button>
+                </template> 
+            </paper-listbox>
+        </paper-dropdown-menu>        
+    </template>
+    <script>
+        class KctIconPicker extends Polymer.Element {
+            static get is() {
+                return 'kct-icon-picker';
+            }
+            static get properties() {
+                return {
+                    label: { type: String, value: 'Icon', reflectToAttribute: true },
+                    value: { type: String, value: '', notify: true }
+                }
+            }
+            static get observers() {
+                return [
+                    '__valueChanged(value)'
+                ];
+            }
+            constructor() {
+                super();
+
+                this.__icons = [
+                    '3d-rotation',
+                    'account-circle',
+                    'alarm',
+                    'android',
+                    'communication:phone',
+                    'description',
+                    'dashboard',
+                    'device:usb',
+                    'done',
+                    'done-all',
+                    'donut-large',
+                    'editor:attach-money',
+                    'label-outline',
+                    'home',
+                    'settings',
+                    'shopping-cart',
+                    'social:public',
+                    'trending-up',
+                    'view-carousel'
+                ];
+
+                this.__contentResized = false;
+            }
+            __valueChanged(value) {
+                if (value && this.__icons.indexOf(value) === -1) {
+                    this.push('__icons', value);
+                }
+            }
+            __onOpenToggle(e) {
+                let opened = e.detail.value;
+                if (opened && ! this.__contentResized) {
+                    let width = e.target.offsetWidth;
+                    this.updateStyles({ '--dropdown-content-width': width + 'px' });
+                    this.__contentResized = true;
+                }
+            }
+        }
+        customElements.define(KctIconPicker.is, KctIconPicker);
+    </script>
+</dom-module>

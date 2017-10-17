@@ -1,0 +1,9 @@
+<IfModule mod_rewrite.c>
+    Options +FollowSymLinks
+    RewriteEngine on
+    # RewriteCond %{HTTPS} !=on
+    # RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+    RewriteCond %{REQUEST_URI} !\.(html|gif|jpg|jpeg|png|css|js|ttf|woff2?|svg|eot|map|json|ico)$
+    RewriteRule ^([^/]+)/(.*) $1/ [L,NC]
+    RewriteRule ^$ demo [L]
+</IfModule>

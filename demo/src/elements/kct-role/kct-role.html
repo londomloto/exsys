@@ -1,0 +1,120 @@
+<link rel="import" href="../../../bower_components/polymer/lib/utils/flattened-nodes-observer.html">
+<link rel="import" href="../kct-ajax/kct-ajax.html">
+
+<dom-module id="kct-role">
+    <template>
+        <kct-ajax id="ajax"></kct-ajax>
+    </template>
+
+    <script>
+        class KctRole extends Polymer.Element {
+            static get is() {
+                return 'kct-role';
+            }
+            static get properties() {
+                return {
+                    perms: { type: Array, value: () => ([]) },
+                    autoValidate: { type: Boolean, value: false }
+                };
+            }
+            static get observers() {
+                return [
+                    '__permissionsChanged(perms.*)'
+                ];
+            }
+            constructor() {
+                super();
+                this.__watchers = [];
+                this.__perms = {};
+            }
+            ready() {
+                super.ready();
+                this._ensureAttribute('hidden', true);
+            }
+            connectedCallback() {
+                super.connectedCallback();
+                this.__loadPermissions();
+            }
+            disconnectedCallback() {
+                this.__uninstall();
+                super.disconnectedCallback();
+            }
+            validate() {
+                let owner = this.parentNode && this.parentNode.host;
+
+                if (owner) {
+                    owner.shadowRoot.querySelectorAll('[data-perm]').forEach(elem => {
+                        let perm = elem.dataset.perm;
+                        if (elem.dataset.display == undefined) {
+                            elem.dataset.display = elem.style.display;
+                        }
+
+                        if (this.__perms[perm]) {
+                            elem.style.display = elem.dataset.display;
+                            elem.dataset.display = undefined;
+                        } else {
+                            elem.style.display = 'none';
+                        }
+                    });
+                }
+            }
+            __loadPermissions() {
+                return this.$.ajax.GET('/users/users-permissions?display=authorized').then(r => {
+                    this.set('perms', r.data);
+                });
+            }
+            __permissionsChanged(changed) {
+                if (changed.path == 'perms') {
+                    
+                    if (this.autoValidate) {
+                        this.__uninstall();
+                        this.__install();    
+                    }
+
+                    this.__perms = {};
+
+                    this.perms.forEach(k => {
+                        this.__perms[k.permission] = true;
+                    });
+                }
+            }
+            __install() {
+                let owner = this.parentNode && this.parentNode.host;
+
+                if (owner) {
+                    owner.shadowRoot.querySelectorAll('[data-authorized]').forEach(target => {
+                        let watcher = new Polymer.FlattenedNodesObserver(target, this.__watching.bind(this));
+                        this.__watchers.push(watcher);
+                    });    
+                }
+                
+            }
+            __uninstall() {
+                this.__watchers.forEach(w => {
+                    w.disconnect();
+                });
+
+                this.__watchers = [];
+            }
+            __watching(info) {
+                let context = info.target;
+                context.querySelectorAll('[data-perm]').forEach(elem => {
+                    let perm = elem.dataset.perm;
+
+                    if (elem.dataset.display == undefined) {
+                        elem.dataset.display = elem.style.display;
+                    }
+
+                    if (this.__perms[perm]) {
+                        elem.style.display = elem.dataset.display;
+                        elem.dataset.display = undefined;
+                    } else {
+                        elem.style.display = 'none';
+                    }
+                });
+            }
+        }
+
+        customElements.define(KctRole.is, KctRole);
+    </script>
+</dom-module>

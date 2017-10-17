@@ -1,0 +1,23 @@
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+
+<dom-module id="gantt-page">
+    <template>
+        <style include="theme-helper">
+            
+        </style>
+    </template>
+    <script>
+        class GanttPage extends KctView {
+            static get is() {
+                return 'gantt-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, notify: true, value: 'Gantt Chart' }
+                }
+            }
+        }
+        customElements.define(GanttPage.is, GanttPage);
+    </script>
+</dom-module>

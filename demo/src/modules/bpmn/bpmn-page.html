@@ -1,0 +1,61 @@
+<link rel="import" href="../../elements/kct-bpmn/kct-bpmn.html">
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+
+<dom-module id="bpmn-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: var(--bpmn-page-height, 572px);
+                overflow: hidden;
+            }
+            .page-actions {
+                top: 92px;
+            } 
+        </style>
+        <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue" icon="reply" title="Back to setting" on-tap="__onBackTap"></paper-fab>
+        </div>
+        <kct-bpmn id="bpmn"></kct-bpmn>
+    </template>
+    <script>
+        class BpmnPage extends KctView {
+            static get is() {
+                return 'bpmn-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, notify: true, value: 'Bpmn' }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__heightChanged(height)'
+                ];
+            }
+
+            activate() {
+                if (this.$.bpmn) {
+                    this.$.bpmn.resize();
+                }
+            }
+
+            __heightChanged(height) {
+                this.updateStyles({ 
+                    '--bpmn-page-height': height + 'px' 
+                });
+
+                if (this.$.bpmn) {
+                    this.$.bpmn.resize();
+                }
+            }
+            
+            __onBackTap() {
+                this.set('route.path', '/settings');
+            }
+        }
+
+        customElements.define(BpmnPage.is, BpmnPage);
+    </script>
+</dom-module>

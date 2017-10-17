@@ -1,0 +1,110 @@
+<link rel="import" href="../../../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../../bower_components/paper-radio-group/paper-radio-group.html">
+<link rel="import" href="../../../../bower_components/paper-radio-button/paper-radio-button.html">
+<link rel="import" href="../../../mixins/dialog.html">
+<link rel="import" href="../../../mixins/resolver.html">
+<link rel="import" href="../../../elements/kct-ajax/kct-ajax.html">
+
+<dom-module id="diagram-exporter">
+    <template>
+        <style include="theme-helper">
+            .vbox {
+                margin-top: 0;
+                margin-bottom: 0;
+                padding: 0;
+            }
+            .content {
+                padding: 0 24px;
+            }
+            .header {
+                padding: 24px;
+            }
+            .actions {
+                background-color: var(--app-danger);
+                padding: 8px;
+                text-align: center;
+                margin-bottom: 0;
+            }
+            .actions paper-button {
+                color: #ffffff;
+                height: 40px;
+            }
+            #dialog {
+                width: 600px;
+            }
+        </style>
+        
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <paper-dialog id="dialog" on-iron-overlay-closed="__onClose" modal>
+            <div class="vbox">
+                <div class="header">
+                    <h2 class="f-300">Export Diagram</h2>
+                </div>
+                <div class="flex">
+                    <div class="content m-b">
+                        <div class="form-group">
+                            <label>Format</label>
+                            <paper-radio-group selected="{{ format }}" attr-for-selected="name">
+                                <paper-radio-button name="png">Image PNG</paper-radio-button>
+                                <paper-radio-button name="jpg">Image JPEG</paper-radio-button>
+                                <paper-radio-button name="svg">SVG (Vector)</paper-radio-button>
+                            </paper-radio-group>
+                        </div>
+                        <div class="form-group">
+                            <paper-input value="{{ name }}" label="File name"></paper-input>    
+                        </div>
+                    </div>
+                </div>
+                <div class="actions">
+                    <paper-button on-tap="__onButtonExportTap">Export</paper-button>
+                    <paper-button on-tap="__onButtonCloseTap">Close</paper-button>
+                </div>    
+            </div>
+        </paper-dialog>
+    </template>
+    <script>
+        class DiagramExporter extends Mixins(Polymer.Element).use(Mixins.Resolver, Mixins.Dialog) {
+            static get is() {
+                return 'diagram-exporter';
+            }
+            static get properties() {
+                return {
+                    paper: { type: Object },
+                    diagram: { type: Object },
+                    format: { type: String, value: 'jpg' },
+                    name: { type: String, computed: '__computeName(diagram, format)' }
+                };
+            }
+            open() {
+                this._relocate();
+                this.$.dialog.open();
+            }
+            close() {
+                this.$.dialog.close();
+            }
+            __computeName(diagram, format) {
+                if (diagram && format) {
+                    let name = diagram.props.name;
+                    name = name.replace(/\s+/, '-');
+                    name = name.toLowerCase();
+                    return name + '.' + format;
+                }
+            }
+            __onClose() {
+                this._restore();
+            }
+            __onButtonCloseTap() {
+                this.close();
+            }
+            __onButtonExportTap() {
+                if (this.paper && this.diagram && this.name) {
+                    var type = this.format == 'jpg' ? 'jpeg' : this.format;    
+                    this.paper.diagram().saveAsImage(type, this.name);
+                }
+            }
+        }
+        customElements.define(DiagramExporter.is, DiagramExporter);
+    </script>
+</dom-module>

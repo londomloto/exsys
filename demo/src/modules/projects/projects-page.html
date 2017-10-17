@@ -1,0 +1,21 @@
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+
+<dom-module id="projects-page">
+    <template include="theme-helper">
+        
+    </template>
+    <script>
+        class ProjectsPage extends KctView {
+            static get is() {
+                return 'projects-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, notify: true, value: 'Projects' }
+                };
+            }
+        }
+        customElements.define(ProjectsPage.is, ProjectsPage);
+    </script>
+</dom-module>

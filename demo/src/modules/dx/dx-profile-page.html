@@ -1,0 +1,179 @@
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../elements/kct-checkbox/kct-checkbox.html">
+
+<dom-module id="dx-profile-page">
+    
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: var(--dx-profile-page-height, 582px);
+            }
+            #grid {
+                height: 100%;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue" icon="reply" title="Back to setting" on-tap="__onBackTap"></paper-fab>
+        </div>
+
+        <kct-grid 
+            id="grid" 
+            url="/dx/profiles" 
+            columns="{{ columns }}" 
+            selection="{{ selection }}" 
+            selected="{{ selected }}" 
+            title="Dynamic Upload" 
+            description="Upload Profiles"
+            autoload>
+
+            <paper-button slot="primary-toolbar" on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>New</paper-button>
+            <paper-button slot="primary-toolbar" on-tap="__onEditTap"><iron-icon icon="done"></iron-icon>Edit</paper-button>
+            <paper-button slot="primary-toolbar" on-tap="__onDeleteTap"><iron-icon icon="clear"></iron-icon>Delete</paper-button>        
+
+        </kct-grid>
+
+        <kct-dialog id="editor" title="Profile Editor" width="400" height="100%">
+            <template preserve-content>
+                <div slot="dialog-body">
+                    <paper-input label="Profile Name" value="{{ selected.profile_name }}"></paper-input>
+                    <paper-input label="Header Row" value="{{ selected.header_row_idx }}"></paper-input>
+                    <paper-input label="Column Offset" value="{{ selected.col_offset }}"></paper-input>
+                    <paper-input label="Row Offset" value="{{ selected.row_offset }}"></paper-input>
+                    <kct-checkbox value="{{ selected.map_header }}" true-value="1" false-value="0">
+                        <label>Enable header mapping</label>
+                    </kct-checkbox>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSubmitTap">SAVE</paper-button>
+                    <paper-button on-tap="__onEditpCloseTap">CLOSE</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+
+    <script>
+        class DxProfilePage extends KctView {
+            static get is() {
+                return 'dx-profile-page';
+            }
+
+            static get observers() {
+                return [
+                    '__heightChanged(height)'
+                ];
+            }
+
+            static get properties() {
+                return {
+                    columns: {
+                        type: Array,
+                        value: () => {
+                            return [
+                                { type: 'rownumber' },
+                                { text: 'Profile', dataIndex: 'profile_name' },
+                                { text: 'Header Row', dataIndex: 'header_row_idx' },
+                                { text: 'Column Offset', dataIndex: 'col_offset' },
+                                { text: 'Row Offset', dataIndex: 'row_offset' },
+                                { 
+                                    text: 'Mapping', 
+                                    align: 'center',
+                                    dataIndex: 'map_header',
+                                    renderer: e => {
+                                        return e.data ? (e.data.map_header == 1 ? 'Y' : '-') : '-';
+                                    }
+                                }
+                            ];
+                        }
+                    }
+                };
+            }
+
+            ready() {
+                super.ready();
+            }
+
+            connectedCallback() {
+                super.connectedCallback();
+            }
+
+            activate() {
+                this.$.grid && this.$.grid.resize();
+            }
+
+            __heightChanged(height) {
+                this.updateStyles({ '--dx-profile-page-height': height + 'px'});
+                this.$.grid.resize();
+            }
+
+            __onAddTap() {
+                this.set('selected', {});
+                this.$.editor.open();
+            }
+
+            __onEditTap() {
+                if ( ! this.selected) {
+                    this.toast('Warning', 'No record selected', 'warn');
+                    return;
+                }
+
+                this.$.editor.open();
+            }
+
+            __onDeleteTap() {
+                if ( ! this.selection.length) {
+                    this.toast('Warning', 'No record(s) selected', 'warn');
+                    return;
+                }
+
+                let record = this.selection[0];
+
+                this.confirm('Confirm', 'Are you sure want to delete selected record(s)?').then((y) => {
+                    if (y) {
+                        this.$.ajax.DELETE('/dx/profiles/' + record.profile_id).then(() => {
+                            this.$.grid.load();
+                        });
+                    }
+                });
+
+            }
+
+            __onEditpCloseTap() {
+                this.$.editor.close();
+            }
+
+            __onEditorSubmitTap() {
+                let data = this.selected,
+                    ajax = this.$.ajax;
+
+                if (data.profile_id) {
+                    ajax.PUT('/dx/profiles/' + data.profile_id, data).then(done.bind(this));
+                } else {
+                    ajax.POST('/dx/profiles', data).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.$.grid.load();
+                        this.$.editor.close();
+                    }
+                }
+            }
+
+            __onBackTap() {
+                this.set('route.path', '/settings');
+            }
+        }
+
+        customElements.define(DxProfilePage.is, DxProfilePage);
+    </script>
+
+</dom-module>

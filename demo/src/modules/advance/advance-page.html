@@ -1,0 +1,88 @@
+
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-pages/kct-pages.html">
+<link rel="import" href="advance-list-page.html">
+<link rel="import" href="advance-editor-page.html">
+<link rel="import" href="advance-history-page.html">
+
+<dom-module id="advance-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                display: block;
+            }
+        </style>
+
+        <kct-pages id="pages" selected="{{ page }}" attr-for-selected="name">
+            <advance-list-page name="list" route="{{ route }}" state="[[ state ]]"></advance-list-page>
+            <advance-editor-page name="editor" route="{{ route }}" state="[[ state ]]"></advance-editor-page>
+            <advance-history-page name="history" route="{{ route }}" state="[[ state ]]"></advance-history-page>
+        </kct-pages>
+    </template>
+    <script>
+        class AdvancePage extends KctView {
+            static get is() {
+                return 'advance-page';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Advance Expense', notify: true },
+                    page: { type: String },
+                    width: { type: Number },
+                    height: { type: Number }
+                }
+            }
+            static get observers() {
+                return [
+                    '__pageChanged(page)'
+                ];
+            }
+            handleResizing(width, height) {
+                this.set('width', width);
+                this.set('height', height);
+
+                let pageItem = this.$.pages.selectedItem;
+
+                if (pageItem && pageItem.handleResizing) {
+                    pageItem.__resized = true;
+                    pageItem.handleResizing(width, height);
+                }
+            }
+            handleRouteParams(module, action) {
+                switch(action) {
+                    case 'add':
+                    case 'edit':
+                        this.set('page', 'editor');
+                        break;
+                    case 'view':
+                        this.set('page', 'history');
+                        break;
+                    default:
+                        this.set('page', 'list');
+
+                }
+            }
+            __pageChanged(page) {
+                let timer = setTimeout(() => {
+                    clearTimeout(timer);
+                    timer = null;
+
+                    let pageItem = this.$.pages.selectedItem;
+                    
+                    if (pageItem) {
+                        
+                        pageItem.activate && pageItem.activate();
+
+                        if (pageItem.handleResizing && ! pageItem.__resized) {
+                            pageItem.__resized = true;
+                            pageItem.handleResizing(this.width, this.height);
+                        }
+                        
+                    }
+
+                }, 1);
+            }
+        }
+        customElements.define(AdvancePage.is, AdvancePage);
+    </script>
+</dom-module>

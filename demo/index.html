@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <base href="/exsys/demo/">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+
+        <title>LOADING...</title>
+        <meta name="description" content="Fiberstar Application">
+
+        <link rel="icon" href="images/icons/favicon.ico">
+        <link rel="manifest" href="manifest.json">
+
+        <meta name="theme-color" content="#3f51b5">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="application-name" content="worksaurus">
+
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <meta name="apple-mobile-web-app-title" content="worksaurus">
+
+        <link rel="apple-touch-icon" href="images/manifest/icon-48x48.png">
+        <link rel="apple-touch-icon" sizes="72x72" href="images/manifest/icon-72x72.png">
+        <link rel="apple-touch-icon" sizes="96x96" href="images/manifest/icon-96x96.png">
+        <link rel="apple-touch-icon" sizes="144x144" href="images/manifest/icon-144x144.png">
+        <link rel="apple-touch-icon" sizes="192x192" href="images/manifest/icon-192x192.png">
+
+        <meta name="msapplication-TileImage" content="images/manifest/icon-144x144.png">
+        <meta name="msapplication-TileColor" content="#3f51b5">
+        <meta name="msapplication-tap-highlight" content="no">
+
+        <style>
+            html, 
+            body { 
+                height: 100%;
+                width: 100%;
+                padding: 0;
+                margin: 0;
+                overflow-x: hidden;
+            }
+
+            body.loading {
+                overflow: hidden;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            body.loading kct-app { opacity: 0; }
+            body.ready kct-app { animation: fade-in 0.5s; }
+
+            #loading-indicator {
+                width: 100%;
+                position: absolute;
+                top: 50%;
+                margin-top: -1px;
+                left: 0;
+                color: rgba(255, 255, 255, 0.56);
+            }
+
+            #loading-indicator .spinner {
+                content: "";
+                position: absolute;
+                height: 2px;
+                background: #00b4f0;
+                top: 0;
+                left: 0;
+                width: 100%;
+                animation: 1.2s spin infinite;
+                transform-origin: 100% 0;
+            }
+
+            @keyframes spin {
+                50% { transform: scalex(0); }
+                51% { transform: translatex(-100vw); }
+            }
+
+            @keyframes fade-in {
+                0% { opacity: 0; };
+                100% { opacity: 1; }
+            }
+        </style>
+
+    </head>
+    <body class="loading">
+
+        <div id="loading-indicator">
+            <div class="spinner"></div>     
+        </div>
+
+        <kct-app></kct-app>
+
+        <script>
+
+            var app = {
+
+                supports: {
+                    WEB_COMPONENT: (
+                        'registerElement' in document && 
+                        'import' in document.createElement('link') && 
+                        'content' in document.createElement('template')
+                    )
+                },
+
+                run: function() {
+                    window.Polymer = window.Polymer || {};
+                    window.Polymer.dom = 'shadow';
+
+                    prepare().then(() => {
+                        load();
+                    });
+
+                    function defer() {
+                        let promise, resolve, reject;
+                        promise = new Promise((res, rej) => {
+                            resolve = res;
+                            reject = rej;
+                        });
+                        return { promise: promise, resolve: resolve, reject: reject };
+                    }
+
+                    function prepare() {
+                        let d = defer();
+
+                        if (app.supports.WEB_COMPONENT) {
+                            d.resolve();
+                        } else {
+                            
+                            var script = document.createElement('script');
+                            // script.async = true;
+                            script.src = 'bower_components/webcomponentsjs/webcomponents-loader.js';
+                            script.addEventListener('load', () => {
+                                d.resolve();
+                            });
+
+                            document.head.appendChild(script);
+                        }
+                        return d.promise;
+                    }
+
+                    function load() {
+                        let deps = [
+                            'src/themes/theme-default/theme-default.html',
+                            'src/elements/kct-app/kct-app.html'
+                        ].map((href) => {
+                            let d = defer();
+                            let link;
+                            
+                            link = document.head.querySelector('link[href="' + href + '"][import-href]');
+
+                            if ( ! link) {
+                                link = document.createElement('link');
+                                link.rel = 'import';
+                                link.href = href;
+                                link.async = true;
+                                link.setAttribute('import-href', '');
+                            }
+
+                            link.addEventListener('load', () => {
+                                d.resolve(href);
+                            });
+
+                            if (link.parentNode == null) {
+                                document.head.appendChild(link);    
+                            }
+                            
+                            return d.promise;
+                        });
+
+                        
+
+                        Promise.all(deps).then(() => {
+                            let t = setTimeout(() => {
+                                clearTimeout(t);
+                                finish();    
+                            }, 1000);
+                        });
+                    }
+
+                    function finish() {
+                        var indicator;
+
+                        document.body.classList.remove('loading');
+                        document.body.classList.add('ready');
+
+                        indicator = document.querySelector('#loading-indicator');
+                        indicator.parentNode.removeChild(indicator);
+                        
+                        // register service worker
+                        if ('serviceWorker' in navigator) {
+                            // navigator.serviceWorker.register('service-worker.js');
+                        }
+                    }
+
+                }
+
+            };
+
+            app.run();
+
+        </script>
+
+    </body>
+</html>

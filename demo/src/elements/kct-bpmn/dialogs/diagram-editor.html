@@ -1,0 +1,104 @@
+<link rel="import" href="../../../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../mixins/dialog.html">
+<link rel="import" href="../../../mixins/resolver.html">
+<link rel="import" href="../../../elements/kct-ajax/kct-ajax.html">
+
+<dom-module id="diagram-editor">
+    <template>
+        <style include="theme-helper">
+            .vbox {
+                margin-top: 0;
+                padding: 0;
+            }
+            .vbox > .flex {
+                overflow-y: auto;
+                position: relative;
+            }
+            .content {
+                padding: 0 24px;
+            }
+            .header {
+                padding: 24px;
+            }
+            .actions {
+                background-color: var(--app-danger);
+                padding: 8px;
+                text-align: center;
+                margin-bottom: 0;
+            }
+            .actions paper-button {
+                color: #ffffff;
+                height: 40px;
+            }
+            #dialog {
+                width: 600px;
+                height: 80%;
+            }
+        </style>
+        
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <paper-dialog id="dialog" on-iron-overlay-closed="__onClose" modal>
+            <div class="vbox">
+                <div class="header">
+                    <h2 class="f-300">Diagram Editor</h2>
+                </div>
+                <div class="flex custom-scroll">
+                    <div class="content">
+                        <paper-input value="{{ diagram.props.name }}" label="Diagram name" autofocus></paper-input>    
+                        <paper-input value="{{ diagram.props.description }}" label="Description"></paper-input>    
+                    </div>
+                </div>
+                <div class="actions">
+                    <paper-button on-tap="__onButtonSaveTap">Save</paper-button>
+                    <paper-button on-tap="__onButtonCloseTap">Close</paper-button>
+                </div>    
+            </div>
+        </paper-dialog>
+    </template>
+    <script>
+        class DiagramEditor extends Mixins(Polymer.Element).use(Mixins.Resolver, Mixins.Dialog) {
+            static get is() {
+                return 'diagram-editor';
+            }
+            static get properties() {
+                return {
+                    diagram: { type: Object, notify: true },
+                    params: { 
+                        type: Object,
+                        notify: true,
+                        value: () => {
+                            return {
+                                log_provider: null,
+                                trx_provider: null
+                            };
+                        }
+                    }
+                };
+            }
+            open() {
+                this._relocate();
+                this.$.dialog.open();
+            }
+            close() {
+                this.$.dialog.close();
+            }
+            __onClose() {
+                this._restore();
+            }
+            __onButtonCloseTap() {
+                this.close();
+            }
+            __onButtonSaveTap() {
+                var data = this.diagram.toJson();
+
+                this.$.ajax.POST('/bpmn/diagrams/store', data).then((res) => {
+                    this.dispatchEvent(new CustomEvent('save', { detail: res }));
+                    this.close();
+                });
+            }
+        }
+        customElements.define(DiagramEditor.is, DiagramEditor);
+    </script>
+</dom-module>
