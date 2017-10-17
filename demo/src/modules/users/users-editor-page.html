@@ -1,8 +1,13 @@
 <link rel="import" href="../../../bower_components/paper-input/paper-input.html">
 <link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../bower_components/paper-radio-group/paper-radio-group.html">
+<link rel="import" href="../../../bower_components/paper-radio-button/paper-radio-button.html">
 <link rel="import" href="../../../bower_components/vaadin-combo-box/vaadin-combo-box.html">
+<link rel="import" href="../../../bower_components/vaadin-material-theme/vaadin-date-picker.html">
+<link rel="import" href="../../../bower_components/vaadin-date-picker/vaadin-date-picker.html">
 <link rel="import" href="../../elements/kct-view/kct-view.html">
 <link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../elements/kct-file/kct-file-input.html">
 <link rel="import" href="../../elements/kct-checkbox/kct-checkbox.html">
 <link rel="import" href="../../elements/kct-layouts/kct-hbox.html">
 <link rel="import" href="../../elements/kct-layouts/kct-vbox.html">
@@ -27,45 +32,51 @@
         <kct-ajax id="ajax2"></kct-ajax>
 
         <div class="page-actions">
-            <paper-fab class="fab-raised fab-blue" icon="reply" title="Back to list" on-tap="__onBackTap"></paper-fab>
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to list" on-tap="__onBackTap"></paper-fab>
         </div>
 
         <kct-vbox>
-            <page-header-block image="[[ avatar ]]" title="User Editor" description="[[ record.su_fullname ]]">
+            <page-header-block image="[[ __icon ]]" title="User Editor" description="[[ record.su_fullname ]]">
                 <paper-button on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Save Changes</paper-button>
             </page-header-block>
 
-            <div class="flex scroll-y">
-                <div class="p-a">
-                    <kct-column columns="3">
-                        <div class="p-r">
-                            <h3>Account Information</h3>
-                            <paper-input id="email" label="Email address" type="email" value="{{ record.su_email }}" required error-message="Valid email address is required"></paper-input>
-                             <vaadin-combo-box 
-                                label="Member of role" 
-                                value="{{ record.su_sr_id }}" 
-                                items="[[ roles ]]" 
-                                item-label-path="sr_name" 
-                                item-value-path="sr_id" 
-                                required auto-validate error-message="Role is required"></vaadin-combo-box>
-                            <paper-input label="Password" type="password" value="{{ password1 }}"></paper-input>
-                            <paper-input label="Password confirm" type="password" value="{{ password2 }}"></paper-input>
-                            <kct-checkbox value="{{ record.su_active }}">Check to activate this user</kct-checkbox>
+            <div class="flex scroll-y padding">
+                <kct-column columns="3">
+                    <div class="p-r">
+                        <h3>Account Information</h3>
+                        <paper-input id="email" label="Email address" type="email" value="{{ record.su_email }}" required error-message="Valid email address is required"></paper-input>
+                         <vaadin-combo-box 
+                            label="Member of role" 
+                            value="{{ record.su_sr_id }}" 
+                            items="[[ roles ]]" 
+                            item-label-path="sr_name" 
+                            item-value-path="sr_id" 
+                            required auto-validate error-message="Role is required"></vaadin-combo-box>
+                        <paper-input label="Password" type="password" value="{{ password1 }}"></paper-input>
+                        <paper-input label="Password confirm" type="password" value="{{ password2 }}"></paper-input>
+                        <kct-checkbox value="{{ record.su_active }}">Check to activate this user</kct-checkbox>
+                    </div>
+                    <div class="p-r">
+                        <h3>Personal Information</h3>
+                        <paper-input id="fullname" label="Full Name" value="{{ record.su_fullname }}"></paper-input>
+                        <div class="radio-group">
+                            <label>Sex</label>
+                            <paper-radio-group selected="{{ record.su_sex }}">
+                                <paper-radio-button name="Male">Male</paper-radio-button>
+                                <paper-radio-button name="Female">Female</paper-radio-button>
+                            </paper-radio-group>
                         </div>
-                        <div class="p-r">
-                            <h3>Personal Information</h3>
-                            <paper-input id="fullname" label="Full Name" value="{{ record.su_fullname }}" readonly></paper-input>
-                            <paper-input label="Gender" value="{{ record.su_sex }}"  readonly></paper-input>
-                            <paper-input label="Birthday" value="{{ record.su_dob }}"  readonly></paper-input>
-                            <paper-input label="Job Description" value="{{ record.su_job_title }}"  readonly></paper-input>
-                        </div>
-                        <div class="p-r">
-                            <h3>Account Removal</h3>
-                            <p>Removing user will remove all user data and all related documents.</p>
-                            <paper-button on-tap="__onRemoveAccountTap" class="btn-danger btn-md btn-raised m-t">Delete User</paper-button>
-                        </div>
-                    </kct-columns>    
-                </div>
+                        <vaadin-date-picker label="Birthday" value="{{ record.su_dob }}"></vaadin-date-picker>
+                        <paper-input label="Job Description" value="{{ record.su_job_title }}" ></paper-input>
+                        <paper-input label="Phone" value="{{ record.su_phone }}" ></paper-input>
+                        <kct-file-input label="Avatar" value="{{ record.su_avatar }}" file="{{ avatar }}"></kct-file-input>
+                    </div>
+                    <div class="p-r">
+                        <h3>Account Removal</h3>
+                        <p>Removing user will remove all user data and all related documents.</p>
+                        <paper-button on-tap="__onRemoveAccountTap" class="btn-danger btn-md m-t">Delete User</paper-button>
+                    </div>
+                </kct-columns>   
             </div>
         </kct-vbox>
 
@@ -81,19 +92,20 @@
                     page: { type: String, value: 'profile' },
                     roles: { type: Array },
                     record: { type: Object, value: () => ({ su_active: '1' }) },
-                    picture: { type: String },
-                    invalid: { type: Boolean },
-                    avatar: {
-                        type: String,
-                        computed: '__computeAvatar(picture, record.su_avatar_thumb)'
-                    }
+                    invalid: { type: Boolean }
                 };
             }
 
             static get observers() {
                 return [
-                    '__heightChanged(height)'
+                    '__heightChanged(height)',
+                    '__thumbChanged(record.su_avatar_thumb)'
                 ];
+            }
+
+            constructor() {
+                super();
+                this.__icon = '';
             }
 
             handleRouteParams(setting, action, id) {
@@ -110,8 +122,9 @@
                 }
             }
 
-            __computeAvatar(picture, avatar) {
-                return picture ? picture : (avatar ? avatar + '&w=40&h=40' : null);
+            __thumbChanged(thumb) {
+                let icon = thumb ? (thumb + '&w=32&h=32') : null;
+                this.set('__icon', icon);
             }
 
             __heightChanged(height) {
@@ -160,7 +173,23 @@
 
                 function done(res) {
                     if (res.success) {
-                        this.toast('Success', 'User has been saved');
+                        let id = res.data.su_id;
+                        this.set('record.su_id', id);
+
+                        if (this.avatar) {
+                            this.$.ajax1.UPLOAD('/users/' + id + '/upload', {
+                                files: [
+                                    { name: 'userfile', file: this.avatar }
+                                ]
+                            }).then(res => {
+                                if (res.success) {
+                                    this.set('record.su_avatar_thumb', res.data.su_avatar_thumb);
+                                }
+                                this.toast('Success', 'User has been saved');    
+                            });
+                        } else {
+                            this.toast('Success', 'User has been saved');
+                        }
                     }
                 }
             }

@@ -93,7 +93,7 @@
 
             --paper-input-container-label-floating: { font-size: 17px; margin-bottom: 30px; };
             --paper-input-container-label-focus: { color: #339EF3; };
-            --paper-input-container-underline: { border-color: var(--paper-grey-200); };
+            --paper-input-container-underline: { border-color: var(--paper-grey-300); };
             --paper-input-container-underline-focus: { border-color: var(--paper-green-500); };
             --paper-input-error: { font-size: var(--app-text-sm); };
 
@@ -392,6 +392,16 @@
                 --material-subhead-font-size: 15px;
                 ---material-text-field-input-line-background-color: var(--paper-grey-300);
                 ---material-text-field-input-line-opacity: 1;
+            }
+
+            /** radio */
+            paper-radio-button {
+                --paper-radio-button-checked-color: var(--paper-green-500);
+            }
+
+            .radio-group {
+                border-bottom: 1px solid var(--paper-grey-300);
+                padding: 4px 0;
             }
 
             page-header-block vaadin-combo-box,

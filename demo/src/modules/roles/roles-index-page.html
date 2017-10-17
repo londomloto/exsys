@@ -44,34 +44,17 @@
                 height: 50px;
                 border-radius: 50%;
                 text-align: center;
-                line-height: 42px;
+                line-height: 46px;
                 color: #fff;
             }
 
             paper-card h3 {
-                font-size: 18px;
+                font-size: 16px;
                 font-weight: 500;
             }
 
-            .box-icon {
-                height: 150px;
-                line-height: 150px;
-                position: relative;
-                text-align: center;
-            }
-            .box-icon span {
-                display: inline-block;
-                background-color: var(--paper-cyan-500);
-                color: #fff;
-                --iron-icon-width: 50px;
-                --iron-icon-height: 50px;
-                width: 80px;
-                height: 80px;
-                line-height: 70px;
-                border-radius: 50%;
-            }
-            .box-foot {
-                padding: 0 15px 15px 15px;
+            paper-card p {
+                font-size: 14px;
             }
         </style>
         
@@ -109,9 +92,9 @@
                                     </kct-hbox>
                                 </div>
                                 <div class="card-actions text-center">
-                                    <paper-button on-tap="__onEditTap" class="btn-md">Detail</paper-button>
-                                    <!-- <paper-button on-tap="__onKanbanTap" class="btn-md">Worksheet</paper-button> -->
-                                    <paper-button on-tap="__onDeleteTap" class="btn-md text-danger">Delete</paper-button>
+                                    <paper-button on-tap="__onEditTap" class="btn-sm">Edit</paper-button>
+                                    <!-- <paper-button on-tap="__onKanbanTap" class="btn-sm">Worksheet</paper-button> -->
+                                    <paper-button on-tap="__onDeleteTap" class="btn-sm text-danger">Delete</paper-button>
                                 </div>
                                 
                             </paper-card>

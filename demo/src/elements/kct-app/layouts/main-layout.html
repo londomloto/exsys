@@ -191,6 +191,7 @@
             .primary-toolbar.sm .nav-profile a.icon { display: none; }
         </style>
         
+        <kct-auth id="auth" config="[[ config ]]" user="{{ user }}" on-load="__onAuthLoad"></kct-auth>
         <kct-media size="{{ __responsive }}"></kct-media>
 
         <app-drawer-layout id="viewport" class="unresolved" fullbleed>
@@ -379,6 +380,10 @@
                         this.set('route.addr', page.state.path);
                     }
                 }
+            }
+
+            __onAuthLoad() {
+                // this.$.auth.validate();
             }
 
             __onWorkspaceResize() {

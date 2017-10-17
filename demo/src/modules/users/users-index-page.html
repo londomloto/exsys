@@ -55,12 +55,13 @@
             }
 
             .card-info {
+                line-height: 1.3rem;
                 color: var(--paper-grey-600);
                 --iron-icon-width: 18px;
                 --iron-icon-height: 18px;
             }
 
-            .card-info p { font-size: 14px;  }
+            .card-info p { font-size: 13px;  }
             .card-info h3 { 
                 font-weight: 400;
                 font-size: 20px;  
@@ -73,7 +74,7 @@
         <kct-ajax id="ajax2"></kct-ajax>
 
         <div class="page-actions">
-            <paper-fab class="fab-raised fab-blue" icon="reply" title="Back to setting" on-tap="__onBackTap"></paper-fab>
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to setting" on-tap="__onBackTap"></paper-fab>
         </div>
 
         <kct-vbox>
@@ -98,12 +99,12 @@
                                     <div class="card-info">
                                         <p><iron-icon icon="mail"></iron-icon>&nbsp;[[ item.su_email ]]</strong></p>
                                         <p><iron-icon icon="verified-user"></iron-icon>&nbsp;[[ item.sr_name ]]</p>
-                                        <p><iron-icon icon="communication:phone"></iron-icon>&nbsp;(021) 1234567</p>
+                                        <p><iron-icon icon="communication:phone"></iron-icon>&nbsp;[[ item.su_phone ]]</p>
                                     </div>
                                 </div>
                                 <div class="card-actions">
                                     <div class="text-center">
-                                        <paper-button class="btn-md" on-tap="__onEditTap">Detail</paper-button>
+                                        <paper-button class="btn-sm" on-tap="__onEditTap">Edit</paper-button>
                                         <!-- <paper-button class="btn-md" on-tap="__onKanbanTap">Worksheet</paper-button> -->
                                     </div>
                                 </div>

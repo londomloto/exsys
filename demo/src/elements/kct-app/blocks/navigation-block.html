@@ -135,6 +135,7 @@
                 border-radius: 50%;
                 position: relative;
                 overflow: hidden;
+                cursor: pointer;
             }
             .profile-action {
                 position: absolute;
@@ -162,7 +163,7 @@
                         <paper-icon-button on-tap="__onLogoutTap" icon="power-settings-new"></paper-icon-button>
                     </div>
                     <div class="profile-content">
-                        <div class="avatar">
+                        <div class="avatar" on-tap="__onProfileTap">
                             <img alt="" src$="[[ user.su_avatar_thumb ]]&w=64&h=64">
                         </div>
                         <div class="m-t">
