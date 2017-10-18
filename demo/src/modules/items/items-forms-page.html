@@ -1,0 +1,60 @@
+<link rel="import" href="../../../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
+
+<dom-module id="items-forms-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: var(--paper-grey-100);
+            }
+            .form-item {
+                display: block;
+                width: 100%;
+                margin-bottom: 1rem;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-vbox>
+            <page-header-block icon="code" description="Dynamic Form"></page-header-block>
+            <div class="flex scroll-y padding">
+                
+                <template is="dom-repeat" items="[[ record.item_forms ]]">
+                    <paper-card class="form-item">
+                        <div class="card-content">
+                            <h3>[[ item.item_form_label ]]</h3>
+                        </div>
+                    </paper-card>
+                </template>
+
+            </div>
+        </kct-vbox>
+
+        <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to Setting" on-tap="__onBackTap"></paper-fab>
+        </div>
+
+    </template>
+    <script>
+        class ItemsFormsPage extends KctView {
+            static get is() {
+                return 'items-forms-page';
+            }
+            static get properties() {
+                return {
+                    record: { type: Object }
+                };
+            }
+            __onBackTap() {
+                this.dispatchEvent(new CustomEvent('back'));
+            }
+        }
+        customElements.define(ItemsFormsPage.is, ItemsFormsPage);
+    </script>
+</dom-module>

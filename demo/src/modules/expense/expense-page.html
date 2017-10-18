@@ -1,0 +1,96 @@
+
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-pages/kct-pages.html">
+<link rel="import" href="expense-list-page.html">
+<link rel="import" href="expense-editor-page.html">
+<link rel="import" href="expense-history-page.html">
+
+<dom-module id="expense-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                display: block;
+                height: var(--expense-page-height, 584px);
+            }
+            #pages {
+                display: block;
+                height: 100%;
+            }
+        </style>
+
+        <kct-pages id="pages" selected="{{ page }}" attr-for-selected="name">
+            <expense-list-page name="list" route="{{ route }}" state="[[ state ]]"></expense-list-page>
+            <expense-editor-page name="editor" route="{{ route }}" state="[[ state ]]"></expense-editor-page>
+            <expense-history-page name="history" route="{{ route }}" state="[[ state ]]"></expense-history-page>
+        </kct-pages>
+    </template>
+    <script>
+        class ExpensePage extends KctView {
+            static get is() {
+                return 'expense-page';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Expense', notify: true },
+                    page: { type: String },
+                    width: { type: Number },
+                    height: { type: Number }
+                }
+            }
+            static get observers() {
+                return [
+                    '__pageChanged(page)'
+                ];
+            }
+            handleResizing(width, height) {
+                this.set('width', width);
+                this.set('height', height);
+
+                this.updateStyles({
+                    '--expense-page-height': height + 'px'
+                });
+
+                let pageItem = this.$.pages.selectedItem;
+
+                if (pageItem) {
+                    pageItem.__resized = true;
+                    pageItem.handleResizing(width, height);
+                }
+            }
+            handleRouteParams(module, action) {
+                switch(action) {
+                    case 'add':
+                    case 'edit':
+                        this.set('page', 'editor');
+                        break;
+                    case 'view':
+                        this.set('page', 'history');
+                        break;
+                    default:
+                        this.set('page', 'list');
+
+                }
+            }
+            __pageChanged(page) {
+                let timer = setTimeout(() => {
+                    clearTimeout(timer);
+                    timer = null;
+
+                    let pageItem = this.$.pages.selectedItem;
+                    
+                    if (pageItem) {
+                        
+                        pageItem.activate && pageItem.activate();
+
+                        if ( ! pageItem.__resized) {
+                            pageItem.__resized = true;
+                            pageItem.handleResizing(this.width, this.height);
+                        }
+                    }
+
+                }, 1);
+            }
+        }
+        customElements.define(ExpensePage.is, ExpensePage);
+    </script>
+</dom-module>

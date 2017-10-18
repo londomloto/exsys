@@ -1,0 +1,145 @@
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../elements/kct-grid/kct-grid.html">
+
+<dom-module id="expense-list-page">
+    <template>
+        
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-grid 
+            id="grid" 
+            url="/expense" 
+            page-size="25" 
+            columns="[[ columns ]]" 
+            title="DATASHEET" 
+            description="List of Expense" 
+            selection-model="cell" 
+            pagination>
+
+                <template preserve-content>
+                    <style include="theme-helper"></style>
+                </template>
+
+            <paper-button class="btn-primary" slot="primary-toolbar" on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Expense Request</paper-button>
+
+        </kct-grid>
+
+    </template>
+    <script>
+        class ExpenseListPage extends KctView {
+            static get is() {
+                return 'expense-list-page';
+            }
+            static get properties() {
+                return {
+                    columns: { 
+                        type: Array,
+                        value: [
+                            { type: 'rownumber' },
+                            { text: 'Expense No.', dataIndex: 'exp_no', width: 120, align: 'center' },
+                            { text: 'Subject', dataIndex: 'subject_exp' },
+                            { 
+                                text: 'Date Created', 
+                                dataIndex: 'date', 
+                                width: 120,  
+                                align: 'center',
+                                renderer: (e) => {
+                                    return e.data ? e.data.date_short : '';
+                                }
+                            },
+                            { 
+                                text: 'Amounts (IDR)', 
+                                dataIndex: 'amounts', 
+                                align: 'right', 
+                                width: 150,
+                                renderer: (e) => {
+                                    return e.data ? e.data.amounts_formatted : '-';
+                                }
+                            },
+                            { text: 'Status', dataIndex: 'status_name', width: 150 },
+                            { 
+                                text: 'Action',
+                                type: 'action',
+                                width: 300,
+                                renderer: (e) => {
+                                    if (e.data) {
+                                        let status = e.data.status;
+                                        let buttons = `<paper-button on-tap="__onViewTap" class="btn-muted"><iron-icon icon="search"></iron-icon>&nbsp;View</paper-button>`;
+
+                                        if (status == 1 || status == 10) {
+                                            buttons += `
+                                                <paper-button on-tap="__onEditTap" class="btn-amber"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>
+                                                <paper-button on-tap="__onDeleteTap" class="btn-danger"><iron-icon icon="clear"></iron-icon>&nbsp;Delete</paper-button>
+                                            `;
+                                            if (e.data.has_items) {
+                                                buttons += `<paper-button on-tap="__onSubmitTap" class="btn-info"><iron-icon icon="done"></iron-icon>&nbsp;Submit</paper-button>`;
+                                            }
+                                        }
+                                        return buttons;
+                                    }
+                                    return '';
+                                }
+                            }
+                        ]
+                    }
+                };
+            }
+            ready() {
+                super.ready();
+                this.$.grid.context = this;
+            }
+            handleRouteParams(module, action, id) {
+                if (action) return;
+                if ( ! this.$.grid.__loaded) {
+                    this.$.grid.__loaded = true;
+                    this.$.grid.load();
+                }
+            }
+            handleResizing(width, height) {
+                if (this.$.grid) {
+                    this.$.grid.resize();
+                }
+            }
+            __onAddTap() {
+                this.set('route.path', '/expense/expense/add');
+            }
+            __onEditTap(e) {
+                this.set('route.path', '/expense/expense/edit/' + e.data.id_exp);
+            }
+            __onDeleteTap(e) {
+                let data = e.data;
+                if (data.id_exp) {
+                    this.confirm('Confirm', `Are you sure you want to delete ${data.exp_no} ?`).then(b => {
+                        if (b) {
+                            this.$.ajax.DELETE('/expense/' + data.id_exp).then(() => {
+                                this.$.grid.load();
+                            });
+                        }
+                    });    
+                }
+                
+            }
+            __onViewTap(e) {
+                this.set('route.path', '/expense/expense/view/' + e.data.id_exp);
+            }
+            __onSubmitTap(e) {
+                this.confirm('Confirm', 'Are you sure?').then(b => {
+                    if (b) {
+                        this.$.ajax.POST('/expense/' + e.data.id_exp + '/submit').then(() => {
+                            this.$.grid.load();
+                        });
+                    }
+                });   
+            }
+        }
+        customElements.define(ExpenseListPage.is, ExpenseListPage);
+    </script>
+</dom-module>
