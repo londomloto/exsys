@@ -16,7 +16,7 @@
                 let path = (window.location.pathname || '');
                 let info, base;
 
-                if (/\.d/.test(host) || host == 'localhost') {
+                if (/\.([0-9])/.test(host) || host == 'localhost') {
                     info = path.match(/^\/([^/]+)\/([^/]+)/);
                     if (info) {
                         base = '/' + info[1] + '/' + info[2] + (trail ? '/' : '');

@@ -4,21 +4,20 @@
 
 <dom-module id="modules-page">
     <template>
-        <style include="theme-helper"></style>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+            #pages {
+                display: block;
+                height: 100%;
+            }
+        </style>
         
-        <kct-pages selected="{{ page }}" attr-for-selected="name" lazy-load>
-            <modules-index-page 
-                name="index" 
-                route="{{ route }}" 
-                state="[[ state ]]" 
-                height="[[ height ]]"></modules-index-page>
-            <modules-editor-page 
-                name="editor" 
-                route="{{ route }}" 
-                state="[[ state ]]" 
-                height="[[ height ]]"></modules-editor-page>
+        <kct-pages id="pages" selected="{{ page }}" attr-for-selected="name" lazy-load>
+            <modules-index-page name="index" route="{{ route }}" state="[[ state ]]"></modules-index-page>
+            <modules-editor-page name="editor" route="{{ route }}" state="[[ state ]]"></modules-editor-page>
         </kct-pages>
-
         
     </template>
     <script>

@@ -5,19 +5,19 @@
 
 <dom-module id="users-page">
     <template>
-        <style include="theme-helper"></style>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+            #pages {
+                display: block;
+                height: 100%;
+            }
+        </style>
+
         <kct-pages id="pages" selected="[[ page ]]" attr-for-selected="name" lazy-load>
-            <users-index-page  
-                import="users-index-page.html"  
-                name="index"  
-                route="{{ route }}" 
-                state="[[ state ]]" 
-                height="[[ height ]]"></users-index-page>
-            <users-editor-page 
-                import="users-editor-page.html" 
-                name="editor" route="{{ route }}" 
-                state="[[ state ]]" 
-                height="[[ height ]]"></users-add-page>
+            <users-index-page  import="users-index-page.html"  name="index"  route="{{ route }}" state="[[ state ]]"></users-index-page>
+            <users-editor-page import="users-editor-page.html" name="editor" route="{{ route }}" state="[[ state ]]"></users-add-page>
         </kct-pages>
     </template>
     <script>

@@ -15,7 +15,7 @@
     <template>
         <style include="theme-helper">
             :host {
-                height: var(--modules-page-height, 500px);
+                height: 100%;
             }
             .header {
                 background-color: var(--paper-blue-grey-500);
@@ -158,11 +158,6 @@
                     }
                 };
             }
-            static get observers() {
-                return [
-                    '__heightChanged(height)'
-                ];
-            }
             constructor() {
                 super();
                 this.__capabilityAction = null;
@@ -187,11 +182,6 @@
                     this.set('record', {});
                     this.set('capabilities', []);
                 }
-            }
-            __heightChanged(height) {
-                this.updateStyles({
-                    '--modules-page-height': height + 'px'
-                });
             }
             __loadCapabilities() {
                 this.$.ajax.GET('/modules/modules-capabilities?module=' + this.record.sm_id).then((res) => {

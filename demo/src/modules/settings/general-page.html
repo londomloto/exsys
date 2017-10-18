@@ -11,7 +11,8 @@
     <template>
         <style include="theme-helper">
             :host {
-                height: var(--general-page-height, 500px);
+                height: 100%;
+                background-color: var(--paper-grey-100);
             }
         </style>
 
@@ -33,7 +34,7 @@
                             <paper-input label="App Version" value="{{ config.app_version }}"></paper-input>
                             <paper-input label="Description" value="{{ config.app_description }}"></paper-input>
                             <paper-input label="Keywords" value="{{ config.app_keywords }}"></paper-input>
-                            <paper-input label="Author" value="{{ config.app_author }}" readonly></paper-input>
+                            <paper-input label="Author" value="{{ config.app_author }}"></paper-input>
                         </div>
                         <div></div>
                     </kct-column>
@@ -56,8 +57,7 @@
 
             static get observers() {
                 return [
-                    '__configChanged(config.*)',
-                    '__heightChanged(height)'
+                    '__configChanged(config.*)'
                 ];
             }
 
@@ -70,12 +70,6 @@
                 if ( ! this.__reset && changed.path == 'config') {
                     this.__reset = Object.assign({}, this.config);
                 }
-            }
-
-            __heightChanged(height) {
-                this.updateStyles({
-                    '--general-page-height': height + 'px'
-                });
             }
 
             __onSaveTap() {

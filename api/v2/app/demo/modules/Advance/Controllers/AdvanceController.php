@@ -48,13 +48,15 @@ class AdvanceController extends \Micro\Controller {
         $post['adv_no'] = Autonumber::generate('ADVANCE');
         $post['status'] = 1;
         $post['id_user'] = $user['su_id'];
+        $post['amounts'] = 0;
 
         $data = new Advance();
+
         if ($data->save($post)) {
             return Advance::get($data->id_adv);
-        }/* else {
+        } else {
             print_r($data->getMessages());
-        }*/
+        }
 
         return Advance::none();
     }
@@ -65,6 +67,7 @@ class AdvanceController extends \Micro\Controller {
 
         if ($query->data) {
             $query->data->save($post);
+            $query->data->updateAmounts();
         }
 
         return $query;

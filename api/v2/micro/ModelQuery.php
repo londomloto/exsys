@@ -86,6 +86,7 @@ class ModelQuery {
     public function filterable() {
         $request = $this->__di->getRequest();
 
+        // query
         $query = $request->getQuery('query');
         $fields = $request->getQuery('fields');
 
@@ -103,6 +104,22 @@ class ModelQuery {
                 $this->__builder->where('(' . implode(' OR ', $where) . ')', array('q' => '%'.$query.'%'));    
             }
             
+        }
+
+        // params
+        $params = $request->getQuery('params');
+
+        if ( ! empty($params)) {
+            $params = json_decode($params);
+            foreach($params as $key => $val) {
+                if (isset($this->__fields->{$key})) {
+                    
+                    $bind = array();
+                    $bind['param_'.$key] = $val;
+                    
+                    $this->__builder->where("$key = :param_${key}:", $bind);
+                }
+            }
         }
 
         return $this;

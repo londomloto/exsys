@@ -9,7 +9,7 @@
     <template>
         <style include="theme-helper">
             :host {
-                height: var(--autonumber-page-height, 100%);
+                height: 100%;
             }
         </style>
 
@@ -26,7 +26,8 @@
             columns="{{ columns }}" 
             icon="image:filter-5" 
             title="Application" 
-            description="Autonumber Settings"
+            description="Autonumber Settings" 
+            pagination 
             autoload>
 
             <div slot="grid-toolbar">
@@ -74,14 +75,7 @@
                 };
             }
 
-            static get observers() {
-                return [
-                    '__heightChanged(height)'
-                ];
-            }
-
-            __heightChanged(height) {
-                this.updateStyles({ '--autonumber-page-height': height + 'px' });
+            handleResizing(width, height) {
                 if (this.$.grid) {
                     this.$.grid.resize();
                 }

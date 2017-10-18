@@ -16,7 +16,7 @@
     <template>
         <style include="theme-helper">
             :host {
-                height: var(--menus-page-height, 500px);
+                height: 100%;
             }
             .icon-item {
                 display: inline-block;
@@ -184,11 +184,7 @@
                 }
             }
 
-            __heightChanged(height) {
-                this.updateStyles({
-                    '--menus-page-height': height + 'px'
-                }); 
-
+            handleResizing(width, height) {
                 this.$.grid && this.$.grid.resize();
             }
 

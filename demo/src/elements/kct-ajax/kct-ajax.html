@@ -6,10 +6,6 @@
 <link rel="import" href="kct-crypto.html">
 
 <dom-module id="kct-ajax">
-    <template>
-        <iron-ajax id="ajax-web"></iron-ajax>
-        <iron-ajax id="ajax-api"></iron-ajax>
-    </template>
     <script>
 
         class KctAjax extends Mixins(Polymer.Element).use(
@@ -384,7 +380,7 @@
             }
 
             __sendApiRequest(config) {
-                let ajax = this.$['ajax-api'];
+                let xhr = document.createElement('iron-ajax');
                 let d = this._defer();
 
                 config = Object.assign({}, {
@@ -393,21 +389,21 @@
                     handleAs: 'json'
                 }, config || {});
 
-                ajax.url = config.url;
-                ajax.method = config.method;
-                ajax.contentType = config.contentType;
+                xhr.url = config.url;
+                xhr.method = config.method;
+                xhr.contentType = config.contentType;
 
                 if (config.data) {
                     if (config.method == 'GET') {
-                        ajax.params = config.data;
+                        xhr.params = config.data;
                     } else {
-                        ajax.body = config.data;    
+                        xhr.body = config.data;    
                     }
                 }
 
                 if (config.options) {
                     if (config.options.headers) {
-                        ajax.headers = config.options.headers;
+                        xhr.headers = config.options.headers;
                     }
                 }
 
@@ -418,22 +414,25 @@
 
                 this.__resolveToken().then((token) => {
                     if (token) {
-                        ajax.headers = ajax.headers || {};
-                        ajax.headers['Authorization'] = 'Bearer ' + token;
+                        xhr.headers = xhr.headers || {};
+                        xhr.headers['Authorization'] = 'Bearer ' + token;
                     }
 
-                    ajax.generateRequest()
-                        .completes
-                        .then(xhr => {
-                            let response = xhr.response;
+                    let req = xhr.generateRequest();
 
-                            if ( ! this.novalidate) {
-                                this.__validateResponse(response);
-                            }
+                    req.completes.then(() => {
+                        let response = req.response;
 
-                            d.resolve(response);
-                            KctAjax.executeInterceptor('response');
-                        });
+                        if ( ! this.novalidate) {
+                            this.__validateResponse(response);
+                        }
+
+                        d.resolve(response);
+                        KctAjax.executeInterceptor('response');
+
+                        req = null;
+                        xhr = null;
+                    });
                 });
 
                 return d.promise;

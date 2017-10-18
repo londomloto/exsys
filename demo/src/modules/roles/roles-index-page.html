@@ -20,7 +20,7 @@
     <template>
         <style include="theme-helper">
             :host {
-                height: var(--roles-page-height, 500px);
+                height: 100%;
             }
 
             .page-content {
@@ -182,11 +182,6 @@
                     }
                 };
             }
-            static get observers() {
-                return [
-                    '__heightChanged(height)'
-                ];
-            }
             render() { 
                 super.render();
             }
@@ -198,11 +193,6 @@
             }
             __computeDescription(role) {
                 return role.sr_description || 'No description';
-            }
-            __heightChanged(height) {
-                this.updateStyles({
-                    '--roles-page-height': height + 'px'
-                });
             }
             __loadRoles(data = {}) {
                 this.$.ajax1.GET('/roles', data).then(res => {

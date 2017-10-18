@@ -18,7 +18,7 @@
     <template>
         <style include="theme-helper">
             :host {
-                height: var(--users-page-height, 582px);
+                height: 100%;
             }
 
             h3 {
@@ -98,7 +98,6 @@
 
             static get observers() {
                 return [
-                    '__heightChanged(height)',
                     '__thumbChanged(record.su_avatar_thumb)'
                 ];
             }
@@ -125,12 +124,6 @@
             __thumbChanged(thumb) {
                 let icon = thumb ? (thumb + '&w=32&h=32') : null;
                 this.set('__icon', icon);
-            }
-
-            __heightChanged(height) {
-                this.updateStyles({
-                    '--users-page-height': height + 'px'
-                });
             }
 
             __loadRecord(id) {

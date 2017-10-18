@@ -3,10 +3,18 @@
 
 <dom-module id="roles-page">
     <template>
-        <style include="theme-helper"></style>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+            #pages {
+                height: 100%;
+                display: block;
+            }
+        </style>
 
-        <kct-pages selected="[[ page ]]" attr-for-selected="name" lazy-load>
-            <roles-index-page  import="roles-index-page.html"  name="index"  route="{{ route }}" state="[[ state ]]" height="[[ height ]]"></roles-index-page>
+        <kct-pages id="pages" selected="[[ page ]]" attr-for-selected="name" lazy-load>
+            <roles-index-page  import="roles-index-page.html"  name="index"  route="{{ route }}" state="[[ state ]]"></roles-index-page>
         </kct-pages>
     </template>
     <script>

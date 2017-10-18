@@ -72,7 +72,8 @@ class Advance extends \Micro\Model {
         $data['date_start_short'] = date('d/m/Y', strtotime($this->date_start));
         $data['date_end_short'] = date('d/m/Y', strtotime($this->date_end));
         $data['has_items'] = $this->items->count() > 0 ? 1 : 0;
-        $data['amounts'] = 10000000;
+        $data['amounts_formatted'] = number_format($data['amounts'], 2, ',', '.');
+
         if ($this->lastStatus) {
             $data['status_name'] = $this->lastStatus->status_name;
         }
@@ -92,6 +93,18 @@ class Advance extends \Micro\Model {
         }
 
         return $data;
+    }
+
+    public function updateAmounts() {
+        $amounts = 0;
+
+        foreach($this->items as $elem) {
+            $line = $elem->currency_rate * $elem->amounts;
+            $amounts += $line;
+        }
+
+        $this->amounts = $amounts;
+        $this->save();
     }
 
 }

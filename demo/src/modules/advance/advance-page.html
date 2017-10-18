@@ -9,7 +9,12 @@
     <template>
         <style include="theme-helper">
             :host {
+                height: var(--advance-page-height, 584px);
                 display: block;
+            }
+            #pages {
+                display: block;
+                height: 100%;
             }
         </style>
 
@@ -26,7 +31,7 @@
             }
             static get properties() {
                 return {
-                    title: { type: String, value: 'Advance Expense', notify: true },
+                    title: { type: String, value: 'My Advance', notify: true },
                     page: { type: String },
                     width: { type: Number },
                     height: { type: Number }
@@ -41,9 +46,13 @@
                 this.set('width', width);
                 this.set('height', height);
 
+                this.updateStyles({
+                    '--advance-page-height': height + 'px'
+                });
+
                 let pageItem = this.$.pages.selectedItem;
 
-                if (pageItem && pageItem.handleResizing) {
+                if (pageItem) {
                     pageItem.__resized = true;
                     pageItem.handleResizing(width, height);
                 }
@@ -73,7 +82,7 @@
                         
                         pageItem.activate && pageItem.activate();
 
-                        if (pageItem.handleResizing && ! pageItem.__resized) {
+                        if ( ! pageItem.__resized) {
                             pageItem.__resized = true;
                             pageItem.handleResizing(this.width, this.height);
                         }

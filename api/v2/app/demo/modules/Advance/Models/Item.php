@@ -12,6 +12,15 @@ class Item extends \Micro\Model {
                 'alias' => 'Currency'
             )
         );
+
+        $this->belongsTo(
+            'id_adv',
+            'App\Advance\Models\Advance',
+            'id_adv',
+            array(
+                'alias' => 'Advance'
+            )
+        );
     }
 
     public function getSource() {

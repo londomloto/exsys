@@ -6,12 +6,19 @@
 <dom-module id="settings-page">
     <template>
         <style>
-            :host { display: block;  }    
+            :host { 
+                display: block; 
+                height: var(--settings-page-height, 584px);
+            }
+            #pages {
+                display: block;
+                height: 100%;
+            }
         </style>
 
         <kct-pages id="pages" selected="[[ page ]]" attr-for-selected="name" on-itemactivate="__onPageActivate">
-            <settings-index-page name="index" route="{{ route }}" height="[[ height ]]" state="[[ state ]]" user="[[ user ]]"></settings-index-page>
-            <settings-group-page name="group" route="{{ route }}" width="[[ width ]]" height="[[ height ]]" config="{{ config }}" state="[[ state ]]" user="[[ user ]]"></settings-group-page>
+            <settings-index-page name="index" route="{{ route }}" state="[[ state ]]" user="[[ user ]]"></settings-index-page>
+            <settings-group-page name="group" route="{{ route }}" config="{{ config }}" state="[[ state ]]" user="[[ user ]]"></settings-group-page>
         </kct-pages>
 
     </template>
@@ -40,6 +47,16 @@
             handleResizing(width, height) {
                 this.set('height', height);
                 this.set('width', width);
+
+                this.updateStyles({
+                    '--settings-page-height': height + 'px'
+                });
+
+                let pageItem = this.$.pages.selectedItem;
+
+                if (pageItem) {
+                    pageItem.handleResizing(width, height);
+                }
             }
 
             __stateChanged(changed) {

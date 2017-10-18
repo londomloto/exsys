@@ -69,6 +69,7 @@
                 font-size: 0.7rem;
             }
             .ag-material .ag-cell-action paper-button iron-icon {
+                pointer-events: none;
                 --iron-icon-width: 16px;
                 --iron-icon-height: 16px;
             }
@@ -407,7 +408,7 @@
                 <ag-grid-polymer id="grid" class="ag-material"></ag-grid-polymer>
             </div>
 
-            <div class="grid-panel-footer">
+            <div class="grid-panel-footer" hidden$="[[ hideFooter ]]">
                 <kct-hbox>
                     <div class="flex">
                         <div class="grid-statusbar">
@@ -477,6 +478,7 @@
                         params: { type: Object, notify: true, value: () => ({}) },
                         data: { type: Array, notify: true, value: () => ([]) },
                         selectionModel: { type: String, notify: true, value: 'checkbox' },
+                        pagination: { type: Boolean, value: false },
                         pageSize: { type: Number, notify: true, value: 25 },
                         page: { type: Number },
                         selection: { type: Array, notify: true, value: () => ([]) },
@@ -492,6 +494,7 @@
                         icon: { type: String, value: 'view-column' },
                         searchFields: { type: Array, value: () => ([]) },
 
+
                         __extraClass: {
                             type: String,
                             computed: '__computeExtraClass(extraSize)'
@@ -503,7 +506,8 @@
                     return [
                         '__dependenciesChanged(url, params.*)',
                         '__paramsChanged(params.*)',
-                        '__pageSizeChanged(pageSize)'
+                        '__pageSizeChanged(pageSize)',
+                        '__paginationChanged(pagination)'
                     ];
                 }
 
@@ -596,7 +600,7 @@
                         headerHeight: 36,
                         enableColResize: true,
                         enableSorting: true,
-                        pagination: true,
+                        pagination: this.pagination,
                         paginationPageSize: this.pageSize,
                         suppressPaginationPanel: true,
                         cacheBlockSize: this.pageSize,
@@ -789,6 +793,13 @@
 
                 __dependenciesChanged(url, params) {
                     this.__wait.resolve();
+                }
+
+                __paginationChanged(pagination) {
+                    if ( ! pagination) {
+                        this.set('hideFooter', true);
+                        this.set('pageSize', 1000);
+                    }
                 }
 
                 __computeSelection() {

@@ -10,7 +10,7 @@
     <template>
         <style include="theme-helper">
             :host {
-                height: var(--modules-page-height, 500px);
+                height: 100%;
             }
             .box-tool {
                 font-size: 12px;
@@ -93,11 +93,6 @@
                     records: { type: Array, value: () => [] }
                 };
             }
-            static get observers() {
-                return [
-                    '__heightChanged(height)'
-                ];
-            }
             static get colors() {
                 return [
                     'paper-red',
@@ -125,11 +120,6 @@
             __loadRecords() {
                 this.$.ajax.GET('/modules').then((res) => {
                     this.set('records', res.data);
-                });
-            }
-            __heightChanged(height) {
-                this.updateStyles({
-                    '--modules-page-height': height + 'px'
                 });
             }
             __computeStyle(index) {

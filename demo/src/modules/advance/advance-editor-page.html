@@ -11,13 +11,14 @@
 <link rel="import" href="../../elements/kct-dialog/kct-dialog.html">
 <link rel="import" href="../../elements/kct-pages/kct-pages.html">
 <link rel="import" href="../../elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../elements/kct-layouts/kct-hbox.html">
 <link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
 
 <dom-module id="advance-editor-page">
     <template>
         <style include="theme-helper">
             :host {
-                height: var(--advance-editor-page-height, 500px);
+                height: 100%;
                 background-color: var(--paper-grey-100);
             }
             [hidden] {
@@ -28,26 +29,28 @@
             }
         </style> 
 
-        <kct-ajax id="ajax1"></kct-ajax>
-        <kct-ajax id="ajax2"></kct-ajax>
-        <kct-ajax id="ajax3"></kct-ajax>
+        <kct-ajax id="ajax"></kct-ajax>
 
         <kct-vbox>
+            
             <page-header-block title="EDITOR" description="Advance Request" icon="description">
-                <paper-button hidden="[[ record.id_adv ]]"  disabled="[[ __invalid ]]" class="btn-primary" on-tap="__onNextTap" slot="secondary-toolbar">Next&nbsp;<iron-icon icon="arrow-forward"></iron-icon></paper-button>
+                <paper-button hidden="[[ ! record.id_adv ]]"  disabled="[[ __invalid ]]" class="btn-primary" on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Save Changes</paper-button>
             </page-header-block>
+
             <div class="flex scroll-y padding">
 
                 <paper-card class="block">
                     <div class="card-content">
                         <h3 class="block-title">Advance Summary</h3>
+                        
                         <paper-input label="Subject *" value="{{ record.subject_adv }}" required auto-validate></paper-input>
+                        
                         <kct-hbox>
                             <div class="flex p-r-sm">
-                                <vaadin-date-picker label="Start Date *" value="{{ record.date_start }}"></vaadin-date-picker>
+                                <vaadin-date-picker label="Start Date *" value="{{ record.date_start }}" required auto-validate></vaadin-date-picker>
                             </div>
                             <div class="flex p-l-sm">
-                                <vaadin-date-picker label="End Date *" value="{{ record.date_end }}"></vaadin-date-picker>
+                                <vaadin-date-picker label="End Date *" value="{{ record.date_end }}" required auto-validate></vaadin-date-picker>
                             </div>
                         </kct-hbox>
                             
@@ -60,21 +63,32 @@
                             on-change="__onTypeChange" 
                             required 
                             auto-validate></vaadin-combo-box>
+
                         <vaadin-combo-box 
                             label="Purpose *" 
                             value="{{ record.purpose }}" 
                             items="[[ __purposes ]]" 
                             item-value-path="type_id" 
                             item-label-path="type_name" 
-                            hidden="[[ !__purposes.length ]]"></vaadin-combo-box>
+                            hidden="[[ !__purposes.length ]]" 
+                            required 
+                            auto-validate ></vaadin-combo-box>
 
-                        <paper-input label="Purpose *" value="{{ record.other_purpose }}" hidden="[[ __purposes.length ]]"></paper-input>
+                        <paper-input label="Purpose *" value="{{ record.other_purpose }}" hidden="[[ __purposes.length ]]" required auto-validate></paper-input>
 
                         <kct-file-input label="Attachment" value="{{ record.attachment }}" file="{{ attachment }}"></kct-file-input>
-
-                        <div class="m-t">
-                            <p class="text-muted">*) required field</p>
+                        
+                        <div class="m-t" hidden="[[ record.id_adv ]]">
+                            <kct-hbox>
+                                <div class="flex">
+                                    <paper-button class="btn-md btn-blue-grey" on-tap="__onBackTap"><iron-icon icon="arrow-back"></iron-icon>&nbsp;Back To List</paper-button>
+                                </div>
+                                <div class="flex text-right">
+                                    <paper-button class="btn-md btn-primary" on-tap="__onNextTap" disabled$="[[ __invalid ]]">Continue&nbsp;<iron-icon icon="arrow-forward"></iron-icon></paper-button>
+                                </div>
+                            </kct-hbox>
                         </div>
+
                     </div>
                     
                 </paper-card>
@@ -82,9 +96,8 @@
                 <paper-card class="block" hidden="[[ ! record.id_adv ]]">
                     <div class="card-content">
                         <h3 class="block-title">Advance Items</h3>
-                        
-                        <div class="card-toolbar">
-                            <paper-fab on-tap="__onAddItemTap"  class="fab-primary" icon="add" title="Add item" mini></paper-fab>
+                        <div class="m-b">
+                            <paper-button on-tap="__onAddItemTap" class="btn-sm btn-primary"><iron-icon icon="add"></iron-icon>&nbsp;Add Item</paper-button>
                         </div>
                         <table class="striped">
                             <thead>
@@ -111,6 +124,7 @@
                                 </template>
                             </tbody>
                         </table>
+                        
                     </div>
                     
                 </paper-card>
@@ -118,7 +132,7 @@
             </div>
         </kct-vbox>
 
-        <div class="page-actions">
+        <div class="page-actions" hidden="[[ !record.id_adv ]]">
             <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to list" on-tap="__onBackTap"></paper-fab>
         </div>
 
@@ -131,8 +145,9 @@
                         value="{{ item.currency_id }}"
                         items="[[ currencies ]]" 
                         item-value-path="currency_id" 
-                        item-label-path="currency_name"></vaadin-combo-box>
-                    <paper-input label="Amounts" value="{{ item.amounts }}"></paper-input>
+                        item-label-path="currency_name" 
+                        on-change="__onCurrencyChange"></vaadin-combo-box>
+                    <paper-input allowed-pattern="[0-9.]" label="Amounts" value="{{ item.amounts }}"></paper-input>
                 </div>
                 <div slot="dialog-footer">
                     <paper-button on-tap="__onItemEditorSaveTap">Save</paper-button>
@@ -167,29 +182,24 @@
                 this.__purposes = [];
                 this.__invalid = false;
             }
-            ready() {
-                super.ready();
-            }
-            handleResizing(width, height) {
-                this.updateStyles({'--advance-editor-page-height': height + 'px'});
-            }
             handleRouteParams(module, action, id) {
                 if (['add', 'edit'].indexOf(action) == -1) return;
+
+                this.set('items', []);
+                this.set('record', {});
 
                 if (action == 'edit') {
                     this.mask('Loading...')
 
                     this.__loadReferences().then(() => {
-                        this.$.ajax1.GET('/advance/' + id).then(res => {
+                        this.$.ajax.GET('/advance/' + id).then(res => {
                             this.set('record', res.data);
                             this.__loadItems();
-                            
                             this.unmask();
                         });
                     });
                 } else {
-                    this.__loadReferences();    
-                    this.set('record', {});
+                    this.__loadReferences();
                 }
             }
             __computeNo(index) {
@@ -197,14 +207,14 @@
             }
             __loadReferences() {
 
-                return this.$.ajax2.GET('/types').then(res => {
+                return this.$.ajax.GET('/types').then(res => {
                     this.set('types', res.data);
 
-                    this.$.ajax2.GET('/currencies').then(res => {
+                    this.$.ajax.GET('/currencies').then(res => {
                         this.set('currencies', res.data);
                     });
 
-                    return this.$.ajax3.GET('/types/purposes').then(res => {
+                    return this.$.ajax.GET('/types/purposes').then(res => {
                         this.set('purposes', res.data);
                         this.set('__purposes', res.data);
                     });
@@ -215,17 +225,18 @@
                     return;
                 }
 
-                this.$.ajax3.GET('/advance/items', { advance: this.record.id_adv }).then(res => {
+                this.$.ajax.GET('/advance/items', { advance: this.record.id_adv }).then(res => {
                     this.set('items', res.data);
                 });
             }
-            __onNextTap() {
+            __saveChanges() {
+                let def = this._defer();
                 let data = this.record;
 
                 if (data.id_adv) {
-                    this.$.ajax1.PUT('/advance/' + data.id_adv, data).then(done.bind(this));
+                    this.$.ajax.PUT('/advance/' + data.id_adv, data).then(done.bind(this));
                 } else {
-                    this.$.ajax1.POST('/advance', data).then(done.bind(this));
+                    this.$.ajax.POST('/advance', data).then(done.bind(this));
                 }
 
                 function done(res) {
@@ -235,25 +246,41 @@
                         this.set('record.id_adv', id);
 
                         if (this.attachment) {
-                            this.$.ajax1.UPLOAD('/advance/' + id + '/upload', {
+                            this.$.ajax.UPLOAD('/advance/' + id + '/upload', {
                                 files: [
                                     { name: this.attachment.name, file: this.attachment }
                                 ]
                             }).then(() => {
-                                // this.toast('Success', 'Data has been saved');
+                                def.resolve();
                             });
                         } else {
-                            // this.toast('Success', 'Data has been saved');
+                            def.resolve();
                         }
                     }
                 }
+                return def.promise;
+            }
+            __onSaveTap() {
+                this.__saveChanges().then(() => {
+                    this.toast('Success', 'Data has been saved');
+                });
+            }
+            __onNextTap() {
+                this.__saveChanges();
             }
             __recordChanged() {
                 let valid = true;
                 
                 valid = valid && this.record.subject_adv;
+                valid = valid && this.record.date_start;
+                valid = valid && this.record.date_end;
                 valid = valid && this.record.type;
-                valid = valid && this.record.purpose;
+
+                if (this.__purposes.length) {
+                    valid = valid && this.record.purpose;    
+                } else {
+                    valid = valid && this.record.other_purpose;
+                }
 
                 this.set('__invalid', ! valid);
             }
@@ -277,9 +304,17 @@
                 let data = this.item;
                 data.id_adv = this.record.id_adv;
 
-                this.$.ajax3.POST('/advance/items', data).then(() => {
-                    this.__loadItems();
-                });
+                if (data.advance_item_id) {
+                    this.$.ajax.PUT('/advance/items/' + data.advance_item_id, data).then(done.bind(this));
+                } else {
+                    this.$.ajax.POST('/advance/items', data).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.__loadItems();
+                    }
+                }
             }
             __onItemEditorCancelTap() {
                 this.$['item-editor'].close();   
@@ -293,11 +328,21 @@
                 let item = e.model.item;
                 this.confirm('Confirm', `Are you sure you want to delete ${item.description} ?`).then(b => {
                     if (b) {
-                        this.$.ajax3.DELETE('/advance/items/' + item.advance_item_id).then(() => {
+                        this.$.ajax.DELETE('/advance/items/' + item.advance_item_id).then(() => {
                             this.__loadItems();
                         });
                     }
                 });    
+            }
+            __onCurrencyChange(e) {
+                let id = e.target.value;
+                this.set('item.currency_rate', 1);
+                if (id) {
+                    let currency = (this.currencies || []).find(c => c.currency_id == id);
+                    if (currency) {
+                        this.set('item.currency_rate', currency.currency_rate);
+                    }
+                }
             }
             __onBackTap() {
                 this.set('route.path', '/advance');

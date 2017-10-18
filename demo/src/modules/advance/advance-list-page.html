@@ -8,7 +8,7 @@
         
         <style include="theme-helper">
             :host {
-                height: var(--advance-list-page-height, 600px);
+                height: 100%;
             }
 
         </style>
@@ -23,7 +23,7 @@
             title="DATASHEET" 
             description="List of Expense" 
             selection-model="cell" 
-            autoload>
+            pagination>
 
                 <template preserve-content>
                     <style include="theme-helper"></style>
@@ -56,7 +56,16 @@
                                     return e.data ? e.data.date_short : '';
                                 }
                             },
-                            { text: 'Status', dataIndex: 'status_name' },
+                            { 
+                                text: 'Amounts (IDR)', 
+                                dataIndex: 'amounts', 
+                                align: 'right', 
+                                width: 150,
+                                renderer: (e) => {
+                                    return e.data ? e.data.amounts_formatted : '-';
+                                }
+                            },
+                            { text: 'Status', dataIndex: 'status_name', width: 150 },
                             { 
                                 text: 'Action',
                                 type: 'action',
@@ -88,8 +97,15 @@
                 super.ready();
                 this.$.grid.context = this;
             }
+            handleRouteParams(module, action, id) {
+                if (action) return;
+                
+                if ( ! this.$.grid.__loaded) {
+                    this.$.grid.__loaded = true;
+                    this.$.grid.load();
+                }
+            }
             handleResizing(width, height) {
-                this.updateStyles({'--advance-list-page-height': height + 'px'});
                 if (this.$.grid) {
                     this.$.grid.resize();    
                 }

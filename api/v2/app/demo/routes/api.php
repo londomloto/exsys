@@ -51,22 +51,3 @@ Router::group(array(
     'middleware' => 'auth'
 ))
 ->post('/{id}/upload', 'upload');
-
-/**
- * module: products
- */
-Router::group(array(
-    'prefix' => '/products',
-    'handler' => 'App\Products\Controllers\ProductsController',
-    'middleware' => 'auth'
-))
-->get('/services', 'services');
-
-/**
- * module: kanban
- */
-Router::group(array(
-    'prefix' => '/kanban',
-    'handler' => 'App\Kanban\Controllers\KanbanController',
-))
-->post('/comment', 'comment');

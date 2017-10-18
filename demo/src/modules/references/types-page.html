@@ -83,10 +83,7 @@
                                 type: 'action',
                                 renderer: (e) => {
                                     if (e.data) {
-                                        return `
-                                            <paper-button on-tap="__onEditTap" class="btn-amber"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>
-                                            <paper-button on-tap="__onDeleteTap" class="btn-danger"><iron-icon icon="close"></iron-icon>&nbsp;Delete</paper-button>
-                                        `;
+                                        return `<paper-button on-tap="__onEditTap" class="btn-amber"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>`;
                                     }
                                     return '';
                                 }

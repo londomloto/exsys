@@ -11,7 +11,7 @@
     <template>
         <style include="theme-helper">
             :host {
-                height: var(--advance-history-page-height, 500px);
+                height: 100%;
                 background-color: var(--paper-grey-100);
             }
         </style>
@@ -131,15 +131,8 @@
                     record: { type: Object }
                 };
             }
-            ready() {
-                super.ready();
-            }
-            handleResizing(width, height) {
-                this.updateStyles({'--advance-history-page-height': height + 'px'});
-            }
             handleRouteParams(module, action, id) {
                 if (action != 'view') return;
-
                 this.mask('Loading...');
                 this.$.ajax.GET('/advance/' + id + '/view').then(res => {
                     this.set('record', res.data);

@@ -14,7 +14,7 @@
     <template>
         <style include="theme-helper">
             :host {
-                height: var(--users-page-height, 500px);
+                height: 100%;
             }
             .page-content {
                 background-color: var(--paper-grey-100);
@@ -185,12 +185,6 @@
                 }
             }
 
-            static get observers() {
-                return [
-                    '__heightChanged(height)'
-                ];
-            }
-
             constructor() {
                 super();
                 this.__selectedUser = null;
@@ -204,12 +198,6 @@
                 if (setting == 'users' && ! action) {
                     this.__loadUsers();
                 }
-            }
-
-            __heightChanged(height) {
-                this.updateStyles({
-                    '--users-page-height': height + 'px'
-                });
             }
 
             __loadUsers(data = {}) {

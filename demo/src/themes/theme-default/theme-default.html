@@ -7,15 +7,13 @@
 <link rel="import" href="../../../bower_components/iron-icons/communication-icons.html">
 <link rel="import" href="../../../bower_components/iron-icons/av-icons.html">
 <link rel="import" href="../../../bower_components/iron-icons/editor-icons.html">
-<!-- <link rel="import" href="../../../bower_components/font-roboto-local/roboto.html"> -->
 <link rel="import" href="../../../bower_components/paper-styles/paper-styles.html">
-<link rel="import" href="../../fonts/font-montserrat/font-montserrat.html">
 
 <custom-style>
     <style>
         html {
-
-            --app-font-family: /*'Segoe UI', Montserrat,  */Roboto, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            
+            --app-font-family: /*'Segoe UI', */Roboto, 'Helvetica Neue', Helvetica, Arial, sans-serif;
 
             --app-primary-toolbar: {
                 background-color:  #fff;
@@ -83,7 +81,7 @@
                 line-height: 25px;
             };
             --paper-input-container-invalid-color: var(--app-danger);
-            --paper-input-container-input: { font-weight: 400; };
+            --paper-input-container-input: { font-size: 15px; font-weight: 400; };
             --paper-input-container-label: { 
                 color: var(--secondary-text-color); 
                 font-weight: 400;
@@ -388,6 +386,7 @@
 
             /** vaadin-date-picker */
             vaadin-date-picker {
+                padding-top: 8px;
                 width: 100%;
                 --material-subhead-font-size: 15px;
                 ---material-text-field-input-line-background-color: var(--paper-grey-300);
@@ -401,7 +400,12 @@
 
             .radio-group {
                 border-bottom: 1px solid var(--paper-grey-300);
-                padding: 4px 0;
+                padding: 12px 0 0 0;
+            }
+
+            .radio-group label {
+                color: var(--secondary-text-color); 
+                font-size: 15px;
             }
 
             page-header-block vaadin-combo-box,
@@ -592,13 +596,13 @@
 
             paper-card.block .block-title {
                 font-size: 18px;
-                font-weight: 300;
+                font-weight: 400;
                 margin-bottom: 1rem;
-                border-bottom: 1px solid var(--paper-grey-100);
+                border-bottom: 1px solid var(--app-primary);
                 padding-bottom: 8px;
                 /*border-bottom: 1px solid var(--paper-grey-200);*/
                 /*padding: 0 0 8px 0;*/
-                color: var(--paper-green-500);
+                color: var(--app-primary);
             }
 
             .display-field {
@@ -613,7 +617,7 @@
             .display-field > label {
                 font-weight: 500;
                 display: inline-block;
-                width: 100px;
+                width: 120px;
             }
 
             /** table */
@@ -662,10 +666,18 @@
                 padding: 8px 5px;
                 display:table-cell;
                 text-align:left;
-                vertical-align:middle;
-                border-radius: 2px;
+                vertical-align:top;
             }
-
+            tr.group-row {
+                background-color:#f4f4f4;
+            }
+            tr.group-row td {
+                /*font-weight: 500;*/
+            }
+            tr.group-row td iron-icon {
+                position: relative;
+                top: -1px;
+            }
         </style>
     </template>
 </dom-module>

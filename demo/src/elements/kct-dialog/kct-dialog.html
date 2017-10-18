@@ -33,6 +33,12 @@
                 overflow-y: auto;
             }
 
+            .dialog-body::-webkit-scrollbar { -webkit-appearance: none; }
+            .dialog-body::-webkit-scrollbar:vertical { width: 8px; }
+            .dialog-body::-webkit-scrollbar:horizontal { height: 8px; }
+            .dialog-body::-webkit-scrollbar-thumb { background-color: rgba(0, 0, 0, .3); }
+            .dialog-body::-webkit-scrollbar-track { background-color: rgba(0, 0, 0, .2); }
+
             .dialog-footer {
                 background-color: var(--app-primary);
                 padding: 8px;

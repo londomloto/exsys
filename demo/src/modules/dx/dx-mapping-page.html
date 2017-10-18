@@ -20,8 +20,7 @@
             }
         </style>
 
-        <kct-ajax id="ajax1"></kct-ajax>
-        <kct-ajax id="ajax2"></kct-ajax>
+        <kct-ajax id="ajax"></kct-ajax>
 
         <div class="page-actions">
             <paper-fab class="fab-raised fab-blue" icon="reply" title="Back to setting" on-tap="__onBackTap"></paper-fab>
@@ -134,7 +133,7 @@
                 this.__loadProfiles();
             }
             __loadProfiles() {
-                this.$.ajax2.GET('/dx/profiles').then((r) => {
+                this.$.ajax.GET('/dx/profiles').then((r) => {
                     this.set('profiles', r.data);
                 });
             }
@@ -191,7 +190,7 @@
             }
             __onEditorSubmitTap() {
                 let data = this.selected,
-                    ajax = this.$.ajax1;
+                    ajax = this.$.ajax;
 
                 data.map_profile_id = this.profile.profile_id;
 

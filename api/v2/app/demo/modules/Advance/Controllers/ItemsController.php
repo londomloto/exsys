@@ -24,6 +24,10 @@ class ItemsController extends \Micro\Controller {
         $post = $this->request->getJson();
         $data = new Item();
         if ($data->save($post)) {
+            if ($data->advance) {
+                $data->advance->updateAmounts();
+            }
+
             return Item::get($data->advance_item_id);
         }
         return Item::none();
@@ -34,7 +38,11 @@ class ItemsController extends \Micro\Controller {
         $query = Item::get($id);
 
         if ($query->data) {
-            $query->data->save($post);
+            if ($query->data->save($post)) {
+                if ($query->data->advance) {
+                    $query->data->advance->updateAmounts();
+                }
+            }
         }
 
         return $query;
@@ -44,7 +52,12 @@ class ItemsController extends \Micro\Controller {
         $query = Item::get($id);
 
         if ($query->data) {
-            $query->data->delete();
+            $advance = $query->data->advance;
+            if ($query->data->delete()) {
+                if ($advance) {
+                    $advance->updateAmounts();
+                }
+            }
         }
 
         return array('success' => TRUE);
