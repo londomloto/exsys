@@ -19,14 +19,23 @@
             paper-icon-button {
                 color: var(--paper-blue-grey-500);
             }
+            .message {
+                position: relative;
+                top: -8px;
+                color: var(--paper-input-container-invalid-color, var(--error-color));
+            }
+            [hidden] {
+                display: none;
+            }
         </style>
-        <paper-dropdown-menu label="[[ label ]]" on-opened-changed="__onOpenToggle">
+        <paper-dropdown-menu label="[[ label ]]" on-opened-changed="__onOpenToggle" invalid$="[[ invalid ]]">
             <paper-listbox class="dropdown-content" attr-for-selected="icon" selected="{{ value }}" slot="dropdown-content">
                 <template is="dom-repeat" items="{{ __icons }}">
                     <paper-icon-button icon="[[ item ]]">[[ item ]]</paper-icon-button>
                 </template> 
             </paper-listbox>
-        </paper-dropdown-menu>        
+        </paper-dropdown-menu>
+        <div class="message" hidden$="[[ !invalid ]]">[[ errorMessage ]]</div>
     </template>
     <script>
         class KctIconPicker extends Polymer.Element {
@@ -36,7 +45,11 @@
             static get properties() {
                 return {
                     label: { type: String, value: 'Icon', reflectToAttribute: true },
-                    value: { type: String, value: '', notify: true }
+                    value: { type: String, value: '', notify: true },
+                    invalid: { type: Boolean, value: false, notify: true, reflectToAttribute: true },
+                    required: { type: Boolean, value: false, notify: true, reflectToAttribute: true },
+                    autoValidate: { type: Boolean, value: false },
+                    errorMessage: { type: String }
                 }
             }
             static get observers() {
@@ -75,9 +88,19 @@
 
                 this.__contentResized = false;
             }
+            validate() {
+                let valid = true;
+                if (this.required) {
+                    valid = !!this.value;
+                }
+                this.set('invalid', !valid);
+            }
             __valueChanged(value) {
                 if (value && this.__icons.indexOf(value) === -1) {
                     this.push('__icons', value);
+                }
+                if (this.autoValidate) {
+                    this.validate();
                 }
             }
             __onOpenToggle(e) {
