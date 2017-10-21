@@ -1,0 +1,58 @@
+<dom-module id="kct-network">
+    <script>
+        class KctNetwork extends Polymer.Element {
+            static get is() {
+                return 'kct-network';
+            }
+            static get properties() {
+                return {
+                    state: { type: String }
+                };
+            }
+            constructor() {
+                super();
+            }
+            ready() {
+                super.ready();
+                this._ensureAttribute('hidden', true);
+            }
+            connectedCallback() {
+                super.connectedCallback();
+                this.check();
+
+                // use push
+                // setInterval(() => {
+                //     this.check();
+                // }, 5000);
+            }
+            check() {
+                let xhr = new XMLHttpRequest();
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState != 4) {
+                        return;
+                    }
+
+                    if (xhr.status === 200) {
+                        this.set('state', 'online');
+                        this.__fireEvent();
+                    } else {
+                        this.set('state', 'offline');
+                        this.__fireEvent();
+                    }
+                }.bind(this);
+
+                xhr.open('GET', 'http://127.0.0.1/exsys/api/v2/demo');
+                xhr.send();
+            }
+            __fireEvent() {
+                let event = new CustomEvent('state-change', {
+                    detail: {
+                        state: this.state
+                    }
+                });
+                this.dispatchEvent(event);
+            }
+        }
+        customElements.define(KctNetwork.is, KctNetwork);
+    </script>
+</dom-module>
