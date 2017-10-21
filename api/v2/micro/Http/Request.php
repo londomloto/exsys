@@ -12,7 +12,7 @@ class Request extends \Phalcon\Http\Request {
 
     public function getJson($field = NULL, $filters = NULL) {
         $json = $this->getJsonRawBody(TRUE);
-
+        
         if (is_null($field)) {
             return $json;
         }

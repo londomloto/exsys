@@ -1,8 +1,15 @@
 <link rel="import" href="../../../bower_components/paper-fab/paper-fab.html">
 <link rel="import" href="../../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../bower_components/vaadin-combo-box/vaadin-combo-box.html">
 <link rel="import" href="../../elements/kct-view/kct-view.html">
 <link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../../elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../elements/kct-chip/kct-chip.html">
 <link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
 
 <dom-module id="items-forms-page">
@@ -12,23 +19,144 @@
                 height: 100%;
                 background-color: var(--paper-grey-100);
             }
-            .form-item {
-                display: block;
-                width: 100%;
-                margin-bottom: 1rem;
+            .column-header {
+                padding: 8px 0;
+                font-weight: 500;
+                text-decoration: underline;
+            }
+            .prop {
+                padding: 8px 0;
+                @apply --layout-horizontal
+            }
+            .prop > * {
+                @apply --layout-flex;
+            }
+            .prop + .prop {
+                border-top: 1px solid #dfdfdf;
+            }
+            .prop .value {
+                text-align: right;
+            }
+            [hidden] {
+                display: none;
+            }
+            /*.card-actions {
+                position: absolute;
+                right: 40px;
+                top: 32px;
+            }*/
+            /*.card-actions paper-fab {
+                display: inline-block;
+                margin-left: 3px;
+            }*/
+            ul {
+                margin: 0;
+                padding-left: 0;
+                list-style-type: none;
+            }
+            ul li {
+                padding: 8px 0;
+            }
+            .btn-delete {
+                padding: 4px;
+                width: 28px;
+                height: 28px;
             }
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
 
         <kct-vbox>
-            <page-header-block icon="code" description="Dynamic Form"></page-header-block>
+            <page-header-block icon="code" description="Dynamic Form Setup">
+                <paper-button on-tap="__onAddFormTap" class="btn-primary"><iron-icon icon="add"></iron-icon>&nbsp;Add Dynamic</paper-button>
+            </page-header-block>
             <div class="flex scroll-y padding">
+                <paper-card class="block">
+                    <div class="card-content">
+                        <h3 class="block-title">Expense Item</h3>
+                        <kct-column columns="2">
+                            <div>
+                                <div class="display-field">
+                                    <label>Catagory:</label>
+                                    <div>[[ record.item_parent_name ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Item Name:</label>
+                                    <div>[[ record.item_name ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Account:</label>
+                                    <div>[[ record.coa ]]</div>
+                                </div>
+                            </div>
+                            <div>
+                                
+                            </div>
+                        </kct-column>
+                    </div>
+                </paper-card>
                 
-                <template is="dom-repeat" items="[[ record.item_forms ]]">
-                    <paper-card class="form-item">
+                <template is="dom-repeat" items="[[ forms ]]">
+                    <paper-card class="block">
                         <div class="card-content">
-                            <h3>[[ item.item_form_label ]]</h3>
+                            <h3 class="block-title">[[ item.item_form_label ]]</h3>
+                            <!-- <div class="card-actions">
+                                <paper-fab on-tap="__onEditFormTap" class="fab-amber" icon="image:edit" mini></paper-fab>
+                                <paper-fab on-tap="__onDeleteFormTap" class="fab-red" icon="close" mini></paper-fab>
+                            </div> -->
+                            <kct-column columns="2">
+                                <div>
+                                    <div class="p-r">
+                                        <div class="prop">
+                                            <div class="label">Field Label</div>
+                                            <div class="value">[[ item.item_form_label ]]</div>
+                                        </div>
+                                        <div class="prop">
+                                            <div class="label">Data Type</div>
+                                            <div class="value">[[ item.item_form_type ]]</div>
+                                        </div>
+                                        <div class="prop">
+                                            <div class="label">Input Editor</div>
+                                            <div class="value">[[ item.item_form_editor ]]</div>
+                                        </div>
+                                        <div class="prop">
+                                            <div class="label">Position</div>
+                                            <div class="value">[[ item.index ]]</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div hidden$="[[ ! item.hasOptions ]]" class="p-l-sm">
+                                        
+                                        <table>
+                                            <thead>
+                                                <tr>
+                                                    <th width="60">Value</th>
+                                                    <th>Label</th>
+                                                    <th width="150"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <template is="dom-repeat" items="[[ item.option ]]" as="elem">
+                                                    <tr>
+                                                        <td>[[ elem.value ]]</td>
+                                                        <td>[[ elem.text ]]</td>
+                                                        <td class="text-right">
+                                                            <paper-button on-tap="__onEditOptionTap" class="btn-xs btn-amber">Edit</paper-button> 
+                                                            <paper-button on-tap="__onDeleteOptionTap" class="btn-xs btn-danger">Delete</paper-button>
+                                                        </td>
+                                                    </tr>
+                                                </template>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </kct-column>
+                        </div>
+                        <div class="card-actions text-center p-a-sm">
+                            <paper-button on-tap="__onEditFormTap" class="btn-sm btn-amber">Edit</paper-button>
+                            <paper-button on-tap="__onAddOptionTap" class="btn-sm btn-primary" hidden$="[[ ! item.hasOptions ]]">Add Option</paper-button> 
+                            <paper-button on-tap="__onDeleteFormTap" class="btn-sm btn-danger">Delete</paper-button>
                         </div>
                     </paper-card>
                 </template>
@@ -40,6 +168,47 @@
             <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to Setting" on-tap="__onBackTap"></paper-fab>
         </div>
 
+        <kct-dialog id="form-editor" title="Form Editor" width="400" height="100%">
+            <template preserve-content>
+                <div slot="dialog-body">
+                    <paper-input label="Label" value="{{ selectedForm.item_form_label }}"></paper-input>
+
+                    <vaadin-combo-box 
+                        label="Data Type" 
+                        value="{{ selectedForm.item_form_type }}"
+                        items="[[ __types ]]" 
+                        item-value-path="value" 
+                        item-label-path="label"></vaadin-combo-box>
+
+                    <vaadin-combo-box 
+                        label="Editor" 
+                        value="{{ selectedForm.item_form_editor }}"
+                        items="[[ __editors ]]" 
+                        item-value-path="value" 
+                        item-label-path="label"></vaadin-combo-box>
+
+                    <paper-input allowed-pattern="[0-9]" label="Position" value="{{ selectedForm.index }}"></paper-input>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onFormEditorSaveTap">Save</paper-button>
+                    <paper-button on-tap="__onFormEditorCancelTap">Cancel</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+        <kct-dialog id="option-editor" title="Option Editor" width="400" height="100%">
+            <template preserve-content>
+                <div slot="dialog-body">
+                    <paper-input label="Option Value" value="{{ selectedOption.value }}" required auto-validate error-message="Option value is required"></paper-input>
+                    <paper-input label="Option Label" value="{{ selectedOption.text }}" required auto-validate error-message="Option label is required"></paper-input>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onOptionEditorSaveTap" disabled$="[[ __invalidOption ]]">Save</paper-button>
+                    <paper-button on-tap="__onOptionEditorCancelTap">Cancel</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
     </template>
     <script>
         class ItemsFormsPage extends KctView {
@@ -48,11 +217,168 @@
             }
             static get properties() {
                 return {
-                    record: { type: Object }
+                    record: { type: Object, value: {} },
+                    forms: { type: Array },
+                    selectedForm: { type: Object },
+                    selectedOption: { type: Object }
                 };
             }
+            static get observers() {
+                return [
+                    '__selectedOptionChanged(selectedOption.*)'
+                ];
+            }
+            constructor() {
+                super();
+
+                this.__types = [
+                    { label: 'String', value: 'string' },
+                    { label: 'Number', value: 'number' },
+                    { label: 'Date', value: 'date' }
+                ];
+                
+                this.__editors = [
+                    { label: 'Textbox', value: 'text' },
+                    { label: 'Datepicker', value: 'datepicker' },
+                    { label: 'Dropdown', value: 'dropdown' }
+                ];
+
+                this.__invalidOption = false;
+            }
+            handleRouteParams(setting, action, id) {
+                if (setting != 'items' || action != 'forms') return;
+
+                this.$.ajax.GET('/items/' + id).then(res => {
+                    let record = res.data;
+
+                    if (record) {
+                        let forms = record.item_forms || [];
+
+                        forms.forEach(f => {
+                            f.option = JSON.parse(f.option || '[]');
+                            f.hasOptions = f.item_form_editor == 'dropdown';
+                        });
+
+                        this.set('forms', forms);
+                    }
+                    
+                    this.set('record', record);
+                });
+            }
+            __loadItems() {
+                this.$.ajax.GET('/items/items-forms', { item: this.record.item_id }).then(res => {
+                    let forms = res.data;
+                    
+                    forms.forEach(f => {
+                        f.option = JSON.parse(f.option || '[]');
+                        f.hasOptions = f.item_form_editor == 'dropdown';
+                    });
+
+                    this.set('forms', forms);
+                });
+            }
+            __selectedOptionChanged() {
+                let valid = true;
+
+                valid = valid && this.selectedOption.value;
+                valid = valid && this.selectedOption.text;
+
+                this.set('__invalidOption', ! valid);
+            }
+            __onAddFormTap() {
+
+                this.set('selectedForm', {
+                    item_form_type: 'string',
+                    item_form_editor: 'text',
+                    index: (this.record.item_forms || []).length
+                });
+
+                this.$['form-editor'].open();
+            }
+            __onEditFormTap(e) {
+                this.set('selectedForm', e.model.item);
+                this.$['form-editor'].open();
+            }
+            __onDeleteFormTap(e) {
+                this.confirm('Confirm', `Are you sure you want to delete ${e.model.item.item_form_label} ?`).then(y => {
+                    if (y) {
+                        this.$.ajax.DELETE('/items/items-forms/' + e.model.item.item_form_id).then(() => {
+                            this.__loadItems();
+                        });
+                    }
+                });
+            }
+            __onFormEditorCancelTap() {
+                this.$['form-editor'].close();
+            }
+            __onFormEditorSaveTap() {
+                this.$['form-editor'].close();
+
+                let data = this.selectedForm;
+                data.item_id = this.record.item_id;
+
+                if (data.item_form_id) {
+                    this.$.ajax.PUT('/items/items-forms/' + data.item_form_id, data).then(done.bind(this));
+                } else {
+                    this.$.ajax.POST('/items/items-forms', data).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.toast('Success', 'Data has been saved');
+                        this.__loadItems();
+                    }
+                }
+            }
+            __onAddOptionTap(e) {
+                this.set('selectedForm', e.model.item);
+                this.set('selectedOption', {});
+
+                this.$['option-editor'].open();
+            }
+            __onEditOptionTap(e) {
+                this.set('selectedForm', e.model.parentModel.item);
+                this.set('selectedOption', e.model.elem);
+
+                this.$['option-editor'].open();
+            }
+            __onDeleteOptionTap(e) {
+                this.confirm('Confirm', `Are you sure want to delete ${e.model.elem.text} ?`).then(y => {
+                    if (y) {
+                        this.splice(`forms.${e.model.parentModel.index}.option`, e.model.index, 1);
+                        let form = this.get(`forms.${e.model.parentModel.index}`);
+                        this.$.ajax.PUT('/items/items-forms/' + form.item_form_id, form).then(() => {
+                            this.__loadItems();
+                        });
+                    }
+                });
+            }
+            __onOptionEditorSaveTap() {
+                this.$['option-editor'].close();
+
+                if (this.selectedForm) {
+                    let data = this.selectedOption;
+                    let index = this.selectedForm.option.findIndex(o => o.value == data.value);
+                    let formIndex = this.forms.indexOf(this.selectedForm);
+                    
+                    if (index == -1) {
+                        this.push(`forms.${formIndex}.option`, data);
+                    } else {
+                        this.set(`forms.${formIndex}.option.${index}.text`, data.text);
+                    }
+
+                    let form = this.get(`forms.${formIndex}`);
+
+                    this.$.ajax.PUT('/items/items-forms/' + form.item_form_id, form).then(() => {
+                        this.__loadItems();
+                    });
+                }
+            }
+            __onOptionEditorCancelTap() {
+                this.$['option-editor'].close();
+            }
             __onBackTap() {
-                this.dispatchEvent(new CustomEvent('back'));
+                this.set('route.path', '/settings/items');
             }
         }
         customElements.define(ItemsFormsPage.is, ItemsFormsPage);

@@ -28,7 +28,7 @@ class AuthMiddleware extends \Micro\Component {
             if ($verify['status'] == 'expired') {
                 $message = "It's look like your access token has been expired";
             } else if($verify['status'] == 'pending') {
-                $message = "It's look like Your access token not yet activated";
+                $message = "It's look like your access token not yet activated";
             } else {
                 $message = "It's look like your access token not valid";
             }

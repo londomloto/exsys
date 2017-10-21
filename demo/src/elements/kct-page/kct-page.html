@@ -25,7 +25,7 @@
 
             static get observers() {
                 return [
-                    '__nameChanged(name)'
+                    '__typeChanged(type)'
                 ];
             }
 
@@ -34,10 +34,19 @@
                 this.__stampPage();
             }
 
-            __nameChanged(name) {
+            __typeChanged(type) {
+                if (type) {
+                    this.__stampPage();
+                }
             }
 
             __stampPage() {
+                let existing = this.shadowRoot.querySelector('#page');
+
+                if (existing) {
+                    this.shadowRoot.removeChild(existing);
+                }
+
                 let template = document.createElement('template');    
 
                 template.innerHTML = `
@@ -53,17 +62,7 @@
 
                 let instance = this._stampTemplate(template);
                 this.shadowRoot.appendChild(instance);
-                this.$.page = this.shadowRoot.querySelector('#page');
-            }
-
-            connectedCallback() {
-                super.connectedCallback();
-                console.log('render: ', this.name);
-            }
-
-            disconnectedCallback() {
-                super.disconnectedCallback();
-                console.log('remove:', this.name);
+                this.$.page = instance.$.page;
             }
 
             activate() {

@@ -1,5 +1,6 @@
 <link rel="import" href="../../../bower_components/paper-radio-group/paper-radio-group.html">
 <link rel="import" href="../../../bower_components/paper-radio-button/paper-radio-button.html">
+<link rel="import" href="../../../bower_components/paper-fab/paper-fab.html">
 <link rel="import" href="../../elements/kct-view/kct-view.html">
 <link rel="import" href="../../elements/kct-grid/kct-grid.html">
 <link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
@@ -9,7 +10,7 @@
     <template>
         <style include="theme-helper">
             :host {
-                height: var(--grades-page-height, 500px);
+                height: 100%;
             }
         </style>
         <kct-ajax id="ajax"></kct-ajax>
@@ -21,8 +22,7 @@
             icon="trending-up" 
             title="Datasheet" 
             description="Grades Reference" 
-            pagination 
-            autoload>
+            pagination>
             
             <template preserve-content>
                 <style include="theme-helper"></style>
@@ -52,6 +52,10 @@
                 </div>
             </template>
         </kct-dialog>
+
+        <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to list" on-tap="__onBackTap"></paper-fab>
+        </div>
 
     </template>
     <script>
@@ -116,8 +120,15 @@
                 super.ready();
                 this.$.grid.context = this;
             }
+            handleRouteParams(setting) {
+                if (setting != 'grades') return;
+                
+                if ( ! this.$.grid.__loaded) {
+                    this.$.grid.__loaded = true;
+                    this.$.grid.load();
+                }
+            }
             handleResizing(width, height) {
-                this.updateStyles({ '--grades-page-height': height + 'px' });
                 this.$.grid && this.$.grid.resize();
             }
             __onAddTap() {
@@ -162,6 +173,10 @@
                         });
                     }
                 })
+            }
+
+            __onBackTap() {
+                this.set('route.path', '/settings');
             }
         }
         customElements.define(GradesPage.is, GradesPage);

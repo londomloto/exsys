@@ -1,11 +1,6 @@
-<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
-<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
-<link rel="import" href="../../../bower_components/vaadin-combo-box/vaadin-combo-box.html">
 <link rel="import" href="../../elements/kct-view/kct-view.html">
-<link rel="import" href="../../elements/kct-grid/kct-grid.html">
-<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
-<link rel="import" href="../../elements/kct-dialog/kct-dialog.html">
 <link rel="import" href="../../elements/kct-pages/kct-pages.html">
+<link rel="import" href="items-list-page.html">
 <link rel="import" href="items-forms-page.html">
 
 <dom-module id="items-page">
@@ -20,44 +15,10 @@
             }
         </style>
 
-        <kct-ajax id="ajax"></kct-ajax>
-
-        <kct-pages id="pages" selected="{{ page }}" attr-for-selected="id">
-            <kct-grid 
-                id="grid" 
-                url="/items?display=grid" 
-                columns="[[ columns ]]" 
-                selection-model="cell" 
-                icon="view-list" 
-                title="Datasheet" 
-                description="Expense Items">
-                <template preserve-content>
-                    <style include="theme-helper"></style>
-                </template>
-                <paper-button on-tap="__onAddTap" class="btn-primary" slot="primary-toolbar"><iron-icon icon="add"></iron-icon>&nbsp;Add Item</paper-button>
-
-            </kct-grid>
-            <items-forms-page id="form" record="[[ record ]]" on-back="__onFormsPageBack"></items-forms-page>
+        <kct-pages id="pages" selected="{{ page }}" attr-for-selected="name">
+            <items-list-page name="list" route="{{ route }}" state="[[ state ]]"></items-list-page>
+            <items-forms-page name="form" route="{{ route }}" state="[[ state ]]"></items-forms-page>
         </kct-pages>
-
-        <kct-dialog id="editor" title="Item Editor" width="500" height="100%">
-            <template preserve-content>
-                <div slot="dialog-body">
-                    <vaadin-combo-box
-                        label="Parent Item" 
-                        value="{{ record.parent_id }}" 
-                        items="[[ __parents ]]" 
-                        item-value-path="item_id" 
-                        item-label-path="item_name"></vaadin-combo-box>
-                    <paper-input label="Item Name" value="{{ record.item_name }}"></paper-input>
-                    <paper-input label="Account No." value="{{ record.coa }}"></paper-input>
-                </div>
-                <div slot="dialog-footer">
-                    <paper-button on-tap="__onEditorSaveTap">Save</paper-button>
-                    <paper-button on-tap="__onEditorCancelTap">Cancel</paper-button>
-                </div>
-            </template>
-        </kct-dialog>
 
     </template>
     <script>
@@ -67,122 +28,41 @@
             }
             static get properties() {
                 return {
-                    record: { type: Object },
-                    page: { type: String, value: 'grid' },
-                    columns: {
-                        type: Array,
-                        value: [
-                            { type: 'rownumber' },
-                            { 
-                                text: 'Description', 
-                                dataIndex: 'item_name', 
-                                width: 500,
-                                renderer: (e) => {
-                                    if (e.data) {
-                                        return `<span class="elbow" style="width: ${e.data.item_pad}"></span>${e.data.item_name}`;
-                                    }
-                                    return '';
-                                }
-                            },
-                            { text: 'Account', dataIndex: 'coa', width: 100 },
-                            {
-                                text: '',
-                                type: 'action',
-                                dataIndex: 'item_id',
-                                renderer: (e) => {
-                                    if (e.data) {
-                                        let buttons = '';
-                                        buttons += `<paper-button class="btn-amber" on-tap="__onItemEditTap"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>`;
-                                        if (e.data.parent_id) {
-                                            buttons += `<paper-button class="btn-cyan" on-tap="__onItemFormTap"><iron-icon icon="description"></iron-icon>&nbsp;Form</paper-button>`;
-                                        }
-                                        return buttons;
-                                    }
-                                    return '';
-                                }
-                            }
-                        ]
-                    }
+                    page: { type: String }
                 };
             }
-            constructor() {
-                super();
-                this.__parents = [];
+            static get observers() {
+                return [
+                    '__pageChanged(page)'
+                ];
             }
-            ready() {
-                super.ready();
-                this.$.grid.context = this;
-            }
-            activate() {
-                if (this.$.grid && ! this.$.grid.__resized) {
-                    this.$.grid.__resized = true;
-                    this.$.grid.resize();
+            
+            handleResizing(width, height) {
+                let pageItem = this.$.pages.selectedItem;
+                
+                if (pageItem) {
+                    pageItem.handleResizing(width, height);
                 }
             }
-            handleResizing() {
-                this.$.grid && this.$.grid.resize();
-            }
-            handleRouteParams(setting) {
-                if (setting != 'items') return;
 
-                this.__loadParents();
-
-                if (this.$.grid) {
-                    this.$.grid.load();
+            handleRouteParams(setting, action) {
+                switch(action) {
+                    case 'forms':
+                        this.set('page', 'form');
+                        break;
+                    default:
+                        this.set('page', 'list');
                 }
             }
-            __loadParents() {
-                return this.$.ajax.GET('/items?display=parent').then(res => {
-                    let parents = [{ item_id: '', item_name: 'No Parent' }];
-                    Array.prototype.push.apply(parents, res.data);
-                    this.set('__parents', parents);
-                });
-            }
-            __onAddTap() {
-                this.mask('Opening editor...');
 
-                this.__loadParents().then(() => {
-                    this.unmask();
+            __pageChanged(page) {
+                let timer = setTimeout(() => {
+                    let pageItem = this.$.pages.selectedItem;
 
-                    this.set('record', {});
-                    this.$.editor.open();    
-                });
-            }
-            __onItemEditTap(e) {
-                this.mask('Opening editor...');
-
-                this.__loadParents().then(() => {
-                    this.unmask();
-
-                    this.set('record', e.data);
-                    this.$.editor.open();    
-                });
-            }
-            __onEditorCancelTap() {
-                this.$.editor.close();
-            }
-            __onEditorSaveTap() {
-                this.$.editor.close();
-
-                let data = this.record;
-                if (data.item_id) {
-                    this.$.ajax.PUT('/items/' + data.item_id, data).then(done.bind(this));
-                } else {
-                    this.$.ajax.POST('/items', data).then(done.bind(this));
-                }
-
-                function done(res) {
-                    if (res.success) {
-                        this.$.grid.load();
+                    if (pageItem) {
+                        pageItem.activate();
                     }
-                }
-            }
-            __onItemFormTap(e) {
-                this.set('record', e.data);
-                this.set('page', 'form');
-            }
-            __onFormsPageBack() {
-                this.set('page', 'grid');
+                }, 1);
             }
         }
         customElements.define(ItemsPage.is, ItemsPage);

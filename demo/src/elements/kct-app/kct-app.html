@@ -3,6 +3,7 @@
 <link rel="import" href="../../elements/kct-router/kct-router.html">
 <link rel="import" href="../../elements/kct-pages/kct-pages.html">
 <link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../elements/kct-network/kct-network.html">
 <link rel="import" href="../../mixins/resolver.html">
 
 <dom-module id="kct-app">
@@ -16,6 +17,7 @@
         <kct-config id="config" config="{{ config }}"></kct-config>
         <kct-ajax id="ajax" config="[[ config ]]"></kct-ajax>
         <kct-router id="router" config="[[ config ]]" routes="[[ routes ]]" route="{{ route }}" state="{{ state }}" fallback="/home" on-authenticate="__onAuthenticate"></kct-router>
+        <kct-network on-state-change="__onNetworkStatceChange"></kct-network>
 
         <template is="dom-if" if="[[ state.layout ]]">
             <kct-pages selected="{{ state.layout }}" attr-for-selected="name" fallback-selection="error" lazy-load>
@@ -104,6 +106,10 @@
                 if ( ! e.detail.success) {
                     this.set('route.path', '/login');
                 }
+            }
+
+            __onNetworkStatceChange(e) {
+                console.log('network state: ' + e.detail.state);
             }
 
         }

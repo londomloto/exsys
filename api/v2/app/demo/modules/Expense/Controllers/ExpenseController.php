@@ -10,7 +10,14 @@ use App\Expense\Models\Expense,
 class ExpenseController extends \Micro\Controller {
 
     public function findAction() {
+        $catagory = $this->request->getQuery('catagory');
+
+        if (empty($catagory)) {
+            $catagory = 'claim';
+        }
+
         return Expense::get()
+            ->where('catagory = :catagory:', array('catagory' => $catagory))
             ->join('App\Statuses\Models\Status', 'a.status_id = status', 'a', 'left')
             ->sortable()
             ->filterable()

@@ -23,6 +23,7 @@
                 position: absolute;
                 left: 50%;
                 margin-left: -28px;
+                background-color: var(--paper-blue-grey-400);
             }
             .item > .item-icon {
                 text-align: center;
@@ -49,7 +50,7 @@
                                 <template is="dom-repeat" items="[[ group.children ]]" as="menu">
                                     <div class="item">
                                         <div class="item-icon">
-                                            <paper-fab style$="background-color: [[ _accent() ]]" on-tap="__onMenuTap" data-path$="[[ menu.path ]]" icon="[[ menu.icon ]]" class="fab-raised"></paper-fab>
+                                            <paper-fab on-tap="__onMenuTap" data-path$="[[ menu.path ]]" icon="[[ menu.icon ]]" class="fab-raised"></paper-fab>
                                         </div>
                                         <div class="item-text">[[ menu.text ]]</div>
                                     </div>
@@ -88,8 +89,11 @@
                                     text: 'Expense',
                                     children: [
                                         { text: 'Company', icon: 'communication:business', path: '/settings/company' },
-                                        { text: 'Expense Items', icon: 'view-module', path: '/settings/items' },
-                                        { text: 'Dynamic Forms', icon: 'editor:border-color', path: '/settings/forms' }
+                                        { text: 'Items', icon: 'view-module', path: '/settings/items' },
+                                        { text: 'Currencies', icon: 'editor:attach-money', path: '/settings/currencies' },
+                                        { text: 'Statuses', icon: 'done-all', path: '/settings/statuses' },
+                                        { text: 'Grades', icon: 'trending-up', path: '/settings/grades' },
+                                        { text: 'Types', icon: 'label-outline', path: '/settings/types' }
                                     ]
                                 },
                                 {
