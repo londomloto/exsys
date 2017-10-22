@@ -2,14 +2,14 @@
 <link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../../elements/kct-grid/kct-grid.html">
 <link rel="import" href="../../elements/kct-pages/kct-pages.html">
-<link rel="import" href="tasks-expense-action.html">
+<link rel="import" href="tasks-opex-action.html">
 
-<dom-module id="tasks-expense-page">
+<dom-module id="tasks-opex-page">
     <template>
 
         <style include="theme-helper">
             :host {
-                height: var(--tasks-expense-page-height, 600px);
+                height: var(--tasks-opex-page-height, 600px);
             }
             kct-pages {
                 display: block;
@@ -20,7 +20,7 @@
         <kct-pages selected="{{ page }}" attr-for-selected="id">
             <kct-grid 
                 id="grid" 
-                url="/expense/tasks" 
+                url="/expense/tasks?catagory=opex" 
                 page-size="25" 
                 name="list"
                 columns="[[ columns ]]" 
@@ -35,25 +35,25 @@
                     </template>
 
             </kct-grid>
-            <tasks-expense-action id="action" task="[[ task ]]" on-back-tap="__onActionBackTap"></tasks-expense-action>
+            <tasks-opex-action id="action" task="[[ task ]]" on-back-tap="__onActionBackTap"></tasks-opex-action>
         </kct-pages>
 
     </template>
     <script>
-        class TasksExpensePage extends KctView {
+        class TasksOpexPage extends KctView {
             static get is() {
-                return 'tasks-expense-page';
+                return 'tasks-opex-page';
             }
             static get properties() {
                 return {
-                    title: { type: String, value: 'Expense Task', notify: true },
+                    title: { type: String, value: 'Operational Task', notify: true },
                     page: { type: String, value: 'grid' },
                     task: { type: Object },
                     columns: { 
                         type: Array,
                         value: [
                             { type: 'rownumber' },
-                            { text: 'Expense No.', dataIndex: 'exp_no', width: 120, align: 'center' },
+                            { text: 'Opex No.', dataIndex: 'exp_no', width: 120, align: 'center' },
                             { text: 'Subject', dataIndex: 'subject_exp' },
                             { text: 'Proposed By', dataIndex: 'user_fullname' },
                             { text: 'Date Created', dataIndex: 'date_short', width: 120, align: 'center' },
@@ -87,7 +87,7 @@
                 this.$.grid.context = this;
             }
             handleResizing(width, height) {
-                this.updateStyles({'--tasks-expense-page-height': height + 'px'});
+                this.updateStyles({'--tasks-opex-page-height': height + 'px'});
                 this.$.action.handleResizing(width, height);
             }
             handleRouteParams() {
@@ -102,6 +102,6 @@
                 this.$.grid.load();
             }
         }
-        customElements.define(TasksExpensePage.is, TasksExpensePage);
+        customElements.define(TasksOpexPage.is, TasksOpexPage);
     </script>
 </dom-module>

@@ -10,10 +10,13 @@ use App\Trips\Models\Trip,
 class TripsController extends \Micro\Controller {
 
     public function findAction() {
+        $user = $this->auth->user();
+
         return Trip::get()
             ->join('App\Statuses\Models\Status', 'a.status_id = status', 'a', 'left')
             ->sortable()
             ->filterable()
+            ->andWhere('id_user = :user:', array('user' => $user['su_id']))
             ->paginate();
     }
 
@@ -47,10 +50,15 @@ class TripsController extends \Micro\Controller {
         $post['trip_no'] = Autonumber::generate('TRIP');
         $post['status'] = 1;
         $post['id_user'] = $user['su_id'];
+        $post['date'] = date('Y-m-d H:i:s');
 
         $data = new Trip();
 
         if ($data->save($post)) {
+            if ($data->advance) {
+                $data->amounts = $data->advance->amounts;
+                $data->save();
+            }
             return Trip::get($data->id_trip);
         }
 
@@ -59,9 +67,15 @@ class TripsController extends \Micro\Controller {
 
     public function updateAction($id) {
         $post = $this->request->getJson();
+        unset($post['date']);
+        
         $query = Trip::get($id);
 
         if ($query->data) {
+            if ($query->data->advance) {
+                $query->data->amounts = $query->data->advance->amounts;
+                $query->data->save();
+            }
             $query->data->save($post);
         }
 
@@ -103,6 +117,7 @@ class TripsController extends \Micro\Controller {
     public function submitByIdAction($id) {
         $trip = Trip::get($id)->data;
         $user = $this->auth->user();
+        $done = FALSE;
 
         if ($trip) {
             // create history
@@ -131,10 +146,17 @@ class TripsController extends \Micro\Controller {
                     
                     $task->save();
                 }
+
+                // submit advance if any
+                if ($trip->advance) {
+                    $trip->advance->submit();
+                }
+
+                $done = TRUE;
             }
         }
 
-        return array('success' => TRUE);
+        return array('success' => $done);
     }
 
     public function rejectByIdAction($id) {

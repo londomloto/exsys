@@ -10,11 +10,22 @@ use App\Advance\Models\Advance,
 class AdvanceController extends \Micro\Controller {
 
     public function findAction() {
-        return Advance::get()
-            ->join('App\Statuses\Models\Status', 'a.status_id = status', 'a', 'left')
-            ->sortable()
-            ->filterable()
-            ->paginate();
+        $params = $this->request->getParams();
+        $display = isset($params['display']) ? $params['display'] : FALSE;
+        $user = $this->auth->user();
+
+        switch($display) {
+            case 'trip':
+                break;
+            default:
+                return Advance::get()
+                    ->join('App\Statuses\Models\Status', 'a.status_id = status', 'a', 'left')
+                    ->sortable()
+                    ->filterable()
+                    ->andWhere('type <> :type:', array('type' => 1))
+                    ->andWhere('id_user = :user:', array('user' => $user['su_id'])) 
+                    ->paginate();
+        }
     }
 
     public function findByIdAction($id) {
@@ -49,6 +60,7 @@ class AdvanceController extends \Micro\Controller {
         $post['status'] = 1;
         $post['id_user'] = $user['su_id'];
         $post['amounts'] = 0;
+        $post['date'] = date('Y-m-d H:i:s');
 
         $data = new Advance();
 
@@ -63,6 +75,7 @@ class AdvanceController extends \Micro\Controller {
 
     public function updateAction($id) {
         $post = $this->request->getJson();
+        unset($post['date']);
         $query = Advance::get($id);
 
         if ($query->data) {
@@ -107,39 +120,13 @@ class AdvanceController extends \Micro\Controller {
 
     public function submitByIdAction($id) {
         $advance = Advance::get($id)->data;
-        $user = $this->auth->user();
+        $success = FALSE;
 
         if ($advance) {
-            // create history
-            $history = new History();
-            $history->id_adv = $advance->id_adv;
-            $history->status_id = 2;
-            $history->user_act = $user['su_id'];
-            $history->date = date('Y-m-d H:i:s');
-
-            if ($history->save()) {
-                $advance->status = $history->status_id;
-                $advance->save();
-
-                $user = User::get($user['su_id'])->data;
-
-                // entry task
-                $superiors = $user->getSuperiors($advance->amounts);
-
-                foreach($superiors as $super) {
-                    $task = new Task();
-
-                    $task->id_adv = $advance->id_adv;
-                    $task->su_id = $super['user_id'];
-                    $task->grade_id = $super['grade_id'];
-                    $task->is_allowed = 1;
-                    
-                    $task->save();
-                }
-            }
+            $success = $advance->submit();
         }
 
-        return array('success' => TRUE);
+        return array('success' => $success);
     }
 
     public function rejectByIdAction($id) {

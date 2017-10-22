@@ -1,6 +1,10 @@
 <?php
 namespace App\Advance\Models;
 
+use App\Advance\Models\History,
+    App\Advance\Models\Task,
+    App\Users\Models\User;
+
 class Advance extends \Micro\Model {
 
     public function initialize() {
@@ -105,6 +109,42 @@ class Advance extends \Micro\Model {
 
         $this->amounts = $amounts;
         $this->save();
+    }
+
+    public function submit() {
+        $user = \Micro\App::getDefault()->auth->user();
+
+        // create history
+        $history = new History();
+        $history->id_adv = $this->id_adv;
+        $history->status_id = 2;
+        $history->user_act = $user['su_id'];
+        $history->date = date('Y-m-d H:i:s');
+
+        if ($history->save()) {
+            $this->status = $history->status_id;
+            $this->save();
+
+            $user = User::get($user['su_id'])->data;
+
+            // entry task
+            $superiors = $user->getSuperiors($this->amounts);
+
+            foreach($superiors as $super) {
+                $task = new Task();
+
+                $task->id_adv = $this->id_adv;
+                $task->su_id = $super['user_id'];
+                $task->grade_id = $super['grade_id'];
+                $task->is_allowed = 1;
+                
+                $task->save();
+            }
+
+            return TRUE;
+        }
+
+        return FALSE;
     }
 
 }

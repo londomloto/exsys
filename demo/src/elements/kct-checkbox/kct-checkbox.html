@@ -200,6 +200,11 @@
                     ];
                 }
 
+                ready() {
+                    super.ready();
+                    this.set('value', this.falseValue);
+                }
+
                 __checkedChanged(checked) {
                     let value = checked ? this.trueValue : this.falseValue;
                     this.set('value', value);

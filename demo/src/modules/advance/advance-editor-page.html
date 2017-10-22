@@ -90,17 +90,6 @@
 
                             <kct-file-input label="Attachment" value="{{ record.attachment }}" file="{{ attachment }}"></kct-file-input>
                         </kct-form-validator>
-                        
-                        <div class="m-t" hidden="[[ record.id_adv ]]">
-                            <kct-hbox>
-                                <div class="flex">
-                                    <paper-button class="btn-md btn-blue-grey" on-tap="__onBackTap" hidden$="[[ dialogMode ]]"><iron-icon icon="arrow-back"></iron-icon>&nbsp;Back To List</paper-button>
-                                </div>
-                                <div class="flex text-right">
-                                    <paper-button class="btn-md btn-primary" on-tap="__onNextTap" disabled$="[[ __formInvalid ]]">Continue&nbsp;<iron-icon icon="arrow-forward"></iron-icon></paper-button>
-                                </div>
-                            </kct-hbox>
-                        </div>
 
                     </div>
                     
@@ -142,6 +131,19 @@
                     
                 </paper-card>
                 
+                <paper-card class="block" hidden="[[ record.id_adv ]]">
+                    <div class="card-content">
+                        <kct-hbox>
+                            <div class="flex">
+                                <paper-button class="btn-md btn-blue-grey" on-tap="__onBackTap" hidden$="[[ dialogMode ]]"><iron-icon icon="arrow-back"></iron-icon>&nbsp;Back To List</paper-button>
+                            </div>
+                            <div class="flex text-right">
+                                <paper-button class="btn-md btn-primary" on-tap="__onNextTap" disabled$="[[ __formInvalid ]]">Continue&nbsp;<iron-icon icon="arrow-forward"></iron-icon></paper-button>
+                            </div>
+                        </kct-hbox>
+                    </div>
+                </paper-card>
+
             </div>
         </kct-vbox>
 

@@ -1,7 +1,7 @@
 {
-  "name": "worksaurus",
-  "short_name": "worksaurus",
-  "start_url": "/",
+  "name": "exsys",
+  "short_name": "exsys",
+  "start_url": "/exsys/",
   "display": "standalone",
   "theme_color": "#3f51b5",
   "background_color": "#3f51b5",

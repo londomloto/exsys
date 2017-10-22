@@ -614,17 +614,23 @@
             .display-field {
                 font-size: 14px;
                 padding: 5px 0;
+                border-bottom: 1px solid #f2f2f2;
+                @apply --layout-horizontal;
             }
 
             .display-field > * {
-                display: inline-block;
+                display: block;
             }
 
             .display-field > label {
                 font-weight: 500;
-                display: inline-block;
                 width: 120px;
             }
+
+            .display-field > div {
+                text-align: right;
+                @apply --layout-flex;
+            } 
 
             /** table */
             table {

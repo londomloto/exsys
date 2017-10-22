@@ -1,29 +1,46 @@
-
 <link rel="import" href="../../../bower_components/paper-card/paper-card.html">
-<link rel="import" href="../../../bower_components/paper-fab/paper-fab.html">
 <link rel="import" href="../../elements/kct-view/kct-view.html">
 <link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../../elements/kct-layouts/kct-vbox.html">
 <link rel="import" href="../../elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../elements/kct-message/kct-prompt.html">
 <link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
 
-<dom-module id="trips-history-page">
+<dom-module id="tasks-trip-action">
     <template>
         <style include="theme-helper">
             :host {
-                height: 100%;
+                height: var(--tasks-trip-action-height, 500px);
                 background-color: var(--paper-grey-100);
+            }
+            .action-buttons paper-button {
+                min-width: 90px;
+            }
+            .display-field {
+                font-size: 14px;
+                padding: 5px 0;
+            }
+            .display-field > label:first-child {
+                font-weight: 500;
+                display: inline-block;
+                width: 100px;
             }
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
-
+        
         <kct-vbox>
-            <page-header-block icon="history" description="Trip History">
-                <paper-button class="btn-indigo"><iron-icon icon="print"></iron-icon>&nbsp;Print Document</paper-button>
-            </page-header-block>
+            <page-header-block icon="done" description="Trip Action"></page-header-block>
             <div class="flex scroll-y padding">
-
+                <paper-card class="block">
+                    <div class="card-content">
+                        <div class="action-buttons text-right">
+                            <paper-button on-tap="__onConfirmTap" class="btn-md btn-green">Approve</paper-button>
+                            <paper-button on-tap="__onRejectTap" class="btn-md btn-red">Reject</paper-button>
+                            <paper-button on-tap="__onRequestTap" class="btn-md btn-amber">Request Change</paper-button>    
+                        </div>
+                    </div>
+                </paper-card>
                 <paper-card class="block">
                     <div class="card-content">
                         <h3 class="block-title">[[ record.trip.trip_no ]]</h3>
@@ -65,12 +82,11 @@
                         </kct-column>
                     </div>
                 </paper-card>
-
-                <paper-card  class="block">
+                <paper-card class="block">
                     <div class="card-content">
                         <h3 class="block-title">Trip Items</h3>
 
-                        <table  class="striped">
+                        <table class="striped">
                             <thead>
                                 <th width="50">No.</th>
                                 <th width="150" class="text-center">Departure Date</th>
@@ -78,7 +94,6 @@
                                 <th>Destination</th>
                                 <th width="150" class="text-center">Transport</th>
                                 <th width="80" class="text-center">Visa</th>
-                                <th>Request</th>
                             </thead>
                             <tbody>
                                 <template is="dom-repeat" items="[[ record.items ]]">
@@ -89,19 +104,18 @@
                                         <td>[[ item.destination ]]</td>
                                         <td class="text-center">[[ item.transport_name ]]</td>
                                         <td class="text-center">[[ __computeVisa(item.visa) ]]</td>
-                                        <td>[[ item.special_request ]]</td>
                                     </tr>
                                 </template>
                             </tbody>
                         </table>
                     </div>
                 </paper-card>
-
                 <paper-card class="block">
                     <div class="card-content">
-                        <h3 class="block-title">Advance History</h3>
 
-                        <table class="striped">
+                        <h3 class="block-title">Trip History</h3>
+
+                        <table  class="striped">
                             <thead>
                                 <th width="50">No.</th>
                                 <th width="120">Date</th>
@@ -131,25 +145,28 @@
             <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to list" on-tap="__onBackTap"></paper-fab>
         </div>
 
+        <kct-prompt id="task-prompt" title="[[ actionTitle ]]" message="Type your reason"></kct-prompt>
+
     </template>
     <script>
-        class TripsHistoryPage extends KctView {
+        class TasksTripAction extends KctView {
             static get is() {
-                return 'trips-history-page';
+                return 'tasks-trip-action';
             }
-
             static get properties() {
                 return {
-                    record: { type: Object }
-                };
+                    record: { type: Object },
+                    task: { type: Object },
+                    actionTitle: { type: String, value: 'Approval' }
+                }
             }
-            handleRouteParams(module, action, id) {
-                if (action != 'view') return;
-                this.mask('Loading...');
-                this.$.ajax.GET('/trips/' + id + '/view').then(res => {
-                    this.set('record', res.data);
-                    this.unmask();
-                });
+            static get observers() {
+                return [
+                    '__taskChanged(task.*)'
+                ];
+            }
+            handleResizing(width, height) {
+                this.updateStyles({'--tasks-trip-action-height': height + 'px'});
             }
             __computeNo(index) {
                 return index + 1;
@@ -157,10 +174,65 @@
             __computeVisa(visa) {
                 return visa == '1' ? 'Yes' : '-';
             }
+            __taskChanged() {
+                if (this.task) {
+                    this.$.ajax.GET('/trips/' + this.task.id_trip + '/view').then(res => {
+                        this.set('record', res.data);
+                    });  
+                }
+            }
+            __onRejectTap() {
+                if ( ! this.record && ! this.record.trip) {
+                    return;
+                }
+
+                this.set('action', 'Rejection');
+
+                this.$['task-prompt'].open().then(r => {
+                    if (r.action == 'submit') {
+                        let notes = r.value || '';
+                        this.$.ajax.POST('/trips/' + this.record.trip.id_trip + '/reject', { notes: notes }).then(() => {
+                            this.__onBackTap();
+                        });
+                    }
+                });
+            }
+            __onConfirmTap() {
+                if ( ! this.record && ! this.record.trip) {
+                    return;
+                }
+
+                this.set('action', 'Approval');
+
+                this.$['task-prompt'].open().then(r => {
+                    if (r.action == 'submit') {
+                        let notes = r.value || '';
+                        this.$.ajax.POST('/trips/' + this.record.trip.id_trip + '/approve', { notes: notes }).then(() => {
+                            this.__onBackTap();
+                        });
+                    }
+                });
+            }
+            __onRequestTap() {
+                if ( ! this.record && ! this.record.trip) {
+                    return;
+                }
+
+                this.set('action', 'Request Change');
+
+                this.$['task-prompt'].open().then(r => {
+                    if (r.action == 'submit') {
+                        let notes = r.value || '';
+                        this.$.ajax.POST('/trips/' + this.record.trip.id_trip + '/request', { notes: notes }).then(() => {
+                            this.__onBackTap();
+                        });
+                    }
+                });
+            }
             __onBackTap() {
-                this.set('route.path', '/trips');
+                this.dispatchEvent(new CustomEvent('back-tap'));
             }
         }
-        customElements.define(TripsHistoryPage.is, TripsHistoryPage);
+        customElements.define(TasksTripAction.is, TasksTripAction);
     </script>
 </dom-module>

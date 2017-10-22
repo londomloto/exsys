@@ -2,7 +2,7 @@
 namespace App\Expense\Models;
 
 class Expense extends \Micro\Model {
-
+    
     public function initialize() {
         $this->hasOne(
             'status',
@@ -57,6 +57,15 @@ class Expense extends \Micro\Model {
                 'alias' => 'History'
             )
         );
+
+        $this->hasOne(
+            'adv_ref',
+            'App\Advance\Models\Advance',
+            'id_adv',
+            array(
+                'alias' => 'Advance'
+            )
+        );
     }
 
     public function getSource() {
@@ -69,8 +78,13 @@ class Expense extends \Micro\Model {
         $data['type_name'] = '';
         $data['purpose_name'] = '';
         $data['date_short'] = date('d/m/Y', strtotime($this->date));
-        $data['date_start_short'] = date('d/m/Y', strtotime($this->date_start));
-        $data['date_end_short'] = date('d/m/Y', strtotime($this->date_end));
+
+        $time_start = strtotime($this->date_start);
+        $time_end = strtotime($this->date_end);
+
+        $data['date_start_short'] = date('d/m/Y', $time_start);
+        $data['date_end_short'] = date('d/m/Y', $time_end);
+        $data['period'] = date('F Y', $time_start);
         $data['has_items'] = $this->items->count() > 0 ? 1 : 0;
         $data['amounts_formatted'] = number_format($data['amounts'], 2, ',', '.');
         
@@ -90,6 +104,10 @@ class Expense extends \Micro\Model {
 
         if ($this->user) {
             $data['user_fullname'] = $this->user->su_fullname;
+        }
+
+        if ($this->advance) {
+            $data['adv_no'] = $this->advance->adv_no;
         }
 
         return $data;

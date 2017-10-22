@@ -1,8 +1,252 @@
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../bower_components/paper-spinner/paper-spinner-lite.html">
+<link rel="import" href="../../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../../bower_components/paper-radio-button/paper-radio-button.html">
+<link rel="import" href="../../../bower_components/paper-radio-group/paper-radio-group.html">
+<link rel="import" href="../../../bower_components/vaadin-combo-box/vaadin-combo-box.html">
+<link rel="import" href="../../../bower_components/vaadin-material-theme/vaadin-date-picker.html">
+<link rel="import" href="../../../bower_components/vaadin-date-picker/vaadin-date-picker.html">
 <link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../elements/kct-file/kct-file-input.html">
+<link rel="import" href="../../elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../elements/kct-pages/kct-pages.html">
+<link rel="import" href="../../elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../elements/kct-form/kct-form-validator.html">
+<link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
 
 <dom-module id="opex-editor-page">
     <template>
-        
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: var(--paper-grey-100);
+            }
+            [hidden] {
+                display: none;
+            }
+            kct-grid {
+                height: 300px;
+            }
+            tr.group-row,
+            tr.separator {
+                border-bottom: 1px solid #d0d0d0;
+            }
+
+            tr.separator td {
+                padding: 0;
+            }
+
+            .form-row td {
+                padding-top: 0;
+                padding-bottom: 0;
+                font-size: 13px;
+            }
+            .item-form .label {
+                text-decoration: underline;
+                color: var(--paper-grey-500);
+            }
+            #indicator[hidden] {
+                display: none;
+            }
+        </style> 
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-vbox>
+            <page-header-block title="EDITOR" description="Expense Document" icon="description">
+                <paper-button hidden="[[ !record.id_exp ]]" class="btn-primary" on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Save Changes</paper-button>
+            </page-header-block>
+            <div class="flex scroll-y padding">
+
+                <paper-card class="block">
+                    <div class="card-content">
+                        <h3 class="block-title">[[ record.exp_no ]]</h3>
+                        <kct-column columns="2" gutter="1.5rem">
+                            <div>
+                                <div class="display-field">
+                                    <label>Subject: </label>
+                                    <div>[[ record.subject_exp ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Type: </label>
+                                    <div>-</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Purpose: </label>
+                                    <div>-</div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="display-field">
+                                    <label>Proposed By: </label>
+                                    <div>[[ record.user_fullname ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Start Date: </label>
+                                    <div>[[ record.date_start_short ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>End Date: </label>
+                                    <div>[[ record.date_end_short ]]</div>
+                                </div>
+                            </div>
+                        </kct-column>
+                    </div>
+                </paper-card>
+
+                <paper-card class="block" hidden="[[ ! record.id_exp ]]">
+                    <div class="card-content">
+                        <h3 class="block-title">Expense Items</h3>
+                        
+                        <div class="m-b">
+                            <paper-button on-tap="__onAddItemTap" class="btn-sm btn-primary"><iron-icon icon="add"></iron-icon>&nbsp;Add Item</paper-button>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th width="50">No.</th>
+                                    <th>Description</th>
+                                    <th width="100">Payment</th>
+                                    <th class="text-center" width="100">Currency</th>
+                                    <th width="150" class="text-right">Amounts</th>
+                                    <th width="150"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template is="dom-repeat" items="[[ items ]]" as="group">
+                                    <tr class="group-row">
+                                        <td colspan="6"><iron-icon icon="label-outline"></iron-icon>&nbsp;[[ group.group_name ]]</td>
+                                    </tr>
+                                    <template is="dom-repeat" items="[[ group.group_items ]]">
+                                        <tr>
+                                            <td>[[ item.item_seq ]]</td>
+                                            <td>[[ item.item_name ]]</td>
+                                            <td>[[ item.payment_type_name ]]</td>
+                                            <td class="text-center">[[ item.currency_name ]]</td>
+                                            <td class="text-right">[[ item.amounts_formatted ]]</td>
+                                            <td class="text-right" style="padding-right: 0;">
+                                                <paper-button on-tap="__onItemEditTap" class="btn-xs btn-amber">Edit</paper-button>
+                                                <paper-button on-tap="__onItemDeleteTap" class="btn-xs btn-danger">Delete</paper-button>
+                                            </td>
+                                        </tr>
+                                        <tr class="form-row">
+                                            <td></td>
+                                            <td colspan="4">
+                                                <kct-column columns="3">
+                                                    <template is="dom-repeat" items="[[ item.item_forms ]]" as="form">
+                                                        <div class="item-form">
+                                                            <div class="label">[[ form.item_form_label ]]</div>
+                                                            <div class="value">[[ form.item_form_display ]]</div>
+                                                        </div>
+                                                    </template> 
+                                                </kct-column>
+                                            </td>
+                                            <td></td>
+                                        </tr>
+                                        <tr class="separator">
+                                            <td colspan="6"></td>
+                                        </tr>
+                                    </template>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                </paper-card>
+                
+            </div>
+        </kct-vbox>
+
+        <div class="page-actions" hidden="[[ !record.id_exp ]]">
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to list" on-tap="__onBackTap"></paper-fab>
+        </div>
+
+        <kct-dialog id="item-editor" title="Item Editor" width="500" height="100%" scrollable>
+            <template preserve-content>
+                <style include="theme-helper">
+                    #master-item {
+                        --vaadin-combo-box-item: {
+                            padding: 7px 16px;
+                        };
+                    }
+                </style>
+
+                <div slot="dialog-body">
+                    <kct-form-validator id="item-validator" invalid="{{ __itemInvalid }}" auto-validate manual-collect>
+                        <vaadin-combo-box 
+                            id="master-item" 
+                            label="Expense Item" 
+                            value="{{ item.item_id }}"
+                            items="[[ masterItems ]]" 
+                            item-value-path="item_id" 
+                            item-label-path="item_name" 
+                            on-change="__onMasterItemChange" 
+                            required 
+                            auto-validate 
+                            error-message="Expense item is required">
+                            <template>
+                                <style>
+                                    
+                                    .item {
+                                        font-size: 15px;
+                                    }
+                                    .elbow {
+                                        display: inline-block;
+                                        border-top: 1px solid #ccc;
+                                        height: 1px;
+                                        position: relative;
+                                        top: -4px;
+                                    }
+                                    .item.level-1 .elbow {
+                                        margin-right: 10px;
+                                    }
+                                </style>
+                                <div class$="item level-[[ item.item_level ]]"><span class="elbow" style="width: [[ item.item_pad ]]"></span>[[ item.item_name ]]</div>
+                            </template>        
+                        </vaadin-combo-box>
+
+                        <div id="indicator" class="text-center m-t" hidden$="[[ !__stamping ]]">
+                            <paper-spinner-lite active></paper-spinner-lite>
+                        </div>
+                        
+                        <div id="dynamic"></div>
+
+                        <vaadin-combo-box 
+                            label="Currency" 
+                            value="{{ item.currency_id }}"
+                            items="[[ currencies ]]" 
+                            item-value-path="currency_id" 
+                            item-label-path="currency_name" 
+                            on-change="__onCurrencyChange" 
+                            required 
+                            auto-validate 
+                            error-message="Currency is required"></vaadin-combo-box>
+
+                        <paper-input allowed-pattern="[0-9.]" label="Amounts" value="{{ item.amounts }}" required auto-validate error-message="Amounts is required"></paper-input>
+                        <vaadin-combo-box 
+                            label="Payment Type" 
+                            value="{{ item.payment_type }}"
+                            items="[[ payments ]]" 
+                            item-value-path="id" 
+                            item-label-path="text" 
+                            required 
+                            auto-validate 
+                            error-message="Payment type is required"></vaadin-combo-box>
+                    </kct-form-validator>
+                    
+                </div>
+
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onItemEditorSaveTap" disabled$="[[ __itemInvalid ]]">Save</paper-button>
+                    <paper-button on-tap="__onItemEditorCancelTap">Cancel</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
     </template>
     <script>
         class OpexEditorPage extends KctView {
@@ -10,7 +254,262 @@
                 return 'opex-editor-page';
             }
             static get properties() {
-                return {};
+                return {
+                    record: { type: Object, value: () => ({}) },
+                    types: { type: Array },
+                    purposes: { type: Array },
+                    items: { type: Array, value: () => ([]) },
+                    masterItems: { type: Array, value: () => ([]) },
+                    advance: { type: Array, value: () => ([]) },
+                    item: { type: Object },
+                    dynamic: { type: Object, value: () => ({}) },
+                    payments: {
+                        type: Array,
+                        value: [
+                            { id: '1', text: 'Cash' },
+                            { id: '2', text: 'Credit Card' }
+                        ]
+                    }
+                };
+            }
+            constructor() {
+                super();
+
+                this.__purposes = [];
+                this.__stamping = false;
+            }
+            handleRouteParams(module, action, id) {
+                if (['add', 'edit'].indexOf(action) == -1) return;
+
+                // load master items
+                this.$.ajax.GET('/items?display=combo').then(res => {
+                    this.set('masterItems', res.data);
+                });
+
+                // load currencies
+                this.$.ajax.GET('/currencies').then(res => {
+                    this.set('currencies', res.data);
+                });
+
+                this.set('items', []);
+                this.set('record', {});
+
+                if (action == 'edit') {
+                    this.mask('Loading...')
+
+                    this.$.ajax.GET('/expense/' + id).then(res => {
+                        this.unmask();
+
+                        this.set('record', res.data);
+                        this.__loadItems();
+                    });
+                }
+            }
+            __computeNo(index) {
+                return (index + 1);
+            }
+            __loadItems() {
+                if ( ! this.record || ! this.record.id_exp) {
+                    return;
+                }
+
+                this.$.ajax.GET('/expense/items', { 
+                    display: 'group',
+                    expense: this.record.id_exp 
+                }).then(res => {
+                    this.set('items', res.data);
+                });
+            }
+            __saveChanges() {
+                let data = this.record;
+                let def = this._defer();
+
+                data.catagory = 'opex';
+
+                if (data.id_exp) {
+                    this.$.ajax.PUT('/expense/' + data.id_exp, data).then(done.bind(this));
+                } else {
+                    this.$.ajax.POST('/expense', data).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        let id = res.data.id_exp;
+
+                        this.set('record.id_exp', id);
+
+                        if (this.attachment) {
+                            this.$.ajax.UPLOAD('/expense/' + id + '/upload', {
+                                files: [
+                                    { name: this.attachment.name, file: this.attachment }
+                                ]
+                            }).then(() => {
+                                def.resolve();
+                            });
+                        } else {
+                            def.resolve();
+                        }
+                    }
+                }
+
+                return def.promise;
+            }
+            __onSaveTap() {
+                this.__saveChanges().then(() => {
+                    this.toast('Success', 'Data has been saved');
+                });
+            }
+            __buildForm(forms) {
+                let html = '';
+                let data = {};
+                let combo = {};
+
+                forms.forEach(f => {
+                    let name = `field_${f.item_form_id}`,
+                        value = `dynamic.${name}`,
+                        label = f.item_form_label,
+                        required = f.mandatory == '1' ? true : false;
+
+                    let validation = '';
+
+                    if (required) {
+                        validation = `required auto-validate error-message="${label} is required"`;
+                    }
+
+                    switch(f.item_form_editor) {
+                        case 'datepicker':
+                            html += `
+                                <vaadin-date-picker label="${label}" value="{{ ${value} }}" ${validation}></vaadin-date-picker>
+                            `;
+                            break;
+
+                        case 'dropdown':
+                            
+                            let options = [];
+
+                            try {
+                                options = JSON.parse(f.option || '[]');
+                            } catch(e){}
+
+                            combo[name] = options;
+
+                            html += `
+                                <vaadin-combo-box 
+                                    id="${name}" 
+                                    label="${label}" 
+                                    value="{{ ${value} }}" 
+                                    item-value-path="value" 
+                                    item-label-path="text" ${validation}></vaadin-combo-box>
+                            `;
+                            break;
+
+                        default:
+                            html += `
+                                <paper-input label="${label}" value="{{ ${value} }}" ${validation}></paper-input>
+                            `;
+                            break;
+                    }
+
+                    if (f.item_form_value !== undefined) {
+                        data[name] = f.item_form_value;
+                    }
+                });
+
+                let template = document.createElement('template');
+                template.innerHTML = html;
+
+                let instance = this._stampTemplate(template);
+                this.$.dynamic.appendChild(instance);
+
+                // fixup combo items
+                for(let id in combo) {
+                    instance.$[id].items = combo[id];
+                }
+
+                this.set('dynamic', data);
+
+                this.$['item-validator'].collect().then(() => {
+                    this.$['item-validator'].validate();
+                });
+            }
+            __onMasterItemChange(e) {
+                this.$.dynamic.innerHTML = '';
+                this.set('dynamic', {});
+
+                let id = e.target.value;
+                if ( ! id) return;
+
+                this.set('__stamping', true);
+
+                this.$.ajax.GET('/items/' + id).then(res => {
+                    if (res.data) {
+                        this.__buildForm(res.data.item_forms);    
+                        this.set('__stamping', false);
+                    }
+                });
+            }
+            __onAddItemTap() {
+                this.set('item', {});
+
+                this.$.dynamic.innerHTML = '';
+                this.$['item-editor'].open();
+
+                this.set('__itemInvalid', true);
+            }
+            __onItemEditorSaveTap() {
+                this.$['item-editor'].close();   
+
+                let data = this.item;
+
+                data.id_exp = this.record.id_exp;
+                data.dynamic = this.dynamic;
+
+                if (data.exp_item_id) {
+                    this.$.ajax.PUT('/expense/items/' + data.exp_item_id, data).then(done.bind(this));
+                } else {
+                    this.$.ajax.POST('/expense/items', data).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.__loadItems();
+                    }
+                }
+            }
+            __onItemEditorCancelTap() {
+                this.$['item-editor'].close();   
+            }
+            __onItemEditTap(e) {
+                let item = Object.assign({}, e.model.item);
+                this.set('item', item);
+
+                this.$.dynamic.innerHTML = '';
+
+                this.__buildForm(item.item_forms);
+                this.$['item-editor'].open();
+            }
+            __onItemDeleteTap(e) {
+                let item = e.model.item;
+                this.confirm('Confirm', `Are you sure you want to delete ${item.item_name} ?`).then(b => {
+                    if (b) {
+                        this.$.ajax.DELETE('/expense/items/' + item.exp_item_id).then(() => {
+                            this.__loadItems();
+                        });
+                    }
+                });    
+            }
+            __onCurrencyChange(e) {
+                let id = e.target.value;
+                this.set('item.currency_rate', 1);
+                if (id) {
+                    let currency = (this.currencies || []).find(c => c.currency_id == id);
+                    if (currency) {
+                        this.set('item.currency_rate', currency.currency_rate);
+                    }
+                }
+            }
+            __onBackTap() {
+                this.set('route.path', '/opex');
             }
         }
         customElements.define(OpexEditorPage.is, OpexEditorPage);

@@ -42,13 +42,13 @@
                             { type: 'rownumber' },
                             { text: 'Periode', dataIndex: 'exp_no', width: 120, align: 'center' },
                             { text: 'Subject', dataIndex: 'subject_exp' },
-                            { 
-                                text: 'Date Created', 
-                                dataIndex: 'date', 
-                                width: 120,  
+                            {
+                                text: 'Period',
+                                dataIndex: 'date_start',
+                                width: 150,
                                 align: 'center',
                                 renderer: (e) => {
-                                    return e.data ? e.data.date_short : '';
+                                    return e.data ? e.data.period : '';
                                 }
                             },
                             { 
@@ -64,19 +64,16 @@
                             { 
                                 text: 'Action',
                                 type: 'action',
-                                width: 300,
+                                width: 120,
                                 renderer: (e) => {
                                     if (e.data) {
                                         let status = e.data.status;
-                                        let buttons = `<paper-button on-tap="__onViewTap" class="btn-muted"><iron-icon icon="search"></iron-icon>&nbsp;View</paper-button>`;
+                                        let buttons = `<paper-button on-tap="__onViewTap" class="btn-muted btn-icon" title="View"><iron-icon icon="search"></iron-icon></paper-button>`;
 
                                         if (status == 1 || status == 10) {
-                                            buttons += `
-                                                <paper-button on-tap="__onEditTap" class="btn-amber"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>
-                                                <paper-button on-tap="__onDeleteTap" class="btn-danger"><iron-icon icon="clear"></iron-icon>&nbsp;Delete</paper-button>
-                                            `;
+                                            buttons += `<paper-button on-tap="__onEditTap" class="btn-amber btn-icon" title="Edit"><iron-icon icon="image:edit"></iron-icon></paper-button>`;
                                             if (e.data.has_items) {
-                                                buttons += `<paper-button on-tap="__onSubmitTap" class="btn-info"><iron-icon icon="done"></iron-icon>&nbsp;Submit</paper-button>`;
+                                                buttons += `<paper-button on-tap="__onSubmitTap" class="btn-info btn-icon" title="Submit"><iron-icon icon="done"></iron-icon></paper-button>`;
                                             }
                                         }
                                         return buttons;
@@ -104,6 +101,21 @@
                 if (this.$.grid) {
                     this.$.grid.resize();
                 }
+            }
+            __onViewTap(e) {
+                this.set('route.path', '/opex/opex/view/' + e.data.id_exp);
+            }
+            __onEditTap(e) {
+                this.set('route.path', '/opex/opex/edit/' + e.data.id_exp);
+            }
+            __onSubmitTap(e) {
+                this.confirm('Confirm', `Are you sure you want to submit ${e.data.exp_no} ?`).then(b => {
+                    if (b) {
+                        this.$.ajax.POST('/expense/' + e.data.id_exp + '/submit').then(() => {
+                            this.$.grid.load();
+                        });
+                    }
+                });   
             }
         }
         customElements.define(OpexListPage.is, OpexListPage);

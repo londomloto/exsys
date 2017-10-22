@@ -131,20 +131,24 @@ class HttpRequest {
 
 }
 
+$url = 'http://127.0.0.1/exsys/api/v2/demo';
+
 // captcha
-$req = new HttpRequest('http://127.0.0.1/exsys/api/v2/demo/auth/captcha?type=code', 'GET');
+$req = new HttpRequest($url.'/auth/captcha?type=code', 'GET');
 $req->headers["Connection"] = "close";
 $req->send() or die("Couldn't send!");
+$res = $req->getResponseBody();
+$obj = json_decode($res);
 
-$res = json_decode($req->getResponseBody());
+// print_r($obj);
 
 // login
-$req = new HttpRequest('http://127.0.0.1/exsys/api/v2/demo/auth/login', 'POST');
+$req = new HttpRequest($url.'/auth/login', 'POST');
 
 $data = json_encode(array(
-    'email' => 'cahya@x.app',
+    'email' => 'admin@x.app',
     'password' => '123',
-    'captcha' => $res->data,
+    'captcha' => $obj->data,
     'remeber' => false
 ));
 
@@ -153,16 +157,20 @@ $req->headers["Content-Length"] = strlen($data);
 $req->headers["Connection"] = "close";
 
 $req->send($data) or die("Couldn't send!");
+$res = $req->getResponseBody();
+$obj = json_decode($res);
 
-$res = json_decode($req->getResponseBody());
+// print_r($obj);
 
 sleep(1);
 // create
-$req = new HttpRequest('http://127.0.0.1/exsys/api/v2/demo/opex/cron', 'GET');
-$req->headers["Authorization"] = "Bearer ".$res->data->su_access_token;
+$req = new HttpRequest($url.'/expense/cron', 'POST');
+$req->headers["Authorization"] = "Bearer ".$obj->data->su_access_token;
 $req->headers["Connection"] = "close";
 $req->send() or die("Couldn't send!");
+$res = $req->getResponseBody();
+$obj = json_decode($res);
 
-echo( $req->getResponseBody() );
+print_r($obj);
 
 ?>

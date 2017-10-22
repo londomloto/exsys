@@ -11,10 +11,7 @@ class ExpenseController extends \Micro\Controller {
 
     public function findAction() {
         $catagory = $this->request->getQuery('catagory');
-
-        if (empty($catagory)) {
-            $catagory = 'claim';
-        }
+        $catagory = empty($catagory) ? 'expense' : $catagory;
 
         return Expense::get()
             ->where('catagory = :catagory:', array('catagory' => $catagory))
@@ -49,25 +46,10 @@ class ExpenseController extends \Micro\Controller {
         $post = $this->request->getJson();
         $user = $this->auth->user();
 
-        if ($post['catagory'] == 'claim') {
-            $post['exp_no'] = Autonumber::generate('EXPENSE');
-        } else if ($post['catagory'] == 'trip') {
-            $post['exp_no'] = Autonumber::generate('TRIP');
-        } else if ($post['catagory'] == 'opex') {
-            $code = 'OPX#'.date('my');
-            
-            if (Expense::findFirst("exp_no = '$code'")) {
-                return array(
-                    'success' => FALSE,
-                    'message' => 'Operational document already created'
-                );
-            }
-
-            $post['exp_no'] = $code;
-        }
-        
+        $post['exp_no'] = Autonumber::generate('EXPENSE');
         $post['status'] = 1;
         $post['id_user'] = $user['su_id'];
+        $post['date'] = date('Y-m-d H:i:s');
 
         $data = new Expense();
 
@@ -80,6 +62,8 @@ class ExpenseController extends \Micro\Controller {
 
     public function updateAction($id) {
         $post = $this->request->getJson();
+        unset($post['date']);
+
         $query = Expense::get($id);
 
         if ($query->data) {
@@ -288,5 +272,40 @@ class ExpenseController extends \Micro\Controller {
         return array(
             'success' => TRUE
         );
+    }
+
+    public function cronAction() {
+        $user = $this->auth->user();
+        $date = date('Y-m-d h:i:s');
+        $time = strtotime($date);
+        $code = date('m/Y');
+
+        $opex = Expense::findFirst("DATE_FORMAT(date, '%m/%Y') = '".$code."' AND catagory = 'opex'");
+
+        if ($opex) {
+            return array(
+                'success' => TRUE,
+                'data' => $opex->toArray()
+            );
+        }
+
+        $opex = new Expense();
+        $opex->exp_no = Autonumber::generate('OPEX');
+        $opex->subject_exp = 'Opex '.$code;
+        $opex->catagory = 'opex';
+        $opex->date = $date;
+        $opex->id_user = $user['su_id'];
+        $opex->date_start = date('Y-m-01', $time);
+        $opex->date_end = date('Y-m-t', $time);
+        $opex->other_purpose = NULL;
+        $opex->status = 1;
+
+        if ($opex->save()) {
+            return Expense::get($opex->id_exp);
+        } else {
+            print_r($opex->getMessages());
+        }
+
+        return Expense::none();
     }
 }

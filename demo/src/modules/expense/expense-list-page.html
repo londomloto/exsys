@@ -16,7 +16,7 @@
 
         <kct-grid 
             id="grid" 
-            url="/expense?catagory=claim" 
+            url="/expense?catagory=expense" 
             page-size="25" 
             columns="[[ columns ]]" 
             title="DATASHEET" 
@@ -72,15 +72,15 @@
                                 renderer: (e) => {
                                     if (e.data) {
                                         let status = e.data.status;
-                                        let buttons = `<paper-button on-tap="__onViewTap" class="btn-muted"><iron-icon icon="search"></iron-icon>&nbsp;View</paper-button>`;
+                                        let buttons = `<paper-button on-tap="__onViewTap" class="btn-muted btn-icon" title="View"><iron-icon icon="search"></iron-icon></paper-button>`;
 
                                         if (status == 1 || status == 10) {
                                             buttons += `
-                                                <paper-button on-tap="__onEditTap" class="btn-amber"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>
-                                                <paper-button on-tap="__onDeleteTap" class="btn-danger"><iron-icon icon="clear"></iron-icon>&nbsp;Delete</paper-button>
+                                                <paper-button on-tap="__onEditTap" class="btn-amber btn-icon" title="Edit"><iron-icon icon="image:edit"></iron-icon></paper-button>
+                                                <paper-button on-tap="__onDeleteTap" class="btn-danger btn-icon" title="Delete"><iron-icon icon="clear"></iron-icon></paper-button>
                                             `;
                                             if (e.data.has_items) {
-                                                buttons += `<paper-button on-tap="__onSubmitTap" class="btn-info"><iron-icon icon="done"></iron-icon>&nbsp;Submit</paper-button>`;
+                                                buttons += `<paper-button on-tap="__onSubmitTap" class="btn-info btn-icon" title="Submit"><iron-icon icon="done"></iron-icon></paper-button>`;
                                             }
                                         }
                                         return buttons;
@@ -131,7 +131,7 @@
                 this.set('route.path', '/expense/expense/view/' + e.data.id_exp);
             }
             __onSubmitTap(e) {
-                this.confirm('Confirm', 'Are you sure?').then(b => {
+                this.confirm('Confirm', `Are you sure you want to submit ${e.data.exp_no} ?`).then(b => {
                     if (b) {
                         this.$.ajax.POST('/expense/' + e.data.id_exp + '/submit').then(() => {
                             this.$.grid.load();
