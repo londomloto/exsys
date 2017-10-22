@@ -20,7 +20,7 @@ class Task extends \Micro\Model {
 
     public function toArray($columns = NULL) {
         $data = parent::toArray($columns);
-        $data = array_merge($data, $this->advance->toArray());
+        $data = array_merge($data, $this->trip->toArray());
         $data['amounts_formatted'] = number_format($data['amounts'], 2, ',', '.');
 
         return $data;
