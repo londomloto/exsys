@@ -17,7 +17,7 @@ switch($_SERVER['SERVER_ADMIN']) {
             'db' => array(
                 'host' => '127.0.0.1',
                 'user' => 'root',
-                'pass' => 'exsys123',
+                'pass' => 'xsys123',
                 'name' => 'exsys'
             )
         );
