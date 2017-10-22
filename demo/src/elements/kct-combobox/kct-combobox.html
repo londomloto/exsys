@@ -1,0 +1,39 @@
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../kct-ajax/kct-ajax.html">
+<link rel="import" href="kct-combobox-overlay.html">
+
+<dom-module id="kct-combobox">
+    <template>
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-combobox-overlay
+            id="overlay"
+            opened$=[[opened]]
+            position-target="[[inputElement]]"
+            _focused-index="[[_focusedIndex]]"
+            _item-label-path="[[itemLabelPath]]"
+            loading="[[loading]]"
+            on-down="_onOverlayDown"
+            on-mousedown="_preventDefault"
+            vertical-offset="[[overlayVerticalOffset]]">
+        </kct-combobox-overlay>
+        
+    </template>
+    <script>
+        class KctCombobox extends Polymer.Element {
+            static get is() {
+                return 'kct-combobox';
+            }
+            static get properties() {
+                return {
+                    label: { type: String },
+                    value: { type: String },
+                    pageSize: { type: Number, value: 25 },
+                    url: { type: String },
+                    params: { type: Object }
+                };
+            }
+        }
+        customElements.define(KctCombobox.is, KctCombobox);
+    </script>
+</dom-module>

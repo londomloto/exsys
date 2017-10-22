@@ -1,0 +1,75 @@
+<link rel="import" href="../../../bower_components/vaadin-combo-box/vaadin-combo-box-overlay.html">
+
+<dom-module id="kct-combobox-overlay">
+    <template>
+        <style>
+            :host {
+                position:absolute;
+                @apply --shadow-elevation-2dp;
+                background:#fff;
+                border-radius:0 0 2px 2px;
+                top:0;
+                left:0;
+                pointer-events:auto;
+                z-index:200;
+                overflow:hidden;
+            }
+            #scroller {
+                overflow:auto;
+                max-height:var(--vaadin-combo-box-overlay-max-height,65vh);
+                transform:translate3d(0,0,0);
+                -webkit-overflow-scrolling:touch;
+            }
+            #selector {
+                --iron-list-items-container: {
+                    border-top:8px solid transparent;
+                    border-bottom:8px solid transparent;
+                };
+            }
+            #selector vaadin-combo-box-item {
+                cursor:pointer;
+                padding:10px 16px;
+                color:var(--primary-text-color);
+                white-space:nowrap;
+                overflow:hidden;
+                text-overflow:ellipsis;
+            }
+            :host([opened][loading]) {
+                display:block !important;
+                height:58px;
+            }
+            #selector:not([touch-device]) vaadin-combo-box-item:hover,
+            #selector vaadin-combo-box-item[focused] {
+                background:#eee;
+            }
+            #selector vaadin-combo-box-item[selected] {
+                color:var(--primary-color);
+            }
+            #selector vaadin-combo-box-item[hidden] {
+                display: none;
+            }
+        </style>
+        <vaadin-spinner active="[[loading]]"></vaadin-spinner>
+        <div id="scroller" scroller="[[_getScroller()]]" on-tap="_stopPropagation" on-touchstart="_onTouchStart" on-touchend="_preventDefault" on-scroll="_onScroll" hidden$="[[loading]]">
+            <iron-list id="selector" touch-device$="[[touchDevice]]" role="listbox" items="[[_items]]" scroll-target="[[_getScroller()]]">
+                <template>
+                    <vaadin-combo-box-item on-tap="_onTap" index="[[index]]" item="[[item]]" label="[[getItemLabel(item)]]" selected="[[_isItemSelected(item, _selectedItem)]]" role$="[[_getAriaRole(index)]]" aria-selected$="[[_getAriaSelected(_focusedIndex,index)]]" focused="[[_isItemFocused(_focusedIndex,index)]]"></vaadin-combo-box-item>
+                </template>
+            </iron-list>
+        </div>
+        <div id="pagination"></div>
+    </template>
+    <script>
+        {
+            let BaseClass = customElements.get('vaadin-combo-box-overlay');
+
+            class KctComboboxOverlay extends BaseClass {
+                static get is() {
+                    return 'kct-combobox-overlay';
+                }
+            }
+
+            customElements.define(KctComboboxOverlay.is, KctComboboxOverlay);
+        }
+    </script>
+</dom-module>
