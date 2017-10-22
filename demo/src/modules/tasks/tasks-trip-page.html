@@ -2,7 +2,7 @@
 <link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../../elements/kct-grid/kct-grid.html">
 <link rel="import" href="../../elements/kct-pages/kct-pages.html">
-<link rel="import" href="tasks-action-page.html">
+<link rel="import" href="tasks-trip-action.html">
 
 <dom-module id="tasks-trip-page">
     <template>
@@ -35,7 +35,7 @@
                     </template>
 
             </kct-grid>
-            <tasks-action-page id="action" task="[[ task ]]" on-back-tap="__onActionBackTap"></tasks-action-page>
+            <tasks-trip-action id="action" task="[[ task ]]" on-back-tap="__onActionBackTap"></tasks-trip-action>
         </kct-pages>
 
     </template>
