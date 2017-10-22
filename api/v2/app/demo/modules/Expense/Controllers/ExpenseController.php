@@ -49,11 +49,28 @@ class ExpenseController extends \Micro\Controller {
         $post = $this->request->getJson();
         $user = $this->auth->user();
 
-        $post['exp_no'] = Autonumber::generate('EXPENSE');
+        if ($post['catagory'] == 'claim') {
+            $post['exp_no'] = Autonumber::generate('EXPENSE');
+        } else if ($post['catagory'] == 'trip') {
+            $post['exp_no'] = Autonumber::generate('TRIP');
+        } else if ($post['catagory'] == 'opex') {
+            $code = 'OPX#'.date('my');
+            
+            if (Expense::findFirst("exp_no = '$code'")) {
+                return array(
+                    'success' => FALSE,
+                    'message' => 'Operational document already created'
+                );
+            }
+
+            $post['exp_no'] = $code;
+        }
+        
         $post['status'] = 1;
         $post['id_user'] = $user['su_id'];
 
         $data = new Expense();
+
         if ($data->save($post)) {
             return Expense::get($data->id_exp);
         }

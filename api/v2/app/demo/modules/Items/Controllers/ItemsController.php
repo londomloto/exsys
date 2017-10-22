@@ -8,7 +8,7 @@ class ItemsController extends \Micro\Controller {
     public function findAction() {
         $params = $this->request->getParams();
         $display = isset($params['display']) ? $params['display'] : FALSE;
-
+        
         switch($display) {
             case 'combo':
             case 'grid':

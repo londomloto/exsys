@@ -15,7 +15,7 @@
 
         <kct-grid 
             id="grid" 
-            url="/expense?catagory=trips" 
+            url="/trips" 
             page-size="25" 
             columns="[[ columns ]]" 
             title="DATASHEET" 
@@ -42,8 +42,8 @@
                         type: Array,
                         value: [
                             { type: 'rownumber' },
-                            { text: 'Request No.', dataIndex: 'exp_no', width: 120, align: 'center' },
-                            { text: 'Subject', dataIndex: 'subject_exp' },
+                            { text: 'Request No.', dataIndex: 'trip_no', width: 120, align: 'center' },
+                            { text: 'Subject', dataIndex: 'subject_trip' },
                             { 
                                 text: 'Date Created', 
                                 dataIndex: 'date', 
@@ -70,15 +70,15 @@
                                 renderer: (e) => {
                                     if (e.data) {
                                         let status = e.data.status;
-                                        let buttons = `<paper-button on-tap="__onViewTap" class="btn-muted"><iron-icon icon="search"></iron-icon>&nbsp;View</paper-button>`;
+                                        let buttons = `<paper-button on-tap="__onViewTap" title="View" class="btn-muted btn-icon"><iron-icon icon="search"></iron-icon></paper-button>`;
 
                                         if (status == 1 || status == 10) {
                                             buttons += `
-                                                <paper-button on-tap="__onEditTap" class="btn-amber"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>
-                                                <paper-button on-tap="__onDeleteTap" class="btn-danger"><iron-icon icon="clear"></iron-icon>&nbsp;Delete</paper-button>
+                                                <paper-button on-tap="__onEditTap" class="btn-amber btn-icon" title="Edit"><iron-icon icon="image:edit"></iron-icon></paper-button>
+                                                <paper-button on-tap="__onDeleteTap" class="btn-danger btn-icon" title="Delete"><iron-icon icon="clear"></iron-icon></paper-button>
                                             `;
                                             if (e.data.has_items) {
-                                                buttons += `<paper-button on-tap="__onSubmitTap" class="btn-info"><iron-icon icon="done"></iron-icon>&nbsp;Submit</paper-button>`;
+                                                buttons += `<paper-button on-tap="__onSubmitTap" class="btn-cyan btn-icon" title="Submit"><iron-icon icon="done"></iron-icon></paper-button>`;
                                             }
                                         }
                                         return buttons;
@@ -106,6 +106,12 @@
                 if (this.$.grid) {
                     this.$.grid.resize();
                 }
+            }
+            __onAddTap() {
+                this.set('route.path', '/trips/trips/add');
+            }
+            __onEditTap(e) {
+                this.set('route.path', '/trips/trips/edit/' + e.data.id_trip);
             }
         }
         customElements.define(TripsListPage.is, TripsListPage);

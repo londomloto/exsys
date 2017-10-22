@@ -40,7 +40,7 @@
             .dialog-body::-webkit-scrollbar-track { background-color: rgba(0, 0, 0, .2); }
 
             .dialog-footer {
-                background-color: var(--app-primary);
+                background-color: var(--kct-dialog-accent, var(--app-primary));
                 padding: 8px;
                 text-align: center;
                 margin-bottom: 0;
@@ -51,6 +51,7 @@
             .dialog-footer paper-button[disabled] {
                 background: transparent;
                 opacity: .5;
+                color: #ffffff;
             }
         </style>
 
@@ -82,13 +83,15 @@
                         title: { type: String, value: 'Dialog' },
                         width: { type: String },
                         height: { type: String },
-                        scrollable: { type: Boolean, value: false }
+                        scrollable: { type: Boolean, value: false },
+                        accent: { type: String }
                     }
                 }
                 static get observers() {
                     return [
                         '__sizeChanged(width, height)',
-                        '__titleChanged(title)'
+                        '__titleChanged(title)',
+                        '__accentChanged(accent)'
                     ];
                 }
 
@@ -107,7 +110,11 @@
                         header: false,
                         body: false,
                         footer: false
-                    }
+                    };
+
+                    this.__openedHandler = this.__onDialogOpened.bind(this);
+                    this.__closedHandler = this.__onDialogClosed.bind(this);
+                    this.__relocating = false;
                 }
                 
                 ready() {
@@ -189,6 +196,9 @@
                         }
                         
                         this.shadowRoot.appendChild(dialogInstance);
+
+                        this.$.dialog.addEventListener('iron-overlay-closed', this.__closedHandler);
+                        this.$.dialog.addEventListener('iron-overlay-opened', this.__openedHandler);
                     }
 
                     this.__stampped = true;
@@ -196,12 +206,25 @@
 
                 connectedCallback() {
                     super.connectedCallback();
+
+                    if ( ! this.__relocating && this.$.dialog) {
+                        this.$.dialog.addEventListener('iron-overlay-opened', this.__openedHandler);
+                        this.$.dialog.addEventListener('iron-overlay-closed', this.__closedHandler);
+                    }
+                }
+
+                disconnectedCallback() {
+                    if ( ! this.__relocating && this.$.dialog) {
+                        this.$.dialog.removeEventListener('iron-overlay-opened', this.__openedHandler);
+                        this.$.dialog.removeEventListener('iron-overlay-closed', this.__closedHandler);
+                    }
+                    
+                    super.disconnectedCallback();
                 }
 
                 open() {
                     this.__relocate();
                     this.$.dialog.open();
-                    this.dispatchEvent(new CustomEvent('open'));
                 }
 
                 recenter() {
@@ -209,23 +232,34 @@
                 }
 
                 close() {
-                    this.$.dialog.close();
-                    this.dispatchEvent(new CustomEvent('close'));
                     this.__restore();
+                    this.$.dialog.close();
                 }   
+
+                __accentChanged(accent) {
+                    this.updateStyles({
+                        '--kct-dialog-accent': accent
+                    });
+                }
 
                 __relocate() {
                     let owner = (this.parentNode && this.parentNode.host) || this.parentNode;
+
                     if (owner.localName != 'body') {
+                        this.__relocating = true;
                         this.__owner = owner;
                         document.body.appendChild(this);
+                        this.__relocating = false;
                     }
+                    
                 }
 
                 __restore() {
                     if (this.__owner) {
+                        this.__relocating = true;
                         this.__owner.appendChild(this);
                         this.__owner = null;
+                        this.__relocating = false;
                     }
                 }
 
@@ -257,6 +291,14 @@
                     }
 
                     return name;
+                }
+
+                __onDialogOpened() {
+                    this.dispatchEvent(new CustomEvent('opened'));
+                }
+
+                __onDialogClosed() {
+                    this.dispatchEvent(new CustomEvent('closed'));
                 }
 
                 delegate(prop, value) {

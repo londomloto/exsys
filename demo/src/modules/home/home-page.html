@@ -4,6 +4,7 @@
 <link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../../elements/kct-role/kct-role.html">
 <link rel="import" href="../../elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../elements/kct-form/kct-form-validator.html">
 <link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
 
 <dom-module id="home-page">
@@ -40,6 +41,7 @@
         <kct-vbox >
             <page-header-block icon="home" description="Application Homepage" accent="var(--paper-green-500)"></page-header-block>
             <div class="flex">
+                <kct-form-validator></kct-form-validator>
                 <div class="p-a-lg">
                     <div class="welcome">
                         <!-- <h2 class="welcome-title f-300">[[ config.app_title ]]</h2> -->

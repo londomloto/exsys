@@ -10,6 +10,8 @@
 <link rel="import" href="../../elements/kct-layouts/kct-column.html">
 <link rel="import" href="../../elements/kct-dialog/kct-dialog.html">
 <link rel="import" href="../../elements/kct-chip/kct-chip.html">
+<link rel="import" href="../../elements/kct-form/kct-form-validator.html">
+<link rel="import" href="../../elements/kct-checkbox/kct-checkbox.html">
 <link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
 
 <dom-module id="items-forms-page">
@@ -123,6 +125,10 @@
                                             <div class="label">Position</div>
                                             <div class="value">[[ item.index ]]</div>
                                         </div>
+                                        <div class="prop">
+                                            <div class="label">Mandatory</div>
+                                            <div class="value">[[ __computeMandatory(item.mandatory) ]]</div>
+                                        </div>
                                     </div>
                                 </div>
                                 <div>
@@ -171,23 +177,30 @@
         <kct-dialog id="form-editor" title="Form Editor" width="400" height="100%">
             <template preserve-content>
                 <div slot="dialog-body">
-                    <paper-input label="Label" value="{{ selectedForm.item_form_label }}"></paper-input>
-
-                    <vaadin-combo-box 
-                        label="Data Type" 
-                        value="{{ selectedForm.item_form_type }}"
-                        items="[[ __types ]]" 
-                        item-value-path="value" 
-                        item-label-path="label"></vaadin-combo-box>
-
-                    <vaadin-combo-box 
-                        label="Editor" 
-                        value="{{ selectedForm.item_form_editor }}"
-                        items="[[ __editors ]]" 
-                        item-value-path="value" 
-                        item-label-path="label"></vaadin-combo-box>
-
-                    <paper-input allowed-pattern="[0-9]" label="Position" value="{{ selectedForm.index }}"></paper-input>
+                    <kct-form-validator id="form-validator" invalid="{{ __formInvalid }}" auto-validate>
+                        <paper-input label="Label" value="{{ selectedForm.item_form_label }}" required auto-validate error-message="Label is required"></paper-input>    
+                        <vaadin-combo-box 
+                            label="Data Type" 
+                            value="{{ selectedForm.item_form_type }}"
+                            items="[[ __types ]]" 
+                            item-value-path="value" 
+                            item-label-path="label" 
+                            required 
+                            auto-validate 
+                            error-message="Data type is required"></vaadin-combo-box>
+                        <vaadin-combo-box 
+                            label="Editor" 
+                            value="{{ selectedForm.item_form_editor }}"
+                            items="[[ __editors ]]" 
+                            item-value-path="value" 
+                            item-label-path="label" 
+                            required 
+                            auto-validate 
+                            error-message="Editor is required"></vaadin-combo-box>
+                        <paper-input allowed-pattern="[0-9]" label="Position" value="{{ selectedForm.index }}"></paper-input>
+                        <kct-checkbox value="{{ selectedForm.mandatory }}">Mark as mandatory (required) field</kct-checkbox>
+                    </kct-form-validator>
+                    
                 </div>
                 <div slot="dialog-footer">
                     <paper-button on-tap="__onFormEditorSaveTap">Save</paper-button>
@@ -276,6 +289,9 @@
 
                     this.set('forms', forms);
                 });
+            }
+            __computeMandatory(mandatory) {
+                return mandatory == '1' ? 'Yes' : 'No';
             }
             __selectedOptionChanged() {
                 let valid = true;

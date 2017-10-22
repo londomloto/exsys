@@ -12,6 +12,7 @@
 <link rel="import" href="../../elements/kct-pages/kct-pages.html">
 <link rel="import" href="../../elements/kct-layouts/kct-vbox.html">
 <link rel="import" href="../../elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../elements/kct-form/kct-form-validator.html">
 <link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
 
 <dom-module id="advance-editor-page">
@@ -33,8 +34,8 @@
 
         <kct-vbox>
             
-            <page-header-block title="EDITOR" description="Advance Request" icon="description">
-                <paper-button hidden="[[ ! record.id_adv ]]"  disabled="[[ __invalid ]]" class="btn-primary" on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Save Changes</paper-button>
+            <page-header-block title="EDITOR" description="Advance Request" icon="description" hidden$="[[ dialogMode ]]">
+                <paper-button hidden="[[ ! record.id_adv ]]"  disabled$="[[ __formInvalid ]]" class="btn-primary" on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Save Changes</paper-button>
             </page-header-block>
 
             <div class="flex scroll-y padding">
@@ -42,49 +43,61 @@
                 <paper-card class="block">
                     <div class="card-content">
                         <h3 class="block-title">Advance Summary</h3>
-                        
-                        <paper-input label="Subject *" value="{{ record.subject_adv }}" required auto-validate></paper-input>
-                        
-                        <kct-hbox>
-                            <div class="flex p-r-sm">
-                                <vaadin-date-picker label="Start Date *" value="{{ record.date_start }}" required auto-validate></vaadin-date-picker>
-                            </div>
-                            <div class="flex p-l-sm">
-                                <vaadin-date-picker label="End Date *" value="{{ record.date_end }}" required auto-validate></vaadin-date-picker>
-                            </div>
-                        </kct-hbox>
+                        <kct-form-validator id="validator" invalid="{{ __formInvalid }}" auto-validate>
                             
-                        <vaadin-combo-box 
-                            label="Type *" 
-                            value="{{ record.type }}"
-                            items="[[ types ]]" 
-                            item-value-path="type_id" 
-                            item-label-path="type_name" 
-                            on-change="__onTypeChange" 
-                            required 
-                            auto-validate></vaadin-combo-box>
+                            <paper-input label="Subject" value="{{ record.subject_adv }}" required auto-validate error-message="Subject is required"></paper-input>    
+                            
+                            <kct-hbox>
+                                <div class="flex p-r-sm">
+                                    <vaadin-date-picker label="Start Date" value="{{ record.date_start }}" required auto-validate error-message="Start date is required"></vaadin-date-picker>
+                                </div>
+                                <div class="flex p-l-sm">
+                                    <vaadin-date-picker label="End Date" value="{{ record.date_end }}" required auto-validate error-message="End date is required"></vaadin-date-picker>
+                                </div>
+                            </kct-hbox>
 
-                        <vaadin-combo-box 
-                            label="Purpose *" 
-                            value="{{ record.purpose }}" 
-                            items="[[ __purposes ]]" 
-                            item-value-path="type_id" 
-                            item-label-path="type_name" 
-                            hidden="[[ !__purposes.length ]]" 
-                            required 
-                            auto-validate ></vaadin-combo-box>
+                            <vaadin-combo-box 
+                                label="Type" 
+                                value="{{ record.type }}"
+                                items="[[ types ]]" 
+                                item-value-path="type_id" 
+                                item-label-path="type_name" 
+                                on-change="__onTypeChange" 
+                                required 
+                                auto-validate 
+                                error-message="Type is required"></vaadin-combo-box>
 
-                        <paper-input label="Purpose *" value="{{ record.other_purpose }}" hidden="[[ __purposes.length ]]" required auto-validate></paper-input>
+                            <vaadin-combo-box 
+                                id="combo-purpose" 
+                                label="Purpose" 
+                                value="{{ record.purpose }}" 
+                                items="[[ __purposes ]]" 
+                                item-value-path="type_id" 
+                                item-label-path="type_name" 
+                                hidden$="[[ !__comboPurposeRequired ]]" 
+                                required$="[[ __comboPurposeRequired ]]" 
+                                auto-validate 
+                                error-message="Purpose is required"></vaadin-combo-box>
 
-                        <kct-file-input label="Attachment" value="{{ record.attachment }}" file="{{ attachment }}"></kct-file-input>
+                            <paper-input 
+                                id="text-purpose" 
+                                label="Purpose" 
+                                value="{{ record.other_purpose }}" 
+                                hidden$="[[ __comboPurposeRequired ]]" 
+                                required$="[[ !__comboPurposeRequired ]]" 
+                                auto-validate 
+                                error-message="Purpose is required"></paper-input>
+
+                            <kct-file-input label="Attachment" value="{{ record.attachment }}" file="{{ attachment }}"></kct-file-input>
+                        </kct-form-validator>
                         
                         <div class="m-t" hidden="[[ record.id_adv ]]">
                             <kct-hbox>
                                 <div class="flex">
-                                    <paper-button class="btn-md btn-blue-grey" on-tap="__onBackTap"><iron-icon icon="arrow-back"></iron-icon>&nbsp;Back To List</paper-button>
+                                    <paper-button class="btn-md btn-blue-grey" on-tap="__onBackTap" hidden$="[[ dialogMode ]]"><iron-icon icon="arrow-back"></iron-icon>&nbsp;Back To List</paper-button>
                                 </div>
                                 <div class="flex text-right">
-                                    <paper-button class="btn-md btn-primary" on-tap="__onNextTap" disabled$="[[ __invalid ]]">Continue&nbsp;<iron-icon icon="arrow-forward"></iron-icon></paper-button>
+                                    <paper-button class="btn-md btn-primary" on-tap="__onNextTap" disabled$="[[ __formInvalid ]]">Continue&nbsp;<iron-icon icon="arrow-forward"></iron-icon></paper-button>
                                 </div>
                             </kct-hbox>
                         </div>
@@ -133,24 +146,37 @@
         </kct-vbox>
 
         <div class="page-actions" hidden="[[ !record.id_adv ]]">
-            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to list" on-tap="__onBackTap"></paper-fab>
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to list" on-tap="__onBackTap" hidden$="[[ dialogMode ]]"></paper-fab>
         </div>
 
-        <kct-dialog id="item-editor" title="Item Editor" width="400" height="100%">
+        <kct-dialog 
+            id="item-editor" 
+            title="Item Editor" 
+            width="400" 
+            height="100%" 
+            accent="[[ itemEditorAccent ]]" 
+            on-opened="__onItemEditorOpened" 
+            on-closed="__onItemEditorClosed">
             <template preserve-content>
                 <div slot="dialog-body">
-                    <paper-input label="Description" value="{{ item.description }}"></paper-input>
-                    <vaadin-combo-box 
-                        label="Currency" 
-                        value="{{ item.currency_id }}"
-                        items="[[ currencies ]]" 
-                        item-value-path="currency_id" 
-                        item-label-path="currency_name" 
-                        on-change="__onCurrencyChange"></vaadin-combo-box>
-                    <paper-input allowed-pattern="[0-9.]" label="Amounts" value="{{ item.amounts }}"></paper-input>
+                    <kct-form-validator id="item-validator" invalid="{{ __itemInvalid }}" auto-validate>
+                        <paper-input label="Description" value="{{ item.description }}" required auto-validate error-message="Description is required"></paper-input>
+                        <vaadin-combo-box 
+                            label="Currency" 
+                            value="{{ item.currency_id }}"
+                            items="[[ currencies ]]" 
+                            item-value-path="currency_id" 
+                            item-label-path="currency_name" 
+                            on-change="__onCurrencyChange" 
+                            required 
+                            auto-validate 
+                            error-message="Currency is required"></vaadin-combo-box>
+                        <paper-input allowed-pattern="[0-9.]" label="Amounts" value="{{ item.amounts }}" required auto-validate error-message="Amounts is required"></paper-input>    
+                    </kct-form-validator>
+                    
                 </div>
                 <div slot="dialog-footer">
-                    <paper-button on-tap="__onItemEditorSaveTap">Save</paper-button>
+                    <paper-button on-tap="__onItemEditorSaveTap" disabled$="[[ __itemInvalid ]]">Save</paper-button>
                     <paper-button on-tap="__onItemEditorCancelTap">Cancel</paper-button>
                 </div>
             </template>
@@ -168,19 +194,20 @@
                     types: { type: Array },
                     purposes: { type: Array },
                     items: { type: Array, value: [] },
-                    item: { type: Object }
+                    item: { type: Object },
+                    dialogMode: { type: Boolean, value: false },
+                    itemEditorAccent: { type: String }
                 };
             }
             static get observers() {
                 return [
-                    '__recordChanged(record.*)'
+                    '__purposesChanged(__purposes.*)'
                 ];
             }
             constructor() {
                 super();
-
                 this.__purposes = [];
-                this.__invalid = false;
+                this.__comboPurposeRequired = false;
             }
             handleRouteParams(module, action, id) {
                 if (['add', 'edit'].indexOf(action) == -1) return;
@@ -189,32 +216,78 @@
                 this.set('record', {});
 
                 if (action == 'edit') {
-                    this.mask('Loading...')
+                    this.mask('Loading...');
 
                     this.__loadReferences().then(() => {
                         this.$.ajax.GET('/advance/' + id).then(res => {
+                            this.unmask();
+
                             this.set('record', res.data);
                             this.__loadItems();
-                            this.unmask();
+                            this.$.validator.validate();
                         });
                     });
                 } else {
-                    this.__loadReferences();
+                    this.__loadReferences().then(() => {
+                        this.$.validator.validate();
+                    });
                 }
+            }
+            initDocument() {
+                this.set('items', []);
+                this.set('record', {});
+
+                this.mask('Opening...');
+                this.__loadReferences().then(() => {
+                    this.unmask();
+                    this.$.validator.validate();
+                });
+            }
+            loadDocument(id) {
+                this.set('items', []);
+                this.mask('Opening...');
+                this.__loadReferences().then(() => {
+                    this.$.ajax.GET('/advance/' + id).then(res => {
+                        this.unmask();
+
+                        this.set('record', res.data);
+                        this.__loadItems();
+                        this.$.validator.validate();
+                    });
+                });
+            }
+            saveDocument() {
+                return this.__saveChanges().then(() => {
+                    return Object.assign({}, this.record);
+                });
+            }
+            __purposesChanged() {
+                let required = this.__purposes.length > 0;
+                this.set('__comboPurposeRequired', required);
+                this.$['combo-purpose'].validate();
+                this.$['text-purpose'].validate();
             }
             __computeNo(index) {
                 return (index + 1);
             }
             __loadReferences() {
 
-                return this.$.ajax.GET('/types').then(res => {
+                return this.$.ajax.GET('/types', {
+                    params: {
+                        type_id: ['<>', '1']
+                    }
+                }).then(res => {
                     this.set('types', res.data);
 
                     this.$.ajax.GET('/currencies').then(res => {
                         this.set('currencies', res.data);
                     });
 
-                    return this.$.ajax.GET('/types/purposes').then(res => {
+                    return this.$.ajax.GET('/types/purposes', {
+                        params: {
+                            parent_id: ['<>', '1']
+                        }
+                    }).then(res => {
                         this.set('purposes', res.data);
                         this.set('__purposes', res.data);
                     });
@@ -268,22 +341,7 @@
             __onNextTap() {
                 this.__saveChanges();
             }
-            __recordChanged() {
-                let valid = true;
-                
-                valid = valid && this.record.subject_adv;
-                valid = valid && this.record.date_start;
-                valid = valid && this.record.date_end;
-                valid = valid && this.record.type;
 
-                if (this.__purposes.length) {
-                    valid = valid && this.record.purpose;    
-                } else {
-                    valid = valid && this.record.other_purpose;
-                }
-
-                this.set('__invalid', ! valid);
-            }
             __onTypeChange(e) {
                 let type = e.target.value;
                 let purposes = this.purposes.filter(p => p.parent_id == type);
@@ -297,6 +355,7 @@
             __onAddItemTap() {
                 this.set('item', {});
                 this.$['item-editor'].open();
+                this.$['item-validator'].validate();
             }
             __onItemEditorSaveTap() {
                 this.$['item-editor'].close();   
@@ -323,6 +382,7 @@
                 let item = e.model.item;
                 this.set('item', item);
                 this.$['item-editor'].open();   
+                this.$['item-validator'].validate();
             }
             __onItemDeleteTap(e) {
                 let item = e.model.item;
@@ -343,6 +403,12 @@
                         this.set('item.currency_rate', currency.currency_rate);
                     }
                 }
+            }
+            __onItemEditorOpened() {
+                this.dispatchEvent(new CustomEvent('item-editor-opened'));
+            }
+            __onItemEditorClosed() {
+                this.dispatchEvent(new CustomEvent('item-editor-closed'));
             }
             __onBackTap() {
                 this.set('route.path', '/advance');

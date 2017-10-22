@@ -94,6 +94,7 @@ class Item extends \Micro\Model {
                 'App\Items\Models\ItemForm.index',
                 'App\Items\Models\ItemForm.item_id',
                 'App\Items\Models\ItemForm.option',
+                'App\Items\Models\ItemForm.mandatory',
                 'a.item_form_value'
             ))
             ->join(

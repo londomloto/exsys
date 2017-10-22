@@ -396,6 +396,11 @@
                 if (config.data) {
                     if (config.method == 'GET') {
                         xhr.params = config.data;
+                        if (xhr.params && xhr.params.params) {
+                            if (typeof xhr.params.params == 'object') {
+                                xhr.params.params = JSON.stringify(xhr.params.params);
+                            }
+                        }
                     } else {
                         xhr.body = config.data;    
                     }

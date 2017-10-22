@@ -12,6 +12,8 @@
 <link rel="import" href="../../elements/kct-layouts/kct-hbox.html">
 <link rel="import" href="../../elements/kct-layouts/kct-vbox.html">
 <link rel="import" href="../../elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../elements/kct-form/kct-form-validator.html">
+<link rel="import" href="../../elements/kct-radio-group/kct-radio-group.html">
 <link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
 
 <dom-module id="users-editor-page">
@@ -19,6 +21,7 @@
         <style include="theme-helper">
             :host {
                 height: 100%;
+                background-color: var(--paper-grey-100);
             }
 
             h3 {
@@ -37,46 +40,46 @@
 
         <kct-vbox>
             <page-header-block image="[[ __icon ]]" title="User Editor" description="[[ record.su_fullname ]]">
-                <paper-button on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Save Changes</paper-button>
+                <paper-button on-tap="__onSaveTap" disabled$="[[ __formInvalid ]]"><iron-icon icon="done"></iron-icon>&nbsp;Save Changes</paper-button>
             </page-header-block>
 
             <div class="flex scroll-y padding">
-                <kct-column columns="3">
-                    <div class="p-r">
-                        <h3>Account Information</h3>
-                        <paper-input id="email" label="Email address" type="email" value="{{ record.su_email }}" required error-message="Valid email address is required"></paper-input>
-                         <vaadin-combo-box 
-                            label="Member of role" 
-                            value="{{ record.su_sr_id }}" 
-                            items="[[ roles ]]" 
-                            item-label-path="sr_name" 
-                            item-value-path="sr_id" 
-                            required auto-validate error-message="Role is required"></vaadin-combo-box>
-                        <paper-input label="Password" type="password" value="{{ password1 }}"></paper-input>
-                        <paper-input label="Password confirm" type="password" value="{{ password2 }}"></paper-input>
-                        <kct-checkbox value="{{ record.su_active }}">Check to activate this user</kct-checkbox>
-                    </div>
-                    <div class="p-r">
-                        <h3>Personal Information</h3>
-                        <paper-input id="fullname" label="Full Name" value="{{ record.su_fullname }}"></paper-input>
-                        <div class="radio-group">
-                            <label>Sex</label>
-                            <paper-radio-group selected="{{ record.su_sex }}">
+                <kct-form-validator id="validator" invalid="{{ __formInvalid }}" auto-validate>
+                    <kct-column columns="3">
+                        <div class="p-r">
+                            <h3>Account Information</h3>
+                            <paper-input id="email" label="Email address" type="email" value="{{ record.su_email }}" required error-message="Valid email address is required"></paper-input>
+                             <vaadin-combo-box 
+                                label="Member of role" 
+                                value="{{ record.su_sr_id }}" 
+                                items="[[ roles ]]" 
+                                item-label-path="sr_name" 
+                                item-value-path="sr_id" 
+                                required auto-validate error-message="Role is required"></vaadin-combo-box>
+                            <paper-input label="Password" type="password" value="{{ password1 }}"></paper-input>
+                            <paper-input label="Password confirm" type="password" value="{{ password2 }}"></paper-input>
+                            <kct-checkbox value="{{ record.su_active }}">Check to activate this user</kct-checkbox>
+                        </div>
+                        <div class="p-r">
+                            <h3>Personal Information</h3>
+                            <paper-input id="fullname" label="Full Name" value="{{ record.su_fullname }}" required auto-validate error-message="Full name is required"></paper-input>
+                            <kct-radio-group label="Sex/Gender" value="{{ record.su_sex }}" layout="horizontal">
                                 <paper-radio-button name="Male">Male</paper-radio-button>
                                 <paper-radio-button name="Female">Female</paper-radio-button>
-                            </paper-radio-group>
+                            </kct-radio-group>
+                            <vaadin-date-picker label="Birthday" value="{{ record.su_dob }}"></vaadin-date-picker>
+                            <paper-input label="Job Description" value="{{ record.su_job_title }}" ></paper-input>
+                            <paper-input label="Phone" value="{{ record.su_phone }}" ></paper-input>
+                            <kct-file-input label="Avatar" value="{{ record.su_avatar }}" file="{{ avatar }}"></kct-file-input>
                         </div>
-                        <vaadin-date-picker label="Birthday" value="{{ record.su_dob }}"></vaadin-date-picker>
-                        <paper-input label="Job Description" value="{{ record.su_job_title }}" ></paper-input>
-                        <paper-input label="Phone" value="{{ record.su_phone }}" ></paper-input>
-                        <kct-file-input label="Avatar" value="{{ record.su_avatar }}" file="{{ avatar }}"></kct-file-input>
-                    </div>
-                    <div class="p-r">
-                        <h3>Account Removal</h3>
-                        <p>Removing user will remove all user data and all related documents.</p>
-                        <paper-button on-tap="__onRemoveAccountTap" class="btn-danger btn-md m-t">Delete User</paper-button>
-                    </div>
-                </kct-columns>   
+                        <div class="p-r" hidden$="[[ !record.su_id ]]">
+                            <h3>Account Removal</h3>
+                            <p>Removing user will remove all user data and all related documents.</p>
+                            <paper-button on-tap="__onRemoveAccountTap" class="btn-danger btn-md m-t">Delete User</paper-button>
+                        </div>
+                    </kct-columns>   
+                </kct-form-validator>
+                
             </div>
         </kct-vbox>
 
@@ -91,8 +94,7 @@
                 return {
                     page: { type: String, value: 'profile' },
                     roles: { type: Array },
-                    record: { type: Object, value: () => ({ su_active: '1' }) },
-                    invalid: { type: Boolean }
+                    record: { type: Object, value: () => ({ su_active: '1' }) }
                 };
             }
 
@@ -118,6 +120,7 @@
                     this.__loadRecord(id);
                 } else {
                     this.set('record', {});
+                    this.$.validator.validate();
                 }
             }
 
@@ -130,6 +133,7 @@
                 this.$.ajax1.GET('/users/' + id).then((res) => {
                     if (res.success) {
                         this.set('record', res.data);
+                        this.$.validator.validate();
                     } else {
                         this.alert('Oops!', "It's look like user doesn't exists in database").then(() => {
                             this.__back();

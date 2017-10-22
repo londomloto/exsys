@@ -10,7 +10,8 @@
             static get properties() {
                 return {
                     invalid: { type: Boolean, value: false, notify: true, reflectToAttribute: true },
-                    autoValidate: { type: Boolean, value: false }
+                    autoValidate: { type: Boolean, value: false },
+                    manualCollect: { type: Boolean, value: false }
                 };
             }
             constructor() {
@@ -20,48 +21,45 @@
             }
             ready() {
                 super.ready();
-                this.__collect();
+
+                if ( ! this.manualCollect) {
+                    this.collect();
+                }
             }
             connectedCallback() {
                 super.connectedCallback();
-
-                this.__listening = Polymer.Debouncer.debounce(
-                    this.__listening,
-                    Polymer.Async.timeOut.after(2),
-                    () => {
-                        this.__collections.forEach(item => {
-                            if ('invalid' in item.node) {
-                                item.node.addEventListener('invalid-changed', this.__invalidChangeHandler);
-                            }
-                        }); 
-                    }
-                );
-
-                Polymer.enqueueDebouncer(this.__listening);
+                this.__bindEvent();
             }
             disconnectedCallback() {
-                this.__collections.forEach(item => {
-                    item.node.removeEventListener('invalid-changed', this.__invalidChangeHandler);
-                });
-
+                this.__unbindEvent();
                 super.disconnectedCallback();
             }
-            __collect() {
+            collect() {
+                let defer = {};
+
+                defer.promise = new Promise((res, rej) => {
+                    defer.resolve = res;
+                    defer.reject = rej;
+                });
+
+                this.__collections = [];
                 this.__collecting = Polymer.Debouncer.debounce(
                     this.__collecting,
                     Polymer.Async.timeOut.after(1),
                     () => {
 
                         let owner = this.parentNode;
+
                         if (owner) {
-                            let selector = 'paper-input,vaadin-combo-box,kct-icon-picker-kct-radio-group';
+                            let selector = 'paper-input,vaadin-combo-box,vaadin-date-picker,kct-icon-picker-kct-radio-group';
                             owner.querySelectorAll(selector).forEach(node => {
                                 if ('validate' in node) {
-                                    let found = node.hasAttribute('required');
 
-                                    if ( ! found) {
-                                        found = ['email'].indexOf(node.type) !== -1;
-                                    }
+                                    let found = node.hasAttribute('required') || 
+                                                node.hasAttribute('auto-validate') || 
+                                                node.hasAttribute('error-message') || 
+                                                ['email'].indexOf(node.type) !== -1;
+
                                     if (found) {
                                         this.__collections.push({
                                             type: 'required',
@@ -70,20 +68,51 @@
                                     }
                                 }
                             });
+
+                            if (this.manualCollect) {
+                                this.__bindEvent();
+                            }
                         }
+
+                        defer.resolve();
                     }
                 );
                 Polymer.enqueueDebouncer(this.__collecting);
+
+                return defer.promise;
             }
             validate() {
                 let valid = true;
-
                 this.__collections.forEach(item => {
                     item.node.validate();
                     valid = valid && ( ! item.node.invalid );
                 });
 
                 this.set('invalid', ! valid);
+            }
+            __bindEvent() {
+
+                this.__listening = Polymer.Debouncer.debounce(
+                    this.__listening,
+                    Polymer.Async.timeOut.after(2),
+                    () => {
+                        if (this.manualCollect) {
+                            this.__unbindEvent();
+                        }
+                        
+                        this.__collections.forEach(item => {
+                            if ('invalid' in item.node) {
+                                item.node.addEventListener('invalid-changed', this.__invalidChangeHandler);
+                            }
+                        }); 
+                    }
+                );
+                Polymer.enqueueDebouncer(this.__listening);
+            }
+            __unbindEvent() {
+                this.__collections.forEach(item => {
+                    item.node.removeEventListener('invalid-changed', this.__invalidChangeHandler);
+                });
             }
             __onNodeInvalidChange(e) {
                 if (this.autoValidate) {

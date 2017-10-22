@@ -74,13 +74,6 @@
                 ];
             }
 
-            ready() {
-                super.ready();
-                Polymer.RenderStatus.afterNextRender(this, () => {
-                    this.render();
-                });
-            }
-
             mask(message = 'Loading...') {
                 let masker = this.$.masker;
 
@@ -116,8 +109,6 @@
                     this.$.masker.style.display = 'none';
                 }
             }
-
-            render() {}
             
             activate() {}
 

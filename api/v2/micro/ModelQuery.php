@@ -113,11 +113,32 @@ class ModelQuery {
             $params = json_decode($params);
             foreach($params as $key => $val) {
                 if (isset($this->__fields->{$key})) {
-                    
                     $bind = array();
-                    $bind['param_'.$key] = $val;
+                    $oper = '=';
                     
-                    $this->__builder->where("$key = :param_${key}:", $bind);
+                    if (is_array($val)) {
+                        $oper = $val[0]; 
+
+                        switch(strtolower($oper)) {
+                            case '=':
+                            case '<>':
+                            case '<':
+                            case '<=':
+                            case '>':
+                            case '>=':
+                                $bind['param_'.$key] = $val[1];
+                                $this->__builder->where("$key $oper :param_${key}:", $bind);
+                                break;
+                            case 'not in':
+                                $bind['param_'.$key] = implode(',', $val[1]);
+                                $this->__builder->where("$key $oper (:param_${key}:)", $bind);
+                                break;
+                        }
+                    } else {
+                        $bind['param_'.$key] = $val;
+                        $this->__builder->where("$key $oper :param_${key}:", $bind);
+                    }
+                    
                 }
             }
         }
