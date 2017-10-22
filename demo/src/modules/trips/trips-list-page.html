@@ -115,16 +115,28 @@
             }
             __onDeleteTap(e) {
                 let data = e.data;
-                if (data.id_adv) {
+                if (data.id_trip) {
                     this.confirm('Confirm', `Are you sure you want to delete ${data.trip_no} ?`).then(b => {
                         if (b) {
-                            this.$.ajax.DELETE('/advance/' + data.id_trip).then(() => {
+                            this.$.ajax.DELETE('/trips/' + data.id_trip).then(() => {
                                 this.$.grid.load();
                             });
                         }
                     });    
                 }
                 
+            }
+            __onViewTap(e) {
+                this.set('route.path', '/trips/trips/view/' + e.data.id_trip);
+            }
+            __onSubmitTap(e) {
+                this.confirm('Confirm', `Are you sure you want to submit ${e.data.trip_no} ?`).then(b => {
+                    if (b) {
+                        this.$.ajax.POST('/trips/' + e.data.id_trip + '/submit').then(() => {
+                            this.$.grid.load();
+                        });
+                    }
+                });   
             }
         }
         customElements.define(TripsListPage.is, TripsListPage);

@@ -916,7 +916,7 @@
                         if (args.event.path) {
                             let target = args.event.path[0],
                                 action = target.getAttribute('on-tap');
-                            
+
                             if (action && this.context) {
                                 this.context[action] && this.context[action](args);
                             }

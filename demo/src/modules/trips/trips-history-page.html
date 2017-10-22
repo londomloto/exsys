@@ -1,16 +1,158 @@
+
+<link rel="import" href="../../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../bower_components/paper-fab/paper-fab.html">
 <link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
 
 <dom-module id="trips-history-page">
     <template>
-        
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: var(--paper-grey-100);
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-vbox>
+            <page-header-block icon="history" description="Trip History">
+                <paper-button class="btn-indigo"><iron-icon icon="print"></iron-icon>&nbsp;Print Document</paper-button>
+            </page-header-block>
+            <div class="flex scroll-y padding">
+
+                <paper-card class="block">
+                    <div class="card-content">
+                        <h3 class="block-title">[[ record.trip.trip_no ]]</h3>
+                        <kct-hbox>
+                            <div class="flex">
+                                <div class="display-field">
+                                    <label>Subject: </label>
+                                    <div>[[ record.trip.subject_trip ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Type: </label>
+                                    <div>[[ record.trip.type_name ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Purpose: </label>
+                                    <div>[[ record.trip.purpose_name ]]</div>
+                                </div>
+                            </div>
+                            <div class="flex">
+                                <div class="display-field">
+                                    <label>Proposed By: </label>
+                                    <div>[[ record.trip.user_fullname ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Start Date: </label>
+                                    <div>[[ record.trip.date_start_short ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>End Date: </label>
+                                    <div>[[ record.trip.date_end_short ]]</div>
+                                </div>
+                            </div>
+                        </kct-hbox>
+                    </div>
+                </paper-card>
+
+                <paper-card  class="block">
+                    <div class="card-content">
+                        <h3 class="block-title">Trip Items</h3>
+
+                        <table  class="striped">
+                            <thead>
+                                <th width="50">No.</th>
+                                <th width="150" class="text-center">Departure Date</th>
+                                <th>Origin</th>
+                                <th>Destination</th>
+                                <th width="150" class="text-center">Transport</th>
+                                <th width="80" class="text-center">Visa</th>
+                                <th>Request</th>
+                            </thead>
+                            <tbody>
+                                <template is="dom-repeat" items="[[ record.items ]]">
+                                    <tr>
+                                        <td>[[ __computeNo(index) ]]</td>
+                                        <td class="text-center">[[ item.departure_date_short ]]</td>
+                                        <td>[[ item.origin ]]</td>
+                                        <td>[[ item.destination ]]</td>
+                                        <td class="text-center">[[ item.transport_name ]]</td>
+                                        <td class="text-center">[[ __computeVisa(item.visa) ]]</td>
+                                        <td>[[ item.special_request ]]</td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </paper-card>
+
+                <paper-card class="block">
+                    <div class="card-content">
+                        <h3 class="block-title">Advance History</h3>
+
+                        <table class="striped">
+                            <thead>
+                                <th width="50">No.</th>
+                                <th width="120">Date</th>
+                                <th>Status</th>
+                                <th>User</th>
+                                <th>Notes</th>
+                            </thead>
+                            <tbody>
+                                <template is="dom-repeat" items="[[ record.history ]]">
+                                    <tr>
+                                        <td>[[ __computeNo(index) ]]</td>
+                                        <td>[[ item.date_short ]]</td>
+                                        <td>[[ item.status_name ]]</td>
+                                        <td>[[ item.user_act_name ]]</td>
+                                        <td>[[ item.notes ]]</td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+
+                    </div>
+                </paper-card>
+            </div>
+        </kct-vbox>
+
+        <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to list" on-tap="__onBackTap"></paper-fab>
+        </div>
+
     </template>
     <script>
         class TripsHistoryPage extends KctView {
             static get is() {
                 return 'trips-history-page';
             }
+
             static get properties() {
-                return {};
+                return {
+                    record: { type: Object }
+                };
+            }
+            handleRouteParams(module, action, id) {
+                if (action != 'view') return;
+                this.mask('Loading...');
+                this.$.ajax.GET('/trips/' + id + '/view').then(res => {
+                    this.set('record', res.data);
+                    this.unmask();
+                });
+            }
+            __computeNo(index) {
+                return index + 1;
+            }
+            __computeVisa(visa) {
+                return visa == '1' ? 'Yes' : '-';
+            }
+            __onBackTap() {
+                this.set('route.path', '/trips');
             }
         }
         customElements.define(TripsHistoryPage.is, TripsHistoryPage);

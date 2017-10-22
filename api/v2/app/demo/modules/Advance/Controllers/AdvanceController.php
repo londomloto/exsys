@@ -124,7 +124,7 @@ class AdvanceController extends \Micro\Controller {
                 $user = User::get($user['su_id'])->data;
 
                 // entry task
-                $superiors = $user->getSuperiors(10000000);
+                $superiors = $user->getSuperiors($advance->amounts);
 
                 foreach($superiors as $super) {
                     $task = new Task();

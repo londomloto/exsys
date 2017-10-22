@@ -162,8 +162,6 @@ class User extends \Micro\Model {
         $loop = true;
         $userGrade = $user->grade;
 
-
-
         if ($userGrade && $user->superior) {
             $superGrade = $user->superior->grade;
             if ($superGrade) {

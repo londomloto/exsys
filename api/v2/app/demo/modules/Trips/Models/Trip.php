@@ -72,6 +72,15 @@ class Trip extends \Micro\Model {
         return 'trip_table';
     }
 
+    public function getAmounts() {
+        $amounts = 0;
+
+        if ($this->advance) {
+            $amounts = $this->advance->amounts;
+        }
+        return $amounts;
+    }
+
     public function toArray($columns = NULL) {
         $data = parent::toArray($columns);
         $data['status_name'] = '';

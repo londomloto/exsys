@@ -23,12 +23,14 @@ class TripsController extends \Micro\Controller {
 
     public function viewByIdAction($id) {
         $data = array();
-        $expense = Trip::get($id)->data;
+        $trip = Trip::get($id)->data;
 
-        $data['expense'] = $expense->toArray();
-        $data['items'] = $expense->getGroupedItems();
+        $data['trip'] = $trip->toArray();
+        $data['items'] = $trip->items->filter(function($elem){
+            return $elem->toArray();
+        });
 
-        $data['history'] = $expense->getHistory(array('order' => 'exp_history_id ASC'))->filter(function($elem){
+        $data['history'] = $trip->getHistory(array('order' => 'trip_history_id ASC'))->filter(function($elem){
             return $elem->toArray();
         });
 
@@ -99,30 +101,30 @@ class TripsController extends \Micro\Controller {
     }
 
     public function submitByIdAction($id) {
-        $expense = Trip::get($id)->data;
+        $trip = Trip::get($id)->data;
         $user = $this->auth->user();
 
-        if ($expense) {
+        if ($trip) {
             // create history
             $history = new History();
-            $history->id_exp = $expense->id_exp;
+            $history->id_trip = $trip->id_trip;
             $history->status_id = 2;
             $history->user_act = $user['su_id'];
             $history->date = date('Y-m-d H:i:s');
 
             if ($history->save()) {
-                $expense->status = $history->status_id;
-                $expense->save();
+                $trip->status = $history->status_id;
+                $trip->save();
 
                 $user = User::get($user['su_id'])->data;
 
                 // entry task
-                $superiors = $user->getSuperiors(10000000);
+                $superiors = $user->getSuperiors($trip->getAmounts());
 
                 foreach($superiors as $super) {
                     $task = new Task();
 
-                    $task->id_exp = $expense->id_exp;
+                    $task->id_trip = $trip->id_trip;
                     $task->su_id = $super['user_id'];
                     $task->grade_id = $super['grade_id'];
                     $task->is_allowed = 1;
@@ -136,22 +138,22 @@ class TripsController extends \Micro\Controller {
     }
 
     public function rejectByIdAction($id) {
-        $expense = Trip::get($id)->data;
+        $trip = Trip::get($id)->data;
         $user = $this->auth->user();
         $post = $this->request->getJson();
 
-        if ($expense) {
+        if ($trip) {
             // delete tasks
             Task::find(array(
-                'id_exp = :expense:',
+                'id_trip = :trip:',
                 'bind' => array(
-                    'expense' => $expense->id_exp
+                    'trip' => $trip->id_trip
                 )
             ))->delete();
 
             // tambah history
             $history = new History();
-            $history->id_exp = $expense->id_exp;
+            $history->id_trip = $trip->id_trip;
             $history->status_id = 7;
             $history->user_act = $user['su_id'];
             $history->date = date('Y-m-d H:i:s');
@@ -160,8 +162,8 @@ class TripsController extends \Micro\Controller {
             $history->save();
 
             // update status
-            $expense->status = 7;
-            $expense->save();
+            $trip->status = 7;
+            $trip->save();
         }
 
         return array(
@@ -170,24 +172,24 @@ class TripsController extends \Micro\Controller {
     }
 
     public function approveByIdAction($id) {
-        $expense = Trip::get($id)->data;
+        $trip = Trip::get($id)->data;
         $user = $this->auth->user();
         $post = $this->request->getJson();
 
-        if ($expense) {
+        if ($trip) {
             // delete lower tasks 
             if ($user['su_grade_type'] == 'verificator') {
                 Task::find(array(
-                    'id_exp = :expense: AND su_id = :user:',
+                    'id_trip = :trip: AND su_id = :user:',
                     'bind' => array(
-                        'expense' => $expense->id_exp,
+                        'trip' => $trip->id_trip,
                         'user' => $user['su_id']
                     )
                 ))->delete();    
             } else if ($user['su_grade_type'] == 'approver') {
                 $tasks = Task::get()
-                    ->where('id_exp = :expense: AND a.grade_limit <= :limit:', array(
-                        'expense' => $expense->id_exp,
+                    ->where('id_trip = :trip: AND a.grade_limit <= :limit:', array(
+                        'trip' => $trip->id_trip,
                         'limit' => (int) $user['su_grade_limit']
                     ))
                     ->join('App\Grades\Models\Grade', 'a.grade_id = App\Trips\Models\Task.grade_id', 'a')
@@ -200,7 +202,7 @@ class TripsController extends \Micro\Controller {
 
             // tambah history
             $history = new History();
-            $history->id_exp = $expense->id_exp;
+            $history->id_trip = $trip->id_trip;
 
             $status = NULL;
 
@@ -222,8 +224,8 @@ class TripsController extends \Micro\Controller {
             $history->save();
 
             // update status
-            $expense->status = $status;
-            $expense->save();
+            $trip->status = $status;
+            $trip->save();
         }
 
         return array(
@@ -232,22 +234,22 @@ class TripsController extends \Micro\Controller {
     }
 
     public function requestByIdAction($id) {
-        $expense = Trip::get($id)->data;
+        $trip = Trip::get($id)->data;
         $user = $this->auth->user();
         $post = $this->request->getJson();
 
-        if ($expense) {
+        if ($trip) {
             // delete tasks
             Task::find(array(
-                'id_exp = :expense:',
+                'id_exp = :trip:',
                 'bind' => array(
-                    'expense' => $expense->id_exp
+                    'trip' => $trip->id_trip
                 )
             ))->delete();
 
             // tambah history
             $history = new History();
-            $history->id_exp = $expense->id_exp;
+            $history->id_trip = $trip->id_trip;
             $history->status_id = 10;
             $history->user_act = $user['su_id'];
             $history->date = date('Y-m-d H:i:s');
@@ -256,8 +258,8 @@ class TripsController extends \Micro\Controller {
             $history->save();
 
             // update status
-            $expense->status = 10;
-            $expense->save();
+            $trip->status = 10;
+            $trip->save();
         }
 
         return array(
