@@ -113,6 +113,19 @@
             __onEditTap(e) {
                 this.set('route.path', '/trips/trips/edit/' + e.data.id_trip);
             }
+            __onDeleteTap(e) {
+                let data = e.data;
+                if (data.id_adv) {
+                    this.confirm('Confirm', `Are you sure you want to delete ${data.trip_no} ?`).then(b => {
+                        if (b) {
+                            this.$.ajax.DELETE('/advance/' + data.id_trip).then(() => {
+                                this.$.grid.load();
+                            });
+                        }
+                    });    
+                }
+                
+            }
         }
         customElements.define(TripsListPage.is, TripsListPage);
     </script>

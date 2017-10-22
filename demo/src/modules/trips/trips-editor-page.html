@@ -162,64 +162,29 @@
                                     <th>Origin</th>
                                     <th>Destination</th>
                                     <th>Transport</th>
-                                    <th>Permit</th>
+                                    <th>Visa</th>
                                     <th>Request</th>
                                     <td width="150"></td>
                                 </tr>
                             </thead>
                             <tbody>
-                                   
-                            </tbody>
-                        </table>
-                        <!-- <table>
-                            <thead>
-                                <tr>
-                                    <th width="50">No.</th>
-                                    <th>Description</th>
-                                    <th width="100">Payment</th>
-                                    <th class="text-center" width="100">Currency</th>
-                                    <th width="150" class="text-right">Amounts</th>
-                                    <th width="150"></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <template is="dom-repeat" items="[[ items ]]" as="group">
-                                    <tr class="group-row">
-                                        <td colspan="6"><iron-icon icon="label-outline"></iron-icon>&nbsp;[[ group.group_name ]]</td>
+                                <template is="dom-repeat" items="[[ items ]]">
+                                    <tr>
+                                        <td>[[ __computeNo(index) ]]</td>
+                                        <td>[[ item.departure_date_short ]]</td>
+                                        <td>[[ item.origin ]]</td>
+                                        <td>[[ item.destination ]]</td>
+                                        <td>[[ item.transport_name ]]</td>
+                                        <td>[[ __computeVisa(item.visa) ]]</td>
+                                        <td>[[ item.special_request ]]</td>
+                                        <td class="text-right">
+                                            <paper-button on-tap="__onItemEditTap" class="btn-xs btn-amber">Edit</paper-button>
+                                            <paper-button on-tap="__onItemDeleteTap" class="btn-xs btn-danger">Delete</paper-button>
+                                        </td>
                                     </tr>
-                                    <template is="dom-repeat" items="[[ group.group_items ]]">
-                                        <tr>
-                                            <td>[[ item.item_seq ]]</td>
-                                            <td>[[ item.item_name ]]</td>
-                                            <td>[[ item.payment_type_name ]]</td>
-                                            <td class="text-center">[[ item.currency_name ]]</td>
-                                            <td class="text-right">[[ item.amounts_formatted ]]</td>
-                                            <td class="text-right" style="padding-right: 0;">
-                                                <paper-button on-tap="__onItemEditTap" class="btn-xs btn-amber">Edit</paper-button>
-                                                <paper-button on-tap="__onItemDeleteTap" class="btn-xs btn-danger">Delete</paper-button>
-                                            </td>
-                                        </tr>
-                                        <tr class="form-row">
-                                            <td></td>
-                                            <td colspan="4">
-                                                <kct-column columns="3">
-                                                    <template is="dom-repeat" items="[[ item.item_forms ]]" as="form">
-                                                        <div class="item-form">
-                                                            <div class="label">[[ form.item_form_label ]]</div>
-                                                            <div class="value">[[ form.item_form_display ]]</div>
-                                                        </div>
-                                                    </template> 
-                                                </kct-column>
-                                            </td>
-                                            <td></td>
-                                        </tr>
-                                        <tr class="separator">
-                                            <td colspan="6"></td>
-                                        </tr>
-                                    </template>
                                 </template>
                             </tbody>
-                        </table> -->
+                        </table>
                     </div>
                     
                 </paper-card>
@@ -242,82 +207,22 @@
                 </style>
 
                 <div slot="dialog-body">
-                    <kct-form-validator id="item-validator" invalid="{{ __itemInvalid }}" auto-validate manual-collect>
-                        <vaadin-date-picker label="Departure Date" value="{{ item.trip_departure_date }}" required auto-validate error-message="Departure date is required"></vaadin-date-picker>
-                        <paper-input label="Origin" value="{{ item.trip_origin }}" required auto-validate error-message="Origin is required"></paper-input>
-                        <paper-input label="Destination" value="{{ item.trip_destination }}" required auto-validate error-message="Destination is required"></paper-input>
+                    <kct-form-validator id="item-validator" invalid="{{ __itemInvalid }}" auto-validate>
+                        <vaadin-date-picker label="Departure Date" value="{{ item.departure_date }}" required auto-validate error-message="Departure date is required"></vaadin-date-picker>
+                        <paper-input label="Origin" value="{{ item.origin }}" required auto-validate error-message="Origin is required"></paper-input>
+                        <paper-input label="Destination" value="{{ item.destination }}" required auto-validate error-message="Destination is required"></paper-input>
                         <vaadin-combo-box 
                             label="Transport" 
-                            value="{{ item.trip_transport }}"
+                            value="{{ item.transport }}"
                             items="[[ tripTransports ]]" 
                             item-value-path="value" 
                             item-label-path="label" 
                             required 
                             auto-validate 
                             error-message="Transport is required"></vaadin-combo-box>
-                        <paper-input label="Special Request" value="{{ item.trip_request }}"></paper-input>
-                        <kct-checkbox value="{{ item.trip_visa }}">Trips required visa</kct-checkbox>
-
-                        <!-- <vaadin-combo-box 
-                            id="master-item" 
-                            label="Expense Item" 
-                            value="{{ item.item_id }}"
-                            items="[[ masterItems ]]" 
-                            item-value-path="item_id" 
-                            item-label-path="item_name" 
-                            on-change="__onMasterItemChange" 
-                            required 
-                            auto-validate 
-                            error-message="Expense item is required">
-                            <template>
-                                <style>
-                                    
-                                    .item {
-                                        font-size: 15px;
-                                    }
-                                    .elbow {
-                                        display: inline-block;
-                                        border-top: 1px solid #ccc;
-                                        height: 1px;
-                                        position: relative;
-                                        top: -4px;
-                                    }
-                                    .item.level-1 .elbow {
-                                        margin-right: 10px;
-                                    }
-                                </style>
-                                <div class$="item level-[[ item.item_level ]]"><span class="elbow" style="width: [[ item.item_pad ]]"></span>[[ item.item_name ]]</div>
-                            </template>        
-                        </vaadin-combo-box>
-
-                        <div id="indicator" class="text-center m-t" hidden$="[[ !__stamping ]]">
-                            <paper-spinner-lite active></paper-spinner-lite>
-                        </div>
-                        
-                        <div id="dynamic"></div>
-
-                        <vaadin-combo-box 
-                            label="Currency" 
-                            value="{{ item.currency_id }}"
-                            items="[[ currencies ]]" 
-                            item-value-path="currency_id" 
-                            item-label-path="currency_name" 
-                            on-change="__onCurrencyChange" 
-                            required 
-                            auto-validate 
-                            error-message="Currency is required"></vaadin-combo-box>
-
-                        <paper-input allowed-pattern="[0-9.]" label="Amounts" value="{{ item.amounts }}" required auto-validate error-message="Amounts is required"></paper-input>
-                        <vaadin-combo-box 
-                            label="Payment Type" 
-                            value="{{ item.payment_type }}"
-                            items="[[ payments ]]" 
-                            item-value-path="value" 
-                            item-label-path="label" 
-                            required 
-                            auto-validate 
-                            error-message="Payment type is required"></vaadin-combo-box>
-                    </kct-form-validator> -->
+                        <paper-input label="Special Request" value="{{ item.special_request }}"></paper-input>
+                        <kct-checkbox value="{{ item.visa }}">Need visa?</kct-checkbox>
+                    </kct-form-validator>
                     
                 </div>
 
@@ -351,6 +256,8 @@
                         item-editor-accent="var(--paper-amber-500)" 
                         on-item-editor-opened="__onAdvanceItemEditorOpened" 
                         on-item-editor-closed="__onAdvanceItemEditorClosed" 
+                        on-saved="__onAdvanceSaved" 
+                        traveling-mode 
                         dialog-mode></advance-editor-page>    
                 </div>
                 <div slot="dialog-footer">
@@ -375,7 +282,6 @@
                     masterItems: { type: Array, value: () => ([]) },
                     advance: { type: Array, value: () => ([]) },
                     item: { type: Object },
-                    dynamic: { type: Object, value: () => ({}) },
                     tripTypes: {
                         type: Array,
                         value: [
@@ -449,6 +355,9 @@
             __computeNo(index) {
                 return (index + 1);
             }
+            __computeVisa(visa) {
+                return visa == '1' ? 'Yes' : '-';
+            }
             __purposesChanged() {
                 let required = this.__purposes.length > 0;
                 this.set('__comboPurposeRequired', required);
@@ -489,8 +398,7 @@
                 }
 
                 this.$.ajax.GET('/trips/items', { 
-                    display: 'group',
-                    expense: this.record.id_trip 
+                    trip: this.record.id_trip 
                 }).then(res => {
                     this.set('items', res.data);
                 });
@@ -504,7 +412,7 @@
                 if (data.id_trip) {
                     this.$.ajax.PUT('/trips/' + data.id_trip, data).then(done.bind(this));
                 } else {
-                    this.$.ajax.POST('/expense', data).then(done.bind(this));
+                    this.$.ajax.POST('/trips', data).then(done.bind(this));
                 }
 
                 function done(res) {
@@ -537,97 +445,6 @@
             __onNextTap() {
                 this.__saveChanges();
             }
-            __buildForm(forms) {
-                return;
-
-                let html = '';
-                let data = {};
-                let combo = {};
-
-                forms.forEach(f => {
-                    let name = `field_${f.item_form_id}`,
-                        value = `dynamic.${name}`,
-                        label = f.item_form_label,
-                        required = f.mandatory == '1' ? true : false;
-
-                    let validation = '';
-
-                    if (required) {
-                        validation = `required auto-validate error-message="${label} is required"`;
-                    }
-
-                    switch(f.item_form_editor) {
-                        case 'datepicker':
-                            html += `
-                                <vaadin-date-picker label="${label}" value="{{ ${value} }}" ${validation}></vaadin-date-picker>
-                            `;
-                            break;
-
-                        case 'dropdown':
-                            
-                            let options = [];
-
-                            try {
-                                options = JSON.parse(f.option || '[]');
-                            } catch(e){}
-
-                            combo[name] = options;
-
-                            html += `
-                                <vaadin-combo-box 
-                                    id="${name}" 
-                                    label="${label}" 
-                                    value="{{ ${value} }}" 
-                                    item-value-path="value" 
-                                    item-label-path="text" ${validation}></vaadin-combo-box>
-                            `;
-                            break;
-
-                        default:
-                            html += `
-                                <paper-input label="${label}" value="{{ ${value} }}" ${validation}></paper-input>
-                            `;
-                            break;
-                    }
-
-                    if (f.item_form_value !== undefined) {
-                        data[name] = f.item_form_value;
-                    }
-                });
-
-                let template = document.createElement('template');
-                template.innerHTML = html;
-
-                let instance = this._stampTemplate(template);
-                this.$.dynamic.appendChild(instance);
-
-                // fixup combo items
-                for(let id in combo) {
-                    instance.$[id].items = combo[id];
-                }
-
-                this.set('dynamic', data);
-
-                this.$['item-validator'].collect().then(() => {
-                    this.$['item-validator'].validate();
-                });
-            }
-            __onMasterItemChange(e) {
-                this.$.dynamic.innerHTML = '';
-                this.set('dynamic', {});
-
-                let id = e.target.value;
-                if ( ! id) return;
-
-                this.set('__stamping', true);
-
-                this.$.ajax.GET('/items/' + id).then(res => {
-                    if (res.data) {
-                        this.__buildForm(res.data.item_forms);    
-                        this.set('__stamping', false);
-                    }
-                });
-            }
             __onTypeChange(e) {
                 let type = e.target.value;
                 let purposes = this.purposes.filter(p => p.parent_id == type);
@@ -640,22 +457,17 @@
             }
             __onAddItemTap() {
                 this.set('item', {});
-
-                // this.$.dynamic.innerHTML = '';
                 this.$['item-editor'].open();
-
                 this.set('__itemInvalid', true);
             }
             __onItemEditorSaveTap() {
                 this.$['item-editor'].close();   
 
                 let data = this.item;
-
                 data.id_trip = this.record.id_trip;
-                data.dynamic = this.dynamic;
 
-                if (data.exp_item_id) {
-                    this.$.ajax.PUT('/trips/items/' + data.exp_item_id, data).then(done.bind(this));
+                if (data.trip_item_id) {
+                    this.$.ajax.PUT('/trips/items/' + data.trip_item_id, data).then(done.bind(this));
                 } else {
                     this.$.ajax.POST('/trips/items', data).then(done.bind(this));
                 }
@@ -672,10 +484,6 @@
             __onItemEditTap(e) {
                 let item = Object.assign({}, e.model.item);
                 this.set('item', item);
-
-                // this.$.dynamic.innerHTML = '';
-
-                this.__buildForm(item.item_forms);
                 this.$['item-editor'].open();
             }
             __onItemDeleteTap(e) {
@@ -720,15 +528,18 @@
             }
             __onAdvanceEditorSaveTap() {
                 this.$['advance-editor'].close();
-                this.$['advance-editor-page'].saveDocument().then(advance => {
-                    console.log(advance);
-                    if (advance) {
-                        this.set('record.adv_ref', advance.id_adv);
-                        this.set('record.adv_no', advance.adv_no);
-                        this.set('record.adv_subject', advance.subject_adv);
-                        this.set('record.adv_desc', advance.adv_no + ' (' + advance.subject_adv + ')');
-                    }
-                });
+                this.$['advance-editor-page'].saveDocument();
+            }
+            __onAdvanceSaved(e) {
+                let advance = e.detail.record;
+
+                if (advance) {
+                    this.set('record.amounts', advance.amounts);
+                    this.set('record.adv_ref', advance.id_adv);
+                    this.set('record.adv_no', advance.adv_no);
+                    this.set('record.adv_subject', advance.subject_adv);
+                    this.set('record.adv_desc', advance.adv_no + ' (' + advance.subject_adv + ')');
+                }
             }
             __onBackTap() {
                 this.set('route.path', '/trips');

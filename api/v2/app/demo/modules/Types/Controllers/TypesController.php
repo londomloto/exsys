@@ -19,8 +19,8 @@ class TypesController extends \Micro\Controller {
 
             default:
                 return Type::get()
-                    ->where('parent_id IS NULL')
                     ->filterable()
+                    ->andWhere('parent_id IS NULL')
                     ->sortable()
                     ->paginate();
         }

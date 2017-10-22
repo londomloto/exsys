@@ -15,9 +15,9 @@ switch($_SERVER['SERVER_ADMIN']) {
     default:
         $databases = array(
             'db' => array(
-                'host' => '10.130.185.250',
-                'user' => 'fe3443c1',
-                'pass' => '12345',
+                'host' => '127.0.0.1',
+                'user' => 'root',
+                'pass' => 'password',
                 'name' => 'exsys'
             )
         );

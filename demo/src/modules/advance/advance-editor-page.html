@@ -196,6 +196,7 @@
                     items: { type: Array, value: [] },
                     item: { type: Object },
                     dialogMode: { type: Boolean, value: false },
+                    travelingMode: { type: Boolean, value: false },
                     itemEditorAccent: { type: String }
                 };
             }
@@ -257,9 +258,7 @@
                 });
             }
             saveDocument() {
-                return this.__saveChanges().then(() => {
-                    return Object.assign({}, this.record);
-                });
+                return this.__saveChanges();
             }
             __purposesChanged() {
                 let required = this.__purposes.length > 0;
@@ -272,10 +271,22 @@
             }
             __loadReferences() {
 
+                let typeParams = { type_id: ['<>', '1'] },
+                    purposeParams = {};
+
+
+                if (this.travelingMode) {
+                    typeParams = {
+                        type_id: '1'
+                    };
+
+                    purposeParams = {
+                        parent_id: '1'
+                    };
+                }
+
                 return this.$.ajax.GET('/types', {
-                    params: {
-                        type_id: ['<>', '1']
-                    }
+                    params: typeParams
                 }).then(res => {
                     this.set('types', res.data);
 
@@ -284,9 +295,7 @@
                     });
 
                     return this.$.ajax.GET('/types/purposes', {
-                        params: {
-                            parent_id: ['<>', '1']
-                        }
+                        params: purposeParams
                     }).then(res => {
                         this.set('purposes', res.data);
                         this.set('__purposes', res.data);
@@ -317,6 +326,7 @@
                         let id = res.data.id_adv;
 
                         this.set('record.id_adv', id);
+                        this.set('record.adv_no', res.data.adv_no);
 
                         if (this.attachment) {
                             this.$.ajax.UPLOAD('/advance/' + id + '/upload', {
@@ -324,9 +334,25 @@
                                     { name: this.attachment.name, file: this.attachment }
                                 ]
                             }).then(() => {
+                                let event = new CustomEvent('saved', {
+                                    detail: {
+                                        record: Object.assign({}, this.record)
+                                    }
+                                });
+                                
+                                this.dispatchEvent(event);
+
                                 def.resolve();
                             });
                         } else {
+                            let event = new CustomEvent('saved', {
+                                detail: {
+                                    record: Object.assign({}, this.record)
+                                }
+                            });
+                            
+                            this.dispatchEvent(event);
+
                             def.resolve();
                         }
                     }
