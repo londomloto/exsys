@@ -1,0 +1,199 @@
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../../bower_components/vaadin-combo-box/vaadin-combo-box.html">
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../elements/kct-dialog/kct-dialog.html">
+
+<dom-module id="items-list-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-grid 
+            id="grid" 
+            url="/items?display=grid" 
+            columns="[[ columns ]]" 
+            selection-model="cell" 
+            icon="view-list" 
+            title="Datasheet" 
+            description="Expense Items">
+            
+            <template preserve-content>
+                <style include="theme-helper"></style>
+            </template>
+
+            <paper-button on-tap="__onAddTap" class="btn-primary" slot="primary-toolbar"><iron-icon icon="add"></iron-icon>&nbsp;Add Item</paper-button>
+
+        </kct-grid>
+
+        <kct-dialog id="editor" title="Item Editor" width="500" height="100%">
+            <template preserve-content>
+                <div slot="dialog-body">
+                    <vaadin-combo-box
+                        label="Parent Item" 
+                        value="{{ record.parent_id }}" 
+                        items="[[ __parents ]]" 
+                        item-value-path="item_id" 
+                        item-label-path="item_name"></vaadin-combo-box>
+                    <paper-input label="Item Name" value="{{ record.item_name }}"></paper-input>
+                    <paper-input label="Account No." value="{{ record.coa }}"></paper-input>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSaveTap">Save</paper-button>
+                    <paper-button on-tap="__onEditorCancelTap">Cancel</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+        <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to Setting" on-tap="__onBackTap"></paper-fab>
+        </div>
+
+    </template>
+    <script>
+        class ItemsListPage extends KctView {
+            static get is() {
+                return 'items-list-page';
+            }
+            static get properties() {
+                return {
+                    columns: {
+                        type: Array,
+                        value: [
+                            { type: 'rownumber' },
+                            { 
+                                text: 'Description', 
+                                dataIndex: 'item_name', 
+                                width: 500,
+                                renderer: (e) => {
+                                    if (e.data) {
+                                        return `<span class="elbow" style="width: ${e.data.item_pad}"></span>${e.data.item_name}`;
+                                    }
+                                    return '';
+                                }
+                            },
+                            { text: 'Account', dataIndex: 'coa', width: 100 },
+                            {
+                                text: '',
+                                type: 'action',
+                                dataIndex: 'item_id',
+                                renderer: (e) => {
+                                    if (e.data) {
+                                        let buttons = '';
+                                        buttons += `<paper-button class="btn-amber" on-tap="__onItemEditTap"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>`;
+                                        if (e.data.parent_id) {
+                                            buttons += `<paper-button class="btn-cyan" on-tap="__onItemFormTap"><iron-icon icon="description"></iron-icon>&nbsp;Form</paper-button>`;
+                                        }
+                                        return buttons;
+                                    }
+                                    return '';
+                                }
+                            }
+                        ]
+                    }
+                };
+            }
+
+            constructor() {
+                super();
+                this.__parents = [];
+            }
+
+            ready() {
+                super.ready();
+                this.$.grid.context = this;
+            }
+
+            activate() {
+                if ( ! this.$.grid.__resized) {
+                    this.$.grid.__resized = true;
+                    this.$.grid.resize();
+                }
+            }
+
+            handleResizing(width, height) {
+                if (this.$.grid) {
+                    this.$.grid.resize();
+                }
+            }
+
+            handleRouteParams(setting, action) {
+                if (setting != 'items') return;
+
+                if ( ! action && ! this.$.grid.__loaded) {
+                    this.__loadParents();
+
+                    this.$.grid.__loaded = true;
+                    this.$.grid && this.$.grid.load();
+                }
+            }
+
+            __loadParents() {
+                return this.$.ajax.GET('/items?display=parent').then(res => {
+                    let parents = [{ item_id: '', item_name: 'No Parent' }];
+                    Array.prototype.push.apply(parents, res.data);
+                    this.set('__parents', parents);
+                });
+            }
+
+            __onAddTap() {
+                this.mask('Opening editor...');
+
+                this.__loadParents().then(() => {
+                    this.unmask();
+
+                    this.set('record', {});
+                    this.$.editor.open();    
+                });
+            }
+            __onItemEditTap(e) {
+                this.mask('Opening editor...');
+
+                this.__loadParents().then(() => {
+                    this.unmask();
+
+                    this.set('record', e.data);
+                    this.$.editor.open();    
+                });
+            }
+            __onEditorCancelTap() {
+                this.$.editor.close();
+            }
+            __onEditorSaveTap() {
+                this.$.editor.close();
+
+                let data = this.record;
+                
+                if (data.item_id) {
+                    this.$.ajax.PUT('/items/' + data.item_id, data).then(done.bind(this));
+                } else {
+                    this.$.ajax.POST('/items', data).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.$.grid.load();
+                    }
+                }
+            }
+
+            __onItemFormTap(e) {
+                this.set('route.path', '/settings/items/forms/' + e.data.item_id);
+            }
+
+            __onBackTap() {
+                this.set('route.path', '/settings');
+            }
+            
+        }
+        customElements.define(ItemsListPage.is, ItemsListPage);
+    </script>
+</dom-module>

@@ -1,0 +1,90 @@
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../../bower_components/vaadin-combo-box/vaadin-combo-box.html">
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
+
+<dom-module id="company-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: var(--paper-grey-100);
+            }
+            .block-title {
+                font-weight: 500;
+                font-size: 18px;
+            }
+        </style>
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-vbox>
+            <page-header-block icon="communication:business" description="Company Setting" accent="var(--paper-purple-500)">
+                <paper-button on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Save Changes</paper-button>
+            </page-header-block>
+            <div class="flex scroll-y padding">
+                <kct-column columns="2">
+                    <div>
+                        <h3 class="block-title">Company Information</h3>
+                        <paper-input label="Company Name" value="{{ company.com_name }}"></paper-input>
+                        <paper-input label="Address" value="{{ company.com_addr }}"></paper-input>
+                        <paper-input label="Email Address" value="{{ company.com_email }}"></paper-input>
+                        <paper-input label="Phone" value="{{ company.com_phone }}"></paper-input>
+                        <paper-input label="Faximile" value="{{ company.com_fax }}"></paper-input>
+                        <vaadin-combo-box 
+                            label="Default Currency" 
+                            value="{{ company.com_currency_id }}" 
+                            items="[[ currencies ]]" 
+                            item-value-path="currency_id" 
+                            item-label-path="currency_name"></vaadin-combo-box>
+                    </div>
+                </kct-column>
+            </div>
+        </kct-vbox>
+
+        <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to list" on-tap="__onBackTap"></paper-fab>
+        </div>
+    </template>
+    <script>
+        class CompanyPage extends KctView {
+            static get is() {
+                return 'company-page';
+            }
+            static get properties() {
+                return {
+                    company: { type: Object },
+                    currencies: { type: Array }
+                };
+            }
+            handleRouteParams(setting) {
+                if (setting != 'company') return;
+                this.__loadCurrencies();
+                this.__loadCompany();
+            }
+            __loadCurrencies() {
+                this.$.ajax.GET('/currencies').then(res => {
+                    this.set('currencies', res.data);
+                });
+            }
+            __loadCompany() {
+                this.$.ajax.GET('/company/1').then(res => {
+                    this.set('company', res.data);
+                });
+            }
+            __onSaveTap() {
+                let data = this.company;
+                this.$.ajax.PUT('/company/' + data.com_id, data).then(() => {
+                    this.toast('Success', 'Data has been saved');
+                });
+            }
+            __onBackTap() {
+                this.set('route.path', '/settings');
+            }
+        }
+        customElements.define(CompanyPage.is, CompanyPage);
+    </script>
+</dom-module>
