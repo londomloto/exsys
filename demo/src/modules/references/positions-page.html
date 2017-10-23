@@ -1,0 +1,144 @@
+<link rel="import" href="../../../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../elements/kct-dialog/kct-dialog.html">
+
+<dom-module id="positions-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+        </style>
+        <kct-ajax id="ajax"></kct-ajax>
+        <kct-grid 
+            id="grid" 
+            url="/positions" 
+            columns="[[ columns ]]" 
+            selection-model="cell" 
+            icon="view-list" 
+            title="Datasheet" 
+            description="Positions Reference" 
+            pagination>
+
+            <template preserve-content>
+                <style include="theme-helper"></style>
+            </template>
+            
+            <paper-button on-tap="__onAddTap" class="btn-primary" slot="primary-toolbar"><iron-icon icon="add"></iron-icon>&nbsp;Add Position</paper-button>
+
+        </kct-grid>
+
+        <kct-dialog id="editor" title="Position Editor" width="400" height="100%">
+            <template preserve-content>
+                <div slot="dialog-body">
+                    <paper-input label="Position Name" value="{{ selectedRecord.pos_name }}"></paper-input>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSaveTap">Save</paper-button>
+                    <paper-button on-tap="__onEditorCancelTap">Cancel</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+        <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to list" on-tap="__onBackTap"></paper-fab>
+        </div>
+
+    </template>
+    <script>
+        class PositionsPage extends KctView {
+            static get is() {
+                return 'positions-page';
+            }
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Positions', notify: true },
+                    columns: {
+                        type: Array,
+                        value: [
+                            { type: 'rownumber' },
+                            { text: 'Position Name', dataIndex: 'pos_name' },
+                            {
+                                text: '',
+                                type: 'action',
+                                renderer: (e) => {
+                                    if (e.data) {
+                                        return `
+                                            <paper-button on-tap="__onEditTap" class="btn-amber"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>
+                                            <paper-button on-tap="__onDeleteTap" class="btn-danger"><iron-icon icon="close"></iron-icon>&nbsp;Delete</paper-button>
+                                        `;
+                                    }
+                                    return '';
+                                }
+                            }
+                        ]
+                    },
+                    selectedRecord: { type: Object }
+                };
+            }
+            handleRouteParams(setting) {
+                if (setting != 'positions') return;
+                
+                if ( ! this.$.grid.__loaded) {
+                    this.$.grid.__loaded = true;
+                    this.$.grid.load();
+                }
+            }
+            handleResizing(width, height) {
+                this.$.grid && this.$.grid.resize();
+            }
+            ready() {
+                super.ready();
+                this.$.grid.context = this;
+            }
+            __onAddTap() {
+                this.set('selectedRecord', {});
+                this.$.editor.open();
+            }
+            __onEditTap(e) {
+                this.set('selectedRecord', e.data);
+                this.$.editor.open();
+            }
+            __onEditorSaveTap() {
+                this.$.editor.close();
+            }
+            __onEditorCancelTap() {
+                this.$.editor.close();
+            }
+            __onEditorSaveTap() {
+                this.$.editor.close();
+
+                let data = this.selectedRecord;
+
+                if (data.pos_id) {
+                    this.$.ajax.PUT('/positions/' + data.pos_id, data).then(done.bind(this));
+                } else {
+                    this.$.ajax.POST('/positions', data).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.toast('Success', 'Data has been saved');
+                        this.$.grid.load();
+                    }
+                }
+            }
+            __onDeleteTap(e) {
+                let record = e.data;
+                this.confirm('Confirm', `Are you sure you want to delete ${record.pos_name} ?`).then(y => {
+                    if (y) {
+                        this.$.ajax.DELETE('/positions/' + record.pos_id).then(() => {
+                            this.$.grid.load();
+                        });
+                    }
+                })
+            }
+            __onBackTap() {
+                this.set('route.path', '/settings');
+            }
+        }
+        customElements.define(PositionsPage.is, PositionsPage);
+    </script>
+</dom-module>

@@ -9,4 +9,36 @@ class PositionsController extends \Micro\Controller {
         return Position::get()->sortable()->paginate();
     }
 
+    public function createAction() {
+        $post = $this->request->getJson();
+        $curr = new Position();
+
+        if ($curr->save($post)) {
+            return Position::get($curr->pos_id);
+        }
+
+        return Position::none();
+    }
+
+    public function updateAction($id) {
+        $query = Position::get($id);
+        $post = $this->request->getJson();
+
+        if ($query->data) {
+            $query->data->save($post);
+        }
+
+        return $query;
+    }
+
+    public function deleteAction($id) {
+        $query = Position::get($id);
+
+        if ($query->data) {
+            $query->data->delete();
+        }
+
+        return array('success' => TRUE);
+    }
+
 }
