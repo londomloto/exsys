@@ -1,27 +1,27 @@
 <?php
-namespace App\Positions\Controllers;
+namespace App\Organization\Controllers;
 
-use App\Positions\Models\Position;
+use App\Organization\Models\OrganizationType;
 
-class PositionsController extends \Micro\Controller {
+class OrganizationTypesController extends \Micro\Controller {
 
     public function findAction() {
-        return Position::get()->sortable()->paginate();
+        return OrganizationType::get()->sortable()->paginate();
     }
 
     public function createAction() {
         $post = $this->request->getJson();
-        $data = new Position();
+        $data = new OrganizationType();
 
         if ($data->save($post)) {
-            return Position::get($data->pos_id);
+            return OrganizationType::get($data->pos_id);
         }
 
-        return Position::none();
+        return OrganizationType::none();
     }
 
     public function updateAction($id) {
-        $query = Position::get($id);
+        $query = OrganizationType::get($id);
         $post = $this->request->getJson();
 
         if ($query->data) {
@@ -32,7 +32,7 @@ class PositionsController extends \Micro\Controller {
     }
 
     public function deleteAction($id) {
-        $query = Position::get($id);
+        $query = OrganizationType::get($id);
 
         if ($query->data) {
             $query->data->delete();
