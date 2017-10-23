@@ -1,7 +1,7 @@
 <link rel="import" href="../../../bower_components/paper-input/paper-input.html">
 <link rel="import" href="../../../bower_components/paper-button/paper-button.html">
-<link rel="import" href="../../../bower_components/paper-radio-group/paper-radio-group.html">
 <link rel="import" href="../../../bower_components/paper-radio-button/paper-radio-button.html">
+<link rel="import" href="../../../bower_components/paper-toggle-button/paper-toggle-button.html">
 <link rel="import" href="../../../bower_components/vaadin-combo-box/vaadin-combo-box.html">
 <link rel="import" href="../../../bower_components/vaadin-material-theme/vaadin-date-picker.html">
 <link rel="import" href="../../../bower_components/vaadin-date-picker/vaadin-date-picker.html">
@@ -25,21 +25,40 @@
             }
 
             h3 {
-                font-weight: 500;
+                font-weight: 400;
                 font-size: 18px;
-                margin-bottom: 16px;
+                padding: 8px 0;
+                border-bottom: 1px solid var(--paper-grey-500);
+            }
+            .role-item {
+                background-color: transparent;
+                margin-bottom: 0;
+            }
+            .role-item + .role-item {
+                border-top: 1px solid var(--paper-grey-300);
+            }
+            .role-item .box-body {
+                padding-left: 0;
+                padding-right: 0;
+            }
+            .role-item h4 {
+                font-size: 15px;
+                font-weight: 400;
+            }
+            .role-item p {
+                font-size: 13px;
+                color: #777;
             }
         </style>
 
-        <kct-ajax id="ajax1"></kct-ajax>
-        <kct-ajax id="ajax2"></kct-ajax>
+        <kct-ajax id="ajax"></kct-ajax>
 
         <div class="page-actions">
             <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to list" on-tap="__onBackTap"></paper-fab>
         </div>
 
         <kct-vbox>
-            <page-header-block image="[[ __icon ]]" title="User Editor" description="[[ record.su_fullname ]]">
+            <page-header-block image="[[ __logo ]]" icon="perm-identity" title="User Editor" description="[[ record.su_fullname ]]">
                 <paper-button on-tap="__onSaveTap" disabled$="[[ __formInvalid ]]"><iron-icon icon="done"></iron-icon>&nbsp;Save Changes</paper-button>
             </page-header-block>
 
@@ -47,35 +66,56 @@
                 <kct-form-validator id="validator" invalid="{{ __formInvalid }}" auto-validate>
                     <kct-column columns="3">
                         <div class="p-r">
-                            <h3>Account Information</h3>
+                            <h3 class="m-b">Account Information</h3>
                             <paper-input id="email" label="Email address" type="email" value="{{ record.su_email }}" required error-message="Valid email address is required"></paper-input>
-                             <vaadin-combo-box 
-                                label="Member of role" 
-                                value="{{ record.su_sr_id }}" 
-                                items="[[ roles ]]" 
-                                item-label-path="sr_name" 
-                                item-value-path="sr_id" 
-                                required auto-validate error-message="Role is required"></vaadin-combo-box>
                             <paper-input label="Password" type="password" value="{{ password1 }}"></paper-input>
                             <paper-input label="Password confirm" type="password" value="{{ password2 }}"></paper-input>
                             <kct-checkbox value="{{ record.su_active }}">Check to activate this user</kct-checkbox>
+
+                            
                         </div>
                         <div class="p-r">
-                            <h3>Personal Information</h3>
+                            <h3 class="m-b">Personal Information</h3>
                             <paper-input id="fullname" label="Full Name" value="{{ record.su_fullname }}" required auto-validate error-message="Full name is required"></paper-input>
-                            <kct-radio-group label="Sex/Gender" value="{{ record.su_sex }}" layout="horizontal">
-                                <paper-radio-button name="Male">Male</paper-radio-button>
-                                <paper-radio-button name="Female">Female</paper-radio-button>
-                            </kct-radio-group>
-                            <vaadin-date-picker label="Birthday" value="{{ record.su_dob }}"></vaadin-date-picker>
-                            <paper-input label="Job Description" value="{{ record.su_job_title }}" ></paper-input>
-                            <paper-input label="Phone" value="{{ record.su_phone }}" ></paper-input>
+                            <vaadin-combo-box 
+                                label="Position" 
+                                value="{{ record.su_position_id }}" 
+                                items="[[ positions ]]" 
+                                item-label-path="pos_name" 
+                                item-value-path="pos_id"></vaadin-combo-box> 
+
+                            <vaadin-combo-box 
+                                label="Grade" 
+                                value="{{ record.su_grade_id }}" 
+                                items="[[ grades ]]" 
+                                item-value-path="grade_id" 
+                                item-label-path="grade_code">
+                                <template>
+                                    <style>
+                                        .info { font-size: 13px; text-transform: uppercase; color: #777;  }
+                                    </style>
+                                    <div>
+                                        <div class="name">[[ item.grade_code ]]</div>
+                                        <div class="info">[[ item.grade_desc ]] - [[ item.grade_type ]]</div>    
+                                    </div>
+                                </template>        
+                            </vaadin-combo-box>
+                            
                             <kct-file-input label="Avatar" value="{{ record.su_avatar }}" file="{{ avatar }}"></kct-file-input>
                         </div>
-                        <div class="p-r" hidden$="[[ !record.su_id ]]">
-                            <h3>Account Removal</h3>
-                            <p>Removing user will remove all user data and all related documents.</p>
-                            <paper-button on-tap="__onRemoveAccountTap" class="btn-danger btn-md m-t">Delete User</paper-button>
+                        <div class="p-r">
+                            <h3 class="m-b">Roles Assignment</h3>
+                            <template is="dom-repeat" items="[[ roles ]]">
+                                <div class="box role-item">
+                                    <div class="box-tool" style="right: -8px;">
+                                        <paper-toggle-button checked="{{ item.sr_selected }}"></paper-toggle-button>
+                                    </div>
+                                    <div class="box-body">
+                                        <h4>[[ item.sr_name ]]</h4>
+                                        <p>[[ __computeDescription(item) ]]</p>
+                                    </div>
+                                </div>
+                            </template>
                         </div>
                     </kct-columns>   
                 </kct-form-validator>
@@ -93,8 +133,10 @@
             static get properties() {
                 return {
                     page: { type: String, value: 'profile' },
+                    record: { type: Object, value: () => ({ su_active: '1' }) },
                     roles: { type: Array },
-                    record: { type: Object, value: () => ({ su_active: '1' }) }
+                    grades: { type: Array },
+                    positions: { type: Array }
                 };
             }
 
@@ -106,7 +148,7 @@
 
             constructor() {
                 super();
-                this.__icon = '';
+                this.__logo = '';
             }
 
             handleRouteParams(setting, action, id) {
@@ -114,25 +156,50 @@
                     return;
                 }
 
-                this.__loadRoles();
+                this.set('password1', '');
+                this.set('password2', '');
 
                 if (id) {
-                    this.__loadRecord(id);
+                    this.__loadReferences().then(() => {
+                        this.__loadRecord(id);
+                    });
                 } else {
-                    this.set('record', {});
-                    this.$.validator.validate();
+                    this.__loadReferences().then(() => {
+                        this.set('record', {});
+                        this.$.validator.validate();
+                    });
                 }
             }
 
             __thumbChanged(thumb) {
-                let icon = thumb ? (thumb + '&w=32&h=32') : null;
-                this.set('__icon', icon);
+                let icon = thumb ? (thumb + '&w=32&h=32') : '';
+                this.set('__logo', icon);
+            }
+
+            __computeDescription(role) {
+                return role.sr_description || 'No role description';
             }
 
             __loadRecord(id) {
-                this.$.ajax1.GET('/users/' + id).then((res) => {
+                this.$.ajax.GET('/users/' + id).then((res) => {
                     if (res.success) {
-                        this.set('record', res.data);
+                        let record = res.data;
+                        this.set('record', record);
+
+                        // apply roles
+                        let exists = {};
+
+                        record.su_roles.forEach(r => {
+                            exists[r.sr_id] = true;
+                        });
+
+                        this.roles.forEach((r, i) => {
+                            let path = 'roles.' + i + '.sr_selected';
+                            if (exists[r.sr_id] !== undefined) {
+                                this.set(path, true);
+                            }
+                        });
+
                         this.$.validator.validate();
                     } else {
                         this.alert('Oops!', "It's look like user doesn't exists in database").then(() => {
@@ -143,9 +210,35 @@
             }
 
             __loadRoles() {
-                this.$.ajax2.GET('/roles').then((res) => {
-                    this.set('roles', res.data);
+                return this.$.ajax.GET('/roles').then((res) => {
+                    let roles = res.data;
+                    
+                    roles.forEach(r => {
+                        r.sr_selected = false;
+                    });
+
+                    this.set('roles', roles);
                 });
+            }
+
+            __loadPositions() {
+                return this.$.ajax.GET('/positions').then(res => {
+                    this.set('positions', res.data);
+                });
+            }
+
+            __loadGrades() {
+                return this.$.ajax.GET('/grades').then(res => {
+                    this.set('grades', res.data);
+                });
+            }
+
+            __loadReferences() {
+                return Promise.all([
+                    this.__loadRoles(),
+                    this.__loadPositions(),
+                    this.__loadGrades()
+                ]);
             }
 
             __back() {
@@ -161,11 +254,12 @@
                 }
 
                 data.su_kanban = this.kanban;
+                data.su_roles = this.roles.filter((elem) => elem.sr_selected === true);
 
                 if (phantom) {
-                    this.$.ajax1.POST('/users', data).then(done.bind(this));
+                    this.$.ajax.POST('/users', data).then(done.bind(this));
                 } else {
-                    this.$.ajax1.PUT('/users/' + data.su_id, data).then(done.bind(this));
+                    this.$.ajax.PUT('/users/' + data.su_id, data).then(done.bind(this));
                 }
 
                 function done(res) {
@@ -174,7 +268,7 @@
                         this.set('record.su_id', id);
 
                         if (this.avatar) {
-                            this.$.ajax1.UPLOAD('/users/' + id + '/upload', {
+                            this.$.ajax.UPLOAD('/users/' + id + '/upload', {
                                 files: [
                                     { name: 'userfile', file: this.avatar }
                                 ]
@@ -189,18 +283,6 @@
                         }
                     }
                 }
-            }
-
-            __onRemoveAccountTap() {
-                this.confirm('Account Removal', 'Are you sure want to delete this user?').then((y) => {
-                    if (y) {
-                        this.$.ajax1.DELETE('/users/' + this.record.su_id).then((res) => {
-                            if (res.success) {
-                                this.__back();
-                            }
-                        });
-                    }
-                });  
             }
 
             __onBackTap() {

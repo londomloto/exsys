@@ -116,16 +116,14 @@ class AuthProvider extends \Micro\Component {
         }
 
         $user->su_access_token = $this->security->createToken(array(
-            'su_email' => $user->su_email,
-            'su_sr_id'  => $user->su_sr_id
+            'su_email' => $user->su_email
         ));
 
-        $user->su_refresh_token = $this->security->createToken(NULL, 108000);
+        // $user->su_refresh_token = $this->security->createToken(NULL, 108000);
         $user->save();
-
         $user = $user->toArray();
         
-        unset($user['su_refresh_token']);
+        // unset($user['su_refresh_token']);
         unset($user['su_passwd']);
 
         return $user;

@@ -65,6 +65,30 @@ class Role extends \Micro\Model {
                 'alias' => 'Menus'
             )
         );
+
+        $this->hasMany(
+            'sr_id',
+            'App\Roles\Models\RoleUser',
+            'sru_sr_id',
+            array(
+                'alias' => 'RoleUsers',
+                'foreignKey' => array(
+                    'action' => Relation::ACTION_CASCADE
+                )
+            )
+        );
+
+        $this->hasManyToMany(
+            'sr_id',
+            'App\Roles\Models\RoleUser',
+            'sru_sr_id',
+            'sru_su_id',
+            'App\Users\Models\User',
+            'su_id',
+            array(
+                'alias' => 'Users'
+            )
+        );
     }
 
     public function getSource() {

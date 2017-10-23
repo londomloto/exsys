@@ -39,7 +39,7 @@
                 text-align: center;
             }
             .card-header h3 {
-                font-weight: 400;
+                font-weight: 300;
                 font-size: 18px;
                 color: #fff;
             }
@@ -62,16 +62,11 @@
             }
 
             .card-info p { font-size: 13px;  }
-            .card-info h3 { 
-                font-weight: 400;
-                font-size: 20px;  
-                margin: 0 0 16px 0;
-            }
+            .card-info iron-icon { position: relative; top: -2px;  }
 
         </style>
 
-        <kct-ajax id="ajax1"></kct-ajax>
-        <kct-ajax id="ajax2"></kct-ajax>
+        <kct-ajax id="ajax"></kct-ajax>
 
         <div class="page-actions">
             <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to setting" on-tap="__onBackTap"></paper-fab>
@@ -79,8 +74,9 @@
 
         <kct-vbox>
             <page-header-block icon="social:person-outline" description="Application Users">
+                <paper-icon-button icon="refresh" on-tap="__onRefreshTap"></paper-icon-button>
+                <div class="separator"></div>
                 <paper-button on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Add User</paper-button>
-                <paper-button on-tap="__onRefreshTap"><iron-icon icon="refresh"></iron-icon>&nbsp;Refresh</paper-button>
                 <paper-icon-button on-tap="__onSearchTap" icon="search" slot="secondary-toolbar"></paper-icon-button>
             </page-header-block>
             
@@ -98,13 +94,14 @@
                                 <div class="card-content">
                                     <div class="card-info">
                                         <p><iron-icon icon="mail"></iron-icon>&nbsp;[[ item.su_email ]]</strong></p>
-                                        <p><iron-icon icon="verified-user"></iron-icon>&nbsp;[[ item.sr_name ]]</p>
-                                        <p><iron-icon icon="communication:phone"></iron-icon>&nbsp;[[ item.su_phone ]]</p>
+                                        <p><iron-icon icon="work"></iron-icon>&nbsp;[[ item.su_position_name ]]</p>
+                                        <p><iron-icon icon="stars"></iron-icon>&nbsp;[[ item.su_grade_desc ]]</p>
                                     </div>
                                 </div>
                                 <div class="card-actions">
                                     <div class="text-center">
                                         <paper-button class="btn-sm" on-tap="__onEditTap">Edit</paper-button>
+                                        <paper-button class="btn-sm text-danger" on-tap="__onDeleteTap">Delete</paper-button>
                                         <!-- <paper-button class="btn-md" on-tap="__onKanbanTap">Worksheet</paper-button> -->
                                     </div>
                                 </div>
@@ -201,7 +198,7 @@
             }
 
             __loadUsers(data = {}) {
-                let ajax = this.$.ajax1;
+                let ajax = this.$.ajax;
                 ajax.GET('/users', data).then((res) => {
                     this.set('users', res.data);
                 });
@@ -217,7 +214,7 @@
 
             __loadKanban(user) {
                 let path = '/users/users-kanban?display=setup',
-                    ajax = this.$.ajax2;
+                    ajax = this.$.ajax;
 
                 if (user.su_sr_id) {
                     path += '&role=' + user.su_sr_id;
@@ -248,6 +245,19 @@
                 this.set('route.path', '/settings/users/edit/' + user.su_id);
             }
 
+            __onDeleteTap(e) {
+                let user = e.model.item;
+                this.confirm('Confirm', `Are you sure you want to delete ${user.su_fullname} ?`).then(y => {
+                    if (y) {
+                        this.$.ajax.DELETE('/users/' + this.record.su_id).then((res) => {
+                            if (res.success) {
+                                this.__back();
+                            }
+                        });
+                    }
+                });
+            }
+
             __onKanbanTap(e) {
                 let user = e.model.item;
                 this.__loadKanban(user);
@@ -262,7 +272,7 @@
                 this.$['kanban-dialog'].close();
 
                 let data = this.__selectedUser,
-                    ajax = this.$.ajax1;
+                    ajax = this.$.ajax;
 
                 data.su_kanban = this.kanban;
 
@@ -282,7 +292,7 @@
 
                 this.confirm('Confirm', 'Are you sure want to reset to default configuration (role based) ?').then(y => {
                     if (y) {
-                        let ajax = this.$.ajax2,
+                        let ajax = this.$.ajax,
                             data = this.__selectedUser;
                         
                         data.su_kanban = [];

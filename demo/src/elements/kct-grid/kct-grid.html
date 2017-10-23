@@ -362,6 +362,10 @@
             .search-badge[hidden] {
                 display: none;
             }
+            .grid-panel.sm .grid-panel-footer .col-1,
+            .grid-panel.sm .grid-panel-footer .col-2 {
+                display: none;
+            }
         </style>
 
         <slot id="slot"></slot>
@@ -397,6 +401,9 @@
                         <div class="flex">
                             <div class="grid-toolbar">
                                 <slot name="primary-toolbar"></slot>    
+                                <!-- <paper-menu-button>
+                                    <paper-icon-button icon="menu" slot="dropdown-trigger"></paper-icon-button>
+                                </paper-menu-button> -->
                             </div>
                         </div>
                     </kct-hbox>
@@ -417,7 +424,7 @@
 
             <div class="grid-panel-footer" hidden$="[[ hideFooter ]]">
                 <kct-hbox>
-                    <div class="flex">
+                    <div class="flex col-1">
                         <div class="grid-statusbar">
                             <paper-menu-button horizontal-align="right" vertical-align="bottom">
                                 <paper-button slot="dropdown-trigger">
@@ -436,12 +443,12 @@
                             </paper-menu-button>
                         </div>
                     </div>
-                    <div class="flex">
+                    <div class="flex col-2">
                         <div class="grid-statusbar text-center">
                             <span class="grid-pagination-info">Displaying <b>[[ __page.start ]]</b> - <b>[[ __page.end ]]</b> of <b>[[ __page.total ]]</b></span>    
                         </div>
                     </div>
-                    <div class="flex">
+                    <div class="flex col-3">
                         <div class="grid-statusbar text-right">
                             <div class="grid-pagination">
                                 <paper-icon-button on-tap="__onPageTap" id="nav-first" icon="first-page"></paper-icon-button>

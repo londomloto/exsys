@@ -3,11 +3,12 @@ namespace App\Users\Models;
 
 use App\Users\Models\UserMenu,
     App\Users\Models\UserPermission,
+    App\Roles\Models\RoleUser,
     Phalcon\Mvc\Model\Relation;
 
 class User extends \Micro\Model {
     
-    const AVATAR_DEFAULT = 'defaults/avatar-0.png';
+    const AVATAR_DEFAULT = 'defaults/avatar-0.jpg';
     const MAX_LIMIT = 15000000;
 
     public function initialize() {
@@ -21,15 +22,6 @@ class User extends \Micro\Model {
                 'foreignKey' => array(
                     'action' => Relation::ACTION_CASCADE
                 )
-            )
-        );
-
-        $this->belongsTo(
-            'su_sr_id',
-            'App\Roles\Models\Role',
-            'sr_id',
-            array(
-                'alias' => 'Role'
             )
         );
 
@@ -88,11 +80,41 @@ class User extends \Micro\Model {
         );
 
         $this->hasOne(
+            'su_position_id',
+            'App\Positions\Models\Position',
+            'pos_id',
+            array(
+                'alias' => 'Position'
+            )
+        );
+
+        $this->hasOne(
             'su_grade_id',
             'App\Grades\Models\Grade',
             'grade_id',
             array(
                 'alias' => 'Grade'
+            )
+        );
+
+        $this->hasMany(
+            'su_id',
+            'App\Roles\Models\RoleUser',
+            'sru_su_id',
+            array(
+                'alias' => 'RoleUsers'
+            )
+        );
+
+        $this->hasManyToMany(
+            'su_id',
+            'App\Roles\Models\RoleUser',
+            'sru_su_id',
+            'sru_sr_id',
+            'App\Roles\Models\Role',
+            'sr_id',
+            array(
+                'alias' => 'Roles'
             )
         );
 
@@ -122,15 +144,37 @@ class User extends \Micro\Model {
         // handle password
         unset($array['su_passwd']);    
 
-        if ($this->role) {
-            $array = array_merge($array, $this->role->toArray());
+        // if ($this->role) {
+        //     $array = array_merge($array, $this->role->toArray());
+        // }
+
+        $array['su_roles'] = $this->roles->filter(function($role){
+            return array(
+                'sr_id' => $role->sr_id,
+                'sr_name' => $role->sr_name,
+                'sr_description' => $role->sr_description
+            );
+        });
+
+        $array['su_position_name'] = '';
+
+        if ($this->position) {
+            $array['su_position_name'] = $this->position->pos_name;
         }
 
+        $array['su_grade_desc'] = '';
         $array['su_grade_limit'] = 0;
         $array['su_grade_type'] = '';
 
         if ($this->grade) {
-            $array['su_grade_limit'] = $this->grade->grade_limit;            
+            $array['su_grade_desc'] = $this->grade->grade_code;
+
+            if ( ! empty($this->grade->grade_desc)) {
+                $array['su_grade_desc'] .= ' - '.$this->grade->grade_desc;
+            }
+
+            $array['su_grade_limit'] = $this->grade->grade_limit;
+
             if ($this->grade->approver == 1) {
                 $array['su_grade_type'] = 'approver';
             } else if ($this->grade->verificator == 1) {
@@ -225,11 +269,20 @@ class User extends \Micro\Model {
 
     public function getMenus($options = array()) {
         if ($this->userMenus->count() == 0) {
-            if ($this->role) {
+            $menus = array();
+            foreach($this->roles as $role) {
+                foreach($role->getMenus($options) as $menu) {
+                    if ( ! isset($menus[$menu->smn_id])) {
+                        $menus[$menu->smn_id] = $menu;
+                    }
+                }
+            }
+            return array_values($menus);
+            /*if ($this->role) {
                 return $this->role->getMenus();
             } else {
                 return \App\Menus\Models\Menu::find('smn_id = -1');
-            }
+            }*/
         } else {
             $conditions = '';
 
@@ -254,11 +307,20 @@ class User extends \Micro\Model {
 
     public function getPermissions($options = array()) {
         if ($this->userPermissions->count() == 0) {
-            if ($this->role) {
-                return $this->role->getPermissions();
-            } else {
-                return \App\Modules\Models\ModuleCapability::find('smc_id = -1');
+            $perms = array();
+            foreach($this->roles as $role) {
+                foreach($role->getPermissions() as $perm) {
+                    if ( ! isset($perms[$perm->smc_id])) {
+                        $perms[$perm->smc_id] = $perm;
+                    }
+                }
             }
+            return array_values($perms);
+            // if ($this->role) {
+            //     return $this->role->getPermissions();
+            // } else {
+            //     return \App\Modules\Models\ModuleCapability::find('smc_id = -1');
+            // }
         } else {
             $conditions = '';
 
@@ -462,6 +524,55 @@ class User extends \Micro\Model {
             $up->sup_smc_id = $id;
             $up->sup_selected = 1;
             $up->save();
+        }
+    }
+
+    public function saveRoles($items) {
+        if (count($items) === 0) {
+            $this->roleUsers->delete();
+            return;
+        }
+
+        $exists = array_flip(
+            array_map(
+                function($elem){ return $elem['sr_id']; }, 
+                $this->roles->toArray()
+            )
+        );
+
+        $create = array();
+        $update = array();
+        $delete = array();
+
+        foreach($items as $elem) {
+            if ( ! isset($exists[$elem['sr_id']])) {
+                $create[] = $elem['sr_id'];
+            } else {
+                $update[] = $elem['sr_id'];
+                unset($exists[$elem['sr_id']]);
+            }
+        }
+
+        foreach($exists as $id => $bool) {
+            $ru = RoleUser::findFirst(array(
+                'sru_su_id = :user: AND sru_sr_id = :role:',
+                'bind' => array(
+                    'user' => $this->su_id,
+                    'role' => $id
+                )
+            ));
+
+            if ($ru) {
+                $ru->delete();
+            }
+        }
+
+        foreach($create as $id) {
+            $ru = new RoleUser();
+
+            $ru->sru_sr_id = $id;
+            $ru->sru_su_id = $this->su_id;
+            $ru->save();
         }
     }
 

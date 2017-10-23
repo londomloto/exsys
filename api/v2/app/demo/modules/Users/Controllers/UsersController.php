@@ -1,7 +1,8 @@
 <?php
 namespace App\Users\Controllers;
 
-use App\Users\Models\User;
+use App\Users\Models\User,
+    App\Roles\Models\Role;
 
 class UsersController extends \Micro\Controller {
 
@@ -11,7 +12,7 @@ class UsersController extends \Micro\Controller {
     }
 
     public function findByIdAction($id) {
-        return User::get($id);
+        return User::get($id); 
     }
     
     public function createAction() {
@@ -25,6 +26,10 @@ class UsersController extends \Micro\Controller {
         if ($user->save($post)) {
             if (isset($post['su_kanban'])) {
                 $user->saveKanban($post['su_kanban']);
+            }
+
+            if (isset($post['su_roles'])) {
+                $user->saveRoles($post['su_roles']);
             }
 
             return User::get($user->su_id);
@@ -46,6 +51,10 @@ class UsersController extends \Micro\Controller {
             if ($query->data->save($post)) {
                 if (isset($post['su_kanban'])) {
                     $query->data->saveKanban($post['su_kanban']);
+                }
+
+                if (isset($post['su_roles'])) {
+                    $query->data->saveRoles($post['su_roles']);
                 }
             }
         }

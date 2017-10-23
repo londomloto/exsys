@@ -15,6 +15,8 @@
                 border-bottom: 1px solid #DDDDDD;
             }
 
+
+
             .page-header {
                 background-color: var(--paper-grey-100);
                 padding: 0.8rem;
@@ -168,6 +170,9 @@
             .extra-label ::slotted(*) {
                 font-size: 12px;
             }
+            [hidden] {
+                display: none;
+            }
         </style>
 
         <kct-media size="{{ __responsive }}"></kct-media>
@@ -176,14 +181,10 @@
             <kct-hbox>
                 <div class="column-1">
                     <div class="icon">
-                        <template is="dom-if" if="[[ image ]]">
-                            <div class="header-image" style$="background-image: url([[ image ]])"></div>
-                        </template>
-                        <template is="dom-if" if="[[ icon ]]">
-                            <div class="header-icon"">
-                                <iron-icon icon="[[ icon ]]"></iron-icon>
-                            </div>
-                        </template>
+                        <div hidden="[[ __imageHidden ]]" class="header-image" style$="background-image: url([[ image ]])"></div>
+                        <div hidden="[[ __iconHidden ]]" class="header-icon"">
+                            <iron-icon icon="[[ icon ]]"></iron-icon>
+                        </div>
                     </div>
                     <div class="text">
                         <div class="header-content">
@@ -232,7 +233,7 @@
             }
             static get properties() {
                 return {
-                    icon: { type: String },
+                    icon: { type: String, value: 'settings' },
                     image: { type: String },
                     title: { type: String, value: 'Module' },
                     description: { type: String, value: 'Description' },
@@ -247,13 +248,16 @@
             }
             static get observers() {
                 return [
-                    '__accentChanged(accent)'
+                    '__accentChanged(accent)',
+                    '__logoChanged(image, icon)'
                 ]
             }
 
             constructor() {
                 super();
                 this.__buttons = [];
+                this.__iconHidden = false;
+                this.__imageHidden = true;
             }
 
             ready() {
@@ -290,6 +294,18 @@
 
             __computeExtraClass(extraSize) {
                 return extraSize ? 'extra' : '';
+            }
+
+            __logoChanged(image, icon) {
+
+                this.set('__imageHidden', true);
+                this.set('__iconHidden', false);
+                
+                if (image) {
+                    this.set('__imageHidden', false);
+                    this.set('__iconHidden', true);
+                }
+
             }
 
             __accentChanged(accent) {
