@@ -204,7 +204,7 @@
             }
             __onDeleteTap(e) {
                 let record = e.data;
-                this.confirm('Confirm', `Are you sure you want to delete ${record.org_type_name} ?`).then(y => {
+                this.confirm('Confirm', `Are you sure you want to delete ${record.org_name} ?`).then(y => {
                     if (y) {
                         this.$.ajax.DELETE('/organization/' + record.org_id).then(() => {
                             this.$.grid.load();
