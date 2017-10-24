@@ -138,9 +138,7 @@
                 font-size: 15px;
                 border-bottom: 1px solid #DDDDDD;
             }
-            .grid-panel-header > .col-right {
-                width: 300px;
-            }
+            
             .grid-panel-header[hidden] {
                 display: none;
             }
@@ -178,6 +176,10 @@
                 padding: 0;
             }
 
+            .grid-toolbar paper-menu-button paper-item {
+                cursor: pointer;
+            }
+
             .grid-toolbar paper-input {
                 display: inline-block;
 
@@ -205,6 +207,17 @@
                 position: relative;
                 top: 4px;
                 margin: 0 0.5rem;
+            }
+
+            .grid-toolbar .menu-responsive {
+                display: none;
+                padding: 0;
+            }
+            .grid-panel.sm .grid-toolbar .menu-responsive:not([hidden]) {
+                display: inline-block;
+            }
+            .grid-panel.sm .grid-toolbar ::slotted(*) {
+                display: none;
             }
 
             .grid-panel-header > .col-right > .grid-toolbar {
@@ -400,10 +413,17 @@
                         </div>
                         <div class="flex">
                             <div class="grid-toolbar">
-                                <slot name="primary-toolbar"></slot>    
-                                <!-- <paper-menu-button>
+                                <slot id="primary-toolbar" name="primary-toolbar"></slot>    
+                                <paper-menu-button class="menu-responsive" horizontal-align="right" hidden="[[ __hideResponsive ]]">
                                     <paper-icon-button icon="menu" slot="dropdown-trigger"></paper-icon-button>
-                                </paper-menu-button> -->
+                                    <paper-listbox slot="dropdown-content">
+                                        <template is="dom-repeat" items="[[ __buttons ]]">
+                                            <paper-item on-tap="__onResponsiveToolbarTap">
+                                                <iron-icon icon="[[ item.icon ]]"></iron-icon>&nbsp;[[ item.text ]]
+                                            </paper-item>
+                                        </template>
+                                    </paper-listbox>
+                                </paper-menu-button>
                             </div>
                         </div>
                     </kct-hbox>
@@ -531,6 +551,7 @@
 
                 constructor() {
                     super();
+
                     this.__grid = null;
                     this.__page = {};
                     this.__wait = this._defer();
@@ -542,11 +563,35 @@
                         handler: this.__onGridBulkSelection.bind(this)
                     };
 
+                    this.__buttons = [];
+                    this.__hideResponsive = true;
                 }
 
                 ready() {
                     super.ready();
                     this.__injectStyles();
+
+                    let buttons = this.$['primary-toolbar']
+                        .assignedNodes().filter(n => {
+                            return n.localName == 'paper-button'
+                        })
+                        .map(b => {
+                            let iron = b.querySelector('iron-icon');
+                            let icon = 'chevron-right';
+
+                            if (iron) {
+                                icon = iron.icon;
+                            }
+
+                            return { 
+                                text: b.textContent, 
+                                icon: icon,
+                                link: b
+                            };
+                        });
+
+                    this.set('__buttons', buttons);
+                    this.set('__hideResponsive', buttons.length ? false : true);
                 }
 
                 connectedCallback() {
@@ -1020,6 +1065,11 @@
 
                 __onSearchTap() {
                     this.$.search.open();
+                }
+
+                __onResponsiveToolbarTap(e) {
+                    let button = e.model.item;
+                    button.link.dispatchEvent(new CustomEvent('tap'));
                 }
 
                 __onSearchQuery(e) {

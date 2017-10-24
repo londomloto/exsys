@@ -105,55 +105,58 @@
                         <div class="m-b">
                             <paper-button on-tap="__onAddItemTap" class="btn-sm btn-primary"><iron-icon icon="add"></iron-icon>&nbsp;Add Item</paper-button>
                         </div>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th width="50">No.</th>
-                                    <th>Description</th>
-                                    <th width="100">Payment</th>
-                                    <th class="text-center" width="100">Currency</th>
-                                    <th width="150" class="text-right">Amounts</th>
-                                    <th width="150"></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <template is="dom-repeat" items="[[ items ]]" as="group">
-                                    <tr class="group-row">
-                                        <td colspan="6"><iron-icon icon="label-outline"></iron-icon>&nbsp;[[ group.group_name ]]</td>
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th width="50">No.</th>
+                                        <th>Description</th>
+                                        <th width="100">Payment</th>
+                                        <th class="text-center" width="100">Currency</th>
+                                        <th width="150" class="text-right">Amounts</th>
+                                        <th width="150"></th>
                                     </tr>
-                                    <template is="dom-repeat" items="[[ group.group_items ]]">
-                                        <tr>
-                                            <td>[[ item.item_seq ]]</td>
-                                            <td>[[ item.item_name ]]</td>
-                                            <td>[[ item.payment_type_name ]]</td>
-                                            <td class="text-center">[[ item.currency_name ]]</td>
-                                            <td class="text-right">[[ item.amounts_formatted ]]</td>
-                                            <td class="text-right" style="padding-right: 0;">
-                                                <paper-button on-tap="__onItemEditTap" class="btn-xs btn-amber">Edit</paper-button>
-                                                <paper-button on-tap="__onItemDeleteTap" class="btn-xs btn-danger">Delete</paper-button>
-                                            </td>
+                                </thead>
+                                <tbody>
+                                    <template is="dom-repeat" items="[[ items ]]" as="group">
+                                        <tr class="group-row">
+                                            <td colspan="6"><iron-icon icon="label-outline"></iron-icon>&nbsp;[[ group.group_name ]]</td>
                                         </tr>
-                                        <tr class="form-row">
-                                            <td></td>
-                                            <td colspan="4">
-                                                <kct-column columns="3">
-                                                    <template is="dom-repeat" items="[[ item.item_forms ]]" as="form">
-                                                        <div class="item-form">
-                                                            <div class="label">[[ form.item_form_label ]]</div>
-                                                            <div class="value">[[ form.item_form_display ]]</div>
-                                                        </div>
-                                                    </template> 
-                                                </kct-column>
-                                            </td>
-                                            <td></td>
-                                        </tr>
-                                        <tr class="separator">
-                                            <td colspan="6"></td>
-                                        </tr>
+                                        <template is="dom-repeat" items="[[ group.group_items ]]">
+                                            <tr>
+                                                <td>[[ item.item_seq ]]</td>
+                                                <td>[[ item.item_name ]]</td>
+                                                <td>[[ item.payment_type_name ]]</td>
+                                                <td class="text-center">[[ item.currency_name ]]</td>
+                                                <td class="text-right">[[ item.amounts_formatted ]]</td>
+                                                <td class="text-right" style="padding-right: 0;">
+                                                    <paper-button on-tap="__onItemEditTap" class="btn-xs btn-amber">Edit</paper-button>
+                                                    <paper-button on-tap="__onItemDeleteTap" class="btn-xs btn-danger">Delete</paper-button>
+                                                </td>
+                                            </tr>
+                                            <tr class="form-row">
+                                                <td></td>
+                                                <td colspan="4">
+                                                    <kct-column columns="3">
+                                                        <template is="dom-repeat" items="[[ item.item_forms ]]" as="form">
+                                                            <div class="item-form">
+                                                                <div class="label">[[ form.item_form_label ]]</div>
+                                                                <div class="value">[[ form.item_form_display ]]</div>
+                                                            </div>
+                                                        </template> 
+                                                    </kct-column>
+                                                </td>
+                                                <td></td>
+                                            </tr>
+                                            <tr class="separator">
+                                                <td colspan="6"></td>
+                                            </tr>
+                                        </template>
                                     </template>
-                                </template>
-                            </tbody>
-                        </table>
+                                </tbody>
+                            </table>
+                        </div>
+                        
                     </div>
                     
                 </paper-card>

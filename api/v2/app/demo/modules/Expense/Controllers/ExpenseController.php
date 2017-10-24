@@ -276,11 +276,16 @@ class ExpenseController extends \Micro\Controller {
 
     public function cronAction() {
         $user = $this->auth->user();
-        $date = date('Y-m-d h:i:s');
-        $time = strtotime($date);
-        $code = date('m/Y');
+        $post = $this->request->getJson();
+        $date = (isset($post['date']) && ! empty($post['date'])) ? $post['date'].' '.date('H:i:s') : date('Y-m-d H:i:s');
 
-        $opex = Expense::findFirst("DATE_FORMAT(date, '%m/%Y') = '".$code."' AND catagory = 'opex'");
+        $time = strtotime($date);
+        $code = date('m/Y', $time);
+
+        $opex = Expense::findFirst("
+            DATE_FORMAT(date, '%m/%Y') = '".$code."' 
+            AND catagory = 'opex' 
+        ");
 
         if ($opex) {
             return array(

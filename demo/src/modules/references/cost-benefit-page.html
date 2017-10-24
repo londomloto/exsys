@@ -1,0 +1,28 @@
+<link rel="import" href="../../../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-grid/kct-grid.html">
+
+<dom-module id="cost-benefit-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+        </style>
+
+        <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to list" on-tap="__onBackTap"></paper-fab>
+        </div>
+    </template>
+    <script>
+        class CostBenefitPage extends KctView {
+            static get is() {
+                return 'cost-benefit-page';
+            }
+            __onBackTap() {
+                this.set('route.path', '/settings');
+            }
+        }
+        customElements.define(CostBenefitPage.is, CostBenefitPage);
+    </script>
+</dom-module>

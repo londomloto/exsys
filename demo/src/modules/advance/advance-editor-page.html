@@ -12,6 +12,7 @@
 <link rel="import" href="../../elements/kct-pages/kct-pages.html">
 <link rel="import" href="../../elements/kct-layouts/kct-vbox.html">
 <link rel="import" href="../../elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../elements/kct-layouts/kct-column.html">
 <link rel="import" href="../../elements/kct-form/kct-form-validator.html">
 <link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
 
@@ -47,14 +48,14 @@
                             
                             <paper-input label="Subject" value="{{ record.subject_adv }}" required auto-validate error-message="Subject is required"></paper-input>    
                             
-                            <kct-hbox>
-                                <div class="flex p-r-sm">
+                            <kct-column columns="2">
+                                <div>
                                     <vaadin-date-picker label="Start Date" value="{{ record.date_start }}" required auto-validate error-message="Start date is required"></vaadin-date-picker>
                                 </div>
-                                <div class="flex p-l-sm">
+                                <div>
                                     <vaadin-date-picker label="End Date" value="{{ record.date_end }}" required auto-validate error-message="End date is required"></vaadin-date-picker>
                                 </div>
-                            </kct-hbox>
+                            </kct-column>
 
                             <vaadin-combo-box 
                                 label="Type" 
@@ -101,32 +102,33 @@
                         <div class="m-b">
                             <paper-button on-tap="__onAddItemTap" class="btn-sm btn-primary"><iron-icon icon="add"></iron-icon>&nbsp;Add Item</paper-button>
                         </div>
-                        <table class="striped">
-                            <thead>
-                                <tr>
-                                    <th width="50">No.</th>
-                                    <th>Description</th>
-                                    <th class="text-center" width="100">Currency</th>
-                                    <th class="text-right">Amounts</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <template is="dom-repeat" items="[[ items ]]">
+                        <div class="table-responsive">
+                            <table class="striped">
+                                <thead>
                                     <tr>
-                                        <td>[[ __computeNo(index) ]]</td>
-                                        <td>[[ item.description ]]</td>
-                                        <td class="text-center">[[ item.currency_name ]]</td>
-                                        <td class="text-right">[[ item.amounts_formatted ]]</td>
-                                        <td class="text-right">
-                                            <paper-button on-tap="__onItemEditTap" class="btn-xs btn-amber">Edit</paper-button>
-                                            <paper-button on-tap="__onItemDeleteTap" class="btn-xs btn-danger">Delete</paper-button>
-                                        </td>
+                                        <th width="50">No.</th>
+                                        <th>Description</th>
+                                        <th class="text-center" width="100">Currency</th>
+                                        <th class="text-right">Amounts</th>
+                                        <th></th>
                                     </tr>
-                                </template>
-                            </tbody>
-                        </table>
-                        
+                                </thead>
+                                <tbody>
+                                    <template is="dom-repeat" items="[[ items ]]">
+                                        <tr>
+                                            <td>[[ __computeNo(index) ]]</td>
+                                            <td>[[ item.description ]]</td>
+                                            <td class="text-center">[[ item.currency_name ]]</td>
+                                            <td class="text-right">[[ item.amounts_formatted ]]</td>
+                                            <td class="text-right">
+                                                <paper-button on-tap="__onItemEditTap" class="btn-xs btn-amber">Edit</paper-button>
+                                                <paper-button on-tap="__onItemDeleteTap" class="btn-xs btn-danger">Delete</paper-button>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>    
+                        </div>
                     </div>
                     
                 </paper-card>
@@ -135,10 +137,10 @@
                     <div class="card-content">
                         <kct-hbox>
                             <div class="flex">
-                                <paper-button class="btn-md btn-blue-grey" on-tap="__onBackTap" hidden$="[[ dialogMode ]]"><iron-icon icon="arrow-back"></iron-icon>&nbsp;Back To List</paper-button>
+                                <paper-button class="btn-md btn-blue-grey" on-tap="__onBackTap" hidden$="[[ dialogMode ]]"><iron-icon icon="arrow-back"></iron-icon>&nbsp;Back</paper-button>
                             </div>
                             <div class="flex text-right">
-                                <paper-button class="btn-md btn-primary" on-tap="__onNextTap" disabled$="[[ __formInvalid ]]">Continue&nbsp;<iron-icon icon="arrow-forward"></iron-icon></paper-button>
+                                <paper-button class="btn-md btn-primary" on-tap="__onNextTap" disabled$="[[ __formInvalid ]]">Next&nbsp;<iron-icon icon="arrow-forward"></iron-icon></paper-button>
                             </div>
                         </kct-hbox>
                     </div>

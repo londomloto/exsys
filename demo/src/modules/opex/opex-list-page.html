@@ -1,7 +1,9 @@
 <link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../bower_components/vaadin-date-picker/vaadin-date-picker.html">
 <link rel="import" href="../../elements/kct-view/kct-view.html">
 <link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../../elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../elements/kct-dialog/kct-dialog.html">
 
 <dom-module id="opex-list-page">
     <template>
@@ -27,7 +29,22 @@
                     <style include="theme-helper"></style>
                 </template>
 
+                <paper-button class="btn-primary" on-tap="__onSchedulerTap" slot="primary-toolbar"><iron-icon icon="maps:flight"></iron-icon>&nbsp;Simulator</paper-button>
+
         </kct-grid>
+
+        <kct-dialog id="scheduler" title="Scheduler Simulator" width="400" height="100%">
+            <template preserve-content>
+                <style include="theme-helper"></style>
+                <div slot="dialog-body">
+                    <vaadin-date-picker label="Execution Date" value="{{ jobs.date }}"></vaadin-date-picker>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onSchedulerExecuteTap">Execute</paper-button>
+                    <paper-button on-tap="__onSchedulerCloseTap">Close</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
     </template>
     <script>
         class OpexListPage extends KctView {
@@ -82,7 +99,8 @@
                                 }
                             }
                         ]
-                    }
+                    },
+                    jobs: { type: Object }
                 };
             }
             ready() {
@@ -116,6 +134,21 @@
                         });
                     }
                 });   
+            }
+            __onSchedulerTap() {
+                this.set('jobs', {});
+                this.$.scheduler.open();
+            }
+            __onSchedulerExecuteTap() {
+                this.$.scheduler.close();   
+                if (this.jobs.date) {
+                    this.$.ajax.POST('/expense/cron', { date: this.jobs.date }).then(() => {
+                        this.$.grid.load();
+                    }); 
+                }
+            }
+            __onSchedulerCloseTap() {
+                this.$.scheduler.close();   
             }
         }
         customElements.define(OpexListPage.is, OpexListPage);

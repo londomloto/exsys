@@ -42,11 +42,11 @@
         </style>
         <paper-dialog id="dialog" always-on-top on-iron-overlay-closed="__onClose" modal>
             <div class="body text-center">
-                <iron-icon icon="warning"></iron-icon>
+                <iron-icon icon="[[ icon ]]"></iron-icon>
                 <slot name="title">
                     <h2>[[ title ]]</h2>
                 </slot>
-                <slot name="message">
+                <slot>
                     <p>[[ message ]]</p>
                 </slot>
             </div>
@@ -62,6 +62,7 @@
             }
             static get properties() {
                 return {
+                    icon: { type: String, value: 'warning' },
                     title: { type: String, value: 'Oh Snap!' },
                     message: { type: String }
                 }

@@ -3,7 +3,7 @@
 <link rel="import" href="../../elements/kct-router/kct-router.html">
 <link rel="import" href="../../elements/kct-pages/kct-pages.html">
 <link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
-<link rel="import" href="../../elements/kct-network/kct-network.html">
+<link rel="import" href="../../elements/kct-message/kct-alert.html">
 <link rel="import" href="../../mixins/resolver.html">
 
 <dom-module id="kct-app">
@@ -17,8 +17,7 @@
         <kct-config id="config" config="{{ config }}"></kct-config>
         <kct-ajax id="ajax" config="[[ config ]]"></kct-ajax>
         <kct-router id="router" config="[[ config ]]" routes="[[ routes ]]" route="{{ route }}" state="{{ state }}" fallback="/home" on-authenticate="__onAuthenticate"></kct-router>
-        <kct-network on-state-change="__onNetworkStatceChange"></kct-network>
-
+        
         <template is="dom-if" if="[[ state.layout ]]">
             <kct-pages selected="{{ state.layout }}" attr-for-selected="name" fallback-selection="error" lazy-load>
                 <main-layout  name="main"  config="{{ config }}" route="{{ route }}" state="[[ state ]]" import="layouts/main-layout.html"></main-layout>
@@ -26,6 +25,16 @@
                 <error-layout name="error" config="{{ config }}" route="{{ route }}" state="[[ state ]]" import="layouts/error-layout.html"></error-layout>
             </kct-pages>
         </template>
+
+        <kct-alert 
+            id="update-alert" 
+            icon="social:notifications-active" 
+            title="Update Available">
+                <p>
+                    There is an update available for your application.<br>
+                    Clear your browser cache to apply new update.
+                </p>
+            </kct-alert>
 
     </template>
 
@@ -81,13 +90,23 @@
              * Load application config from server
              */
             __loadConfig() {
-                let config = Object.assign({}, this.config);
+                let config = Object.assign({}, this.config),
+                    version = config.app_version;
 
                 this.$.ajax.GET('/config/load').then(res => {
-                    for (let k in res.data) {
-                        config[k] = res.data[k];
+                    let data = res.data;
+                    if (data) {
+
+                        if (version != data.app_version) {
+                            this.$['update-alert'].open();
+                        }
+
+                        Object.keys(data).forEach(k => {
+                            config[k] = data[k];
+                        });
+
+                        this.set('config', config);
                     }
-                    this.set('config', config);
                 });
 
             }
@@ -106,10 +125,6 @@
                 if ( ! e.detail.success) {
                     this.set('route.path', '/login');
                 }
-            }
-
-            __onNetworkStatceChange(e) {
-                console.log('network state: ' + e.detail.state);
             }
 
         }

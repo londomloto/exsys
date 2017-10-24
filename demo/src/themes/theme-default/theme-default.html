@@ -634,6 +634,16 @@
             } 
 
             /** table */
+            @media only screen and (max-width : 480px) {
+                .table-responsive {
+                    position: relative;
+                    overflow: auto;
+                }    
+                .table-responsive > table {
+                    min-width: 768px;
+                }
+            }
+
             table {
                 border-collapse:collapse;
                 border-spacing:0;

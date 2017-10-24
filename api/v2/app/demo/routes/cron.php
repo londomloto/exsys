@@ -5,4 +5,4 @@ Router::group(array(
     'handler' => 'App\Expense\Controllers\ExpenseController',
     'middleware' => 'auth'
 ))
-->get('/cron', 'cron');
+->POST('/cron', 'cron');
