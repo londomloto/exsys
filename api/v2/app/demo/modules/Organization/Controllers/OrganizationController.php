@@ -6,7 +6,16 @@ use App\Organization\Models\Organization;
 class OrganizationController extends \Micro\Controller {
 
     public function findAction() {
-        return Organization::get()->sortable()->paginate();
+        $params = $this->request->getParams();
+        $display = isset($params['display']) ? $params['display'] : FALSE;
+
+        switch($display) {
+            case 'grid':
+                return Organization::grid();
+            default:
+                return Organization::get()->sortable()->paginate();
+        }
+        
     }
 
     public function createAction() {

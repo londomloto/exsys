@@ -15,13 +15,13 @@
         <kct-ajax id="ajax"></kct-ajax>
         <kct-grid 
             id="grid" 
-            url="/organization" 
+            url="/organization?display=grid" 
+            page-size="1000"
             columns="[[ columns ]]" 
             selection-model="cell" 
             icon="view-list" 
             title="Datasheet" 
-            description="Organization Reference" 
-            pagination>
+            description="Organization Reference">
 
             <template preserve-content>
                 <style include="theme-helper"></style>
@@ -34,7 +34,35 @@
         <kct-dialog id="editor" title="Organization Editor" width="400" height="100%">
             <template preserve-content>
                 <div slot="dialog-body">
+                    <vaadin-combo-box 
+                        label="Parent" 
+                        value="{{ selectedRecord.org_parent_id }}" 
+                        items="[[ parents ]]" 
+                        item-value-path="org_id" 
+                        item-label-path="org_name">
+                        
+                        <template>
+                            <style>
+                                .item {
+                                    font-size: 15px;
+                                }
+                                .elbow {
+                                    display: inline-block;
+                                    border-top: 1px solid #ccc;
+                                    height: 1px;
+                                    position: relative;
+                                    top: -4px;
+                                }
+                            </style>
+                            <div class="item">
+                                <span class="elbow" style="width: [[ item.org_pad ]]"></span>
+                                <span>[[ item.org_name ]]</span>
+                            </div>
+                        </template>
+
+                    </vaadin-combo-box>
                     <paper-input label="Organization" value="{{ selectedRecord.org_name }}"></paper-input>
+                    <paper-input label="Code" value="{{ selectedRecord.org_code }}"></paper-input>
                     <vaadin-combo-box 
                         label="Type" 
                         value="{{ selectedRecord.org_type_id }}" 
@@ -66,7 +94,18 @@
                         type: Array,
                         value: [
                             { type: 'rownumber' },
-                            { text: 'Organization', dataIndex: 'org_name', width: 300 },
+                            { 
+                                text: 'Organization', 
+                                dataIndex: 'org_name', 
+                                width: 400,
+                                renderer: (e) => {
+                                    if (e.data) {
+                                        return `<span class="elbow" style="width: ${e.data.org_pad}"></span><span>${e.data.org_name}</span>`;
+                                    }
+                                    return '';
+                                }
+                            },
+                            { text: 'Code', dataIndex: 'org_code' },
                             { text: 'Type', dataIndex: 'org_type_name' },
                             {
                                 text: '',
@@ -84,6 +123,7 @@
                         ]
                     },
                     selectedRecord: { type: Object },
+                    parents: { types: Array, value: [] },
                     types: { type: Array }
                 };
             }
@@ -107,8 +147,16 @@
                     this.set('types', res.data);
                 });
             }
+            __loadParents() {
+                return this.$.ajax.GET('/organization?display=grid').then(res => {
+                    let parents = [{ org_id: '0', org_name: 'NONE' }];
+                    Array.prototype.push.apply(parents, res.data);
+                    this.set('parents', parents);
+                });
+            }
             __loadReferences() {
                 return Promise.all([
+                    this.__loadParents(),
                     this.__loadTypes()
                 ]);
             }
@@ -124,6 +172,8 @@
                 this.mask('Opening...');
                 this.__loadReferences().then(() => {
                     this.unmask();
+                    let parents = this.parents.slice().filter(p => p.org_id != e.data.org_id);
+                    this.set('parents', parents);
                     this.set('selectedRecord', e.data);
                     this.$.editor.open();
                 });
