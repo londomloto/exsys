@@ -769,6 +769,10 @@
                             item.headerClass = 'text-' + (col.align);
                         }
 
+                        if (col.cls) {
+                            item.cellClass = (item.cellClass || '') + ' ' + col.cls;
+                        }
+
                         if (col.type == 'rownumber' || col.type == 'action' || col.sorting == false) {
                             item.suppressSorting = true;
                         }

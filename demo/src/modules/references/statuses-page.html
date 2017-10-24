@@ -3,6 +3,7 @@
 <link rel="import" href="../../elements/kct-grid/kct-grid.html">
 <link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../../elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../elements/kct-form/kct-form-validator.html">
 
 <dom-module id="statuses-page">
     <template>
@@ -31,11 +32,12 @@
         <kct-dialog id="editor" title="Status Editor" width="400" height="100%">
             <template preserve-content>
                 <div slot="dialog-body">
-                    <paper-input label="Status Code" value="{{ selectedRecord.status_id }}"></paper-input>
-                    <paper-input label="Status Name" value="{{ selectedRecord.status_name }}"></paper-input>
+                    <kct-form-validator id="validator" invalid="{{ __formInvalid }}" auto-validate>
+                        <paper-input label="Status Name" value="{{ selectedRecord.status_name }}" tabindex="0" autofocus required auto-validate error-message="Status name is required"></paper-input>    
+                    </kct-form-validator>
                 </div>
                 <div slot="dialog-footer">
-                    <paper-button on-tap="__onEditorSaveTap">Save</paper-button>
+                    <paper-button on-tap="__onEditorSaveTap" disabled$="[[ __formInvalid ]]">Save</paper-button>
                     <paper-button on-tap="__onEditorCancelTap">Cancel</paper-button>
                 </div>
             </template>
@@ -58,7 +60,6 @@
                         type: Array,
                         value: [
                             { type: 'rownumber' },
-                            { text: 'Code', dataIndex: 'status_id', align: 'center', width: 80 },
                             { text: 'Status Name', dataIndex: 'status_name' },
                             {
                                 text: '',
@@ -94,10 +95,14 @@
             __onAddTap() {
                 this.set('selectedRecord', {});
                 this.$.editor.open();
+                this.$.validator.validate();
             }
             __onEditTap(e) {
-                this.set('selectedRecord', e.data);
+                let record = Object.assign({}, e.data);
+                
+                this.set('selectedRecord', record);
                 this.$.editor.open();
+                this.$.validator.validate();
             }
             __onEditorSaveTap() {
                 this.$.editor.close();

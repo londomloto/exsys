@@ -1,7 +1,8 @@
 <?php
 namespace App\Statuses\Controllers;
 
-use App\Statuses\Models\Status;
+use App\Statuses\Models\Status,
+    Micro\Helpers\Text;
 
 class StatusesController extends \Micro\Controller {
 
@@ -11,6 +12,8 @@ class StatusesController extends \Micro\Controller {
 
     public function createAction() {
         $post = $this->request->getJson();
+        $post['status_code'] = Text::slug($post['status_name']);
+
         $stat = new Status();
 
         if ($stat->save($post)) {
@@ -23,6 +26,7 @@ class StatusesController extends \Micro\Controller {
     public function updateAction($id) {
         $query = Status::get($id);
         $post = $this->request->getJson();
+        $post['status_code'] = Text::slug($post['status_name']);
 
         if ($query->data) {
             $query->data->save($post);

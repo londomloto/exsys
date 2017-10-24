@@ -576,4 +576,12 @@ class User extends \Micro\Model {
         }
     }
 
+    public static function findInRoles($names = array()) {
+        return self::get()
+            ->join('App\Roles\Models\RoleUser', 'a.sru_su_id = su_id', 'a', 'left')
+            ->join('App\Roles\Models\Role', 'b.sr_id = a.sru_sr_id', 'b', 'left')
+            ->where('b.sr_slug IN (:names:)', array('names' => implode(',', $names)))
+            ->execute();
+    }
+
 }

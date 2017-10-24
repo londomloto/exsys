@@ -5,7 +5,8 @@ use App\Expense\Models\Expense,
     App\Expense\Models\History,
     App\Expense\Models\Task,
     App\System\Models\Autonumber,
-    App\Users\Models\User;
+    App\Users\Models\User,
+    App\Statuses\Models\Status;
 
 class ExpenseController extends \Micro\Controller {
 
@@ -19,6 +20,13 @@ class ExpenseController extends \Micro\Controller {
             ->sortable()
             ->filterable()
             ->paginate();
+    }
+
+    public function testAction($id) {
+        $expense = Expense::get($id)->data;
+        if ($expense) {
+            $expense->faSubmit('receive-request');
+        }
     }
 
     public function findByIdAction($id) {
@@ -47,7 +55,7 @@ class ExpenseController extends \Micro\Controller {
         $user = $this->auth->user();
 
         $post['exp_no'] = Autonumber::generate('EXPENSE');
-        $post['status'] = 1;
+        $post['status'] = Status::val('draft');
         $post['id_user'] = $user['su_id'];
         $post['date'] = date('Y-m-d H:i:s');
 
@@ -109,36 +117,9 @@ class ExpenseController extends \Micro\Controller {
 
     public function submitByIdAction($id) {
         $expense = Expense::get($id)->data;
-        $user = $this->auth->user();
-
+        
         if ($expense) {
-            // create history
-            $history = new History();
-            $history->id_exp = $expense->id_exp;
-            $history->status_id = 2;
-            $history->user_act = $user['su_id'];
-            $history->date = date('Y-m-d H:i:s');
-
-            if ($history->save()) {
-                $expense->status = $history->status_id;
-                $expense->save();
-
-                $user = User::get($user['su_id'])->data;
-
-                // entry task
-                $superiors = $user->getSuperiors($expense->amounts);
-
-                foreach($superiors as $super) {
-                    $task = new Task();
-
-                    $task->id_exp = $expense->id_exp;
-                    $task->su_id = $super['user_id'];
-                    $task->grade_id = $super['grade_id'];
-                    $task->is_allowed = 1;
-                    
-                    $task->save();
-                }
-            }
+            $expense->submit();
         }
 
         return array('success' => TRUE);
@@ -158,71 +139,11 @@ class ExpenseController extends \Micro\Controller {
                 )
             ))->delete();
 
-            // tambah history
-            $history = new History();
-            $history->id_exp = $expense->id_exp;
-            $history->status_id = 7;
-            $history->user_act = $user['su_id'];
-            $history->date = date('Y-m-d H:i:s');
-            $history->notes = $post['notes'];
-
-            $history->save();
-
-            // update status
-            $expense->status = 7;
-            $expense->save();
-        }
-
-        return array(
-            'success' => TRUE
-        );
-    }
-
-    public function approveByIdAction($id) {
-        $expense = Expense::get($id)->data;
-        $user = $this->auth->user();
-        $post = $this->request->getJson();
-
-        if ($expense) {
-            // delete lower tasks 
-            if ($user['su_grade_type'] == 'verificator') {
-                Task::find(array(
-                    'id_exp = :expense: AND su_id = :user:',
-                    'bind' => array(
-                        'expense' => $expense->id_exp,
-                        'user' => $user['su_id']
-                    )
-                ))->delete();    
-            } else if ($user['su_grade_type'] == 'approver') {
-                $tasks = Task::get()
-                    ->where('id_exp = :expense: AND a.grade_limit <= :limit:', array(
-                        'expense' => $expense->id_exp,
-                        'limit' => (int) $user['su_grade_limit']
-                    ))
-                    ->join('App\Grades\Models\Grade', 'a.grade_id = App\Expense\Models\Task.grade_id', 'a')
-                    ->execute();
-
-                foreach($tasks as $task) {
-                    $task->delete();
-                }
-            }
+            $status = Status::val('reject');
 
             // tambah history
             $history = new History();
             $history->id_exp = $expense->id_exp;
-
-            $status = NULL;
-
-            if ($user['su_grade_type'] == 'verificator') {
-                $status = 9;
-            } else {
-                if ($user['su_grade_limit'] >= 15000000) {
-                    $status = 4;
-                } else {
-                    $status = 3;
-                }
-            }
-
             $history->status_id = $status;
             $history->user_act = $user['su_id'];
             $history->date = date('Y-m-d H:i:s');
@@ -233,6 +154,19 @@ class ExpenseController extends \Micro\Controller {
             // update status
             $expense->status = $status;
             $expense->save();
+        }
+
+        return array(
+            'success' => TRUE
+        );
+    }
+
+    public function approveByIdAction($id) {
+        $expense = Expense::get($id)->data;
+        $post = $this->request->getJson();
+
+        if ($expense) {
+            $expense->approve($post);
         }
 
         return array(
@@ -254,10 +188,12 @@ class ExpenseController extends \Micro\Controller {
                 )
             ))->delete();
 
+            $status = Status::val('change-request');
+
             // tambah history
             $history = new History();
             $history->id_exp = $expense->id_exp;
-            $history->status_id = 10;
+            $history->status_id = $status;
             $history->user_act = $user['su_id'];
             $history->date = date('Y-m-d H:i:s');
             $history->notes = $post['notes'];
@@ -265,7 +201,148 @@ class ExpenseController extends \Micro\Controller {
             $history->save();
 
             // update status
-            $expense->status = 10;
+            $expense->status = $status;
+            $expense->save();
+        }
+
+        return array(
+            'success' => TRUE
+        );
+    }
+
+    public function faReceiveByIdAction($id) {
+        $expense = Expense::get($id)->data;
+        $user = $this->auth->user();
+
+        if ($expense) {
+            // delete tasks
+            \App\Finance\Models\Task::find(array(
+                'id_exp = :expense: AND catagory = :catagory:',
+                'bind' => array(
+                    'catagory' => 'receive-request',
+                    'expense' => $expense->id_exp
+                )
+            ))->delete();
+
+            $expense->received_by = $user['su_id'];
+            $expense->received_date = date('Y-m-d H:i:s');
+
+            if ($expense->save()) {
+                $expense->faSubmit('approval-request');
+            }
+        }
+
+        return array(
+            'success' => TRUE
+        );
+    }
+
+    public function faApproveByIdAction($id) {
+        $expense = Expense::get($id)->data;
+        $user = $this->auth->user();
+        $post = $this->request->getJson();
+
+        if ($expense) {
+            // delete tasks
+            \App\Finance\Models\Task::find(array(
+                'id_exp = :expense: AND catagory = :catagory:',
+                'bind' => array(
+                    'catagory' => 'approval-request',
+                    'expense' => $expense->id_exp
+                )
+            ))->delete();
+
+
+            // tambah history
+            $history = new History();
+            $history->id_exp = $expense->id_exp;
+
+            $status = Status::val('fa-approved');
+            $notes = isset($post['notes']) ? $post['notes'] : '-';
+
+            $history->status_id = $status;
+            $history->user_act = $user['su_id'];
+            $history->date = date('Y-m-d H:i:s');
+            $history->notes = $notes;
+            $history->save();
+
+            // update status
+            $expense->status = $status;
+            $expense->save();
+
+        }
+
+        return array(
+            'success' => TRUE
+        );
+    }
+
+    public function faRejectByIdAction($id) {
+        $expense = Expense::get($id)->data;
+        $user = $this->auth->user();
+        $post = $this->request->getJson();
+
+        if ($expense) {
+            // delete tasks
+            \App\Finance\Models\Task::find(array(
+                'id_exp = :expense: AND catagory = :catagory:',
+                'bind' => array(
+                    'catagory' => 'approval-request',
+                    'expense' => $expense->id_exp
+                )
+            ))->delete();
+
+            $status = Status::val('reject');
+
+            // tambah history
+            $history = new History();
+            $history->id_exp = $expense->id_exp;
+            $history->status_id = $status;
+            $history->user_act = $user['su_id'];
+            $history->date = date('Y-m-d H:i:s');
+            $history->notes = $post['notes'];
+
+            $history->save();
+
+            // update status
+            $expense->status = $status;
+            $expense->save();
+        }
+
+        return array(
+            'success' => TRUE
+        );
+    }
+
+    public function faRequestByIdAction($id) {
+        $expense = Expense::get($id)->data;
+        $user = $this->auth->user();
+        $post = $this->request->getJson();
+
+        if ($expense) {
+            // delete tasks
+            \App\Finance\Models\Task::find(array(
+                'id_exp = :expense: AND catagory = :catagory:',
+                'bind' => array(
+                    'catagory' => 'approval-request',
+                    'expense' => $expense->id_exp
+                )
+            ))->delete();
+
+            $status = Status::val('change-request');
+
+            // tambah history
+            $history = new History();
+            $history->id_exp = $expense->id_exp;
+            $history->status_id = $status;
+            $history->user_act = $user['su_id'];
+            $history->date = date('Y-m-d H:i:s');
+            $history->notes = $post['notes'];
+
+            $history->save();
+
+            // update status
+            $expense->status = $status;
             $expense->save();
         }
 
@@ -303,7 +380,7 @@ class ExpenseController extends \Micro\Controller {
         $opex->date_start = date('Y-m-01', $time);
         $opex->date_end = date('Y-m-t', $time);
         $opex->other_purpose = NULL;
-        $opex->status = 1;
+        $opex->status = Status::val('draft');
 
         if ($opex->save()) {
             return Expense::get($opex->id_exp);

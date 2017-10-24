@@ -25,7 +25,8 @@
             pagination>
 
                 <template preserve-content>
-                    <style include="theme-helper"></style>
+                    <style include="theme-helper">
+                    </style>
                 </template>
 
             <paper-button class="btn-primary" slot="primary-toolbar" on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Expense Request</paper-button>
@@ -34,112 +35,124 @@
 
     </template>
     <script>
-        class ExpenseListPage extends KctView {
-            static get is() {
-                return 'expense-list-page';
-            }
-            static get properties() {
-                return {
-                    columns: { 
-                        type: Array,
-                        value: [
-                            { type: 'rownumber' },
-                            { text: 'Expense No.', dataIndex: 'exp_no', width: 120, align: 'center' },
-                            { text: 'Subject', dataIndex: 'subject_exp' },
-                            { 
-                                text: 'Date Created', 
-                                dataIndex: 'date', 
-                                width: 120,  
-                                align: 'center',
-                                renderer: (e) => {
-                                    return e.data ? e.data.date_short : '';
-                                }
-                            },
-                            { 
-                                text: 'Amounts (IDR)', 
-                                dataIndex: 'amounts', 
-                                align: 'right', 
-                                width: 150,
-                                renderer: (e) => {
-                                    return e.data ? e.data.amounts_formatted : '-';
-                                }
-                            },
-                            { text: 'Status', dataIndex: 'status_name', width: 150 },
-                            { 
-                                text: 'Action',
-                                type: 'action',
-                                width: 300,
-                                renderer: (e) => {
-                                    if (e.data) {
-                                        let status = e.data.status;
-                                        let buttons = `<paper-button on-tap="__onViewTap" class="btn-muted btn-icon" title="View"><iron-icon icon="search"></iron-icon></paper-button>`;
-
-                                        if (status == 1 || status == 10) {
-                                            buttons += `
-                                                <paper-button on-tap="__onEditTap" class="btn-amber btn-icon" title="Edit"><iron-icon icon="image:edit"></iron-icon></paper-button>
-                                                <paper-button on-tap="__onDeleteTap" class="btn-danger btn-icon" title="Delete"><iron-icon icon="clear"></iron-icon></paper-button>
-                                            `;
-                                            if (e.data.has_items) {
-                                                buttons += `<paper-button on-tap="__onSubmitTap" class="btn-info btn-icon" title="Submit"><iron-icon icon="done"></iron-icon></paper-button>`;
-                                            }
-                                        }
-                                        return buttons;
+        {
+            class ExpenseListPage extends KctView {
+                static get is() {
+                    return 'expense-list-page';
+                }
+                static get properties() {
+                    return {
+                        columns: { 
+                            type: Array,
+                            value: [
+                                { type: 'rownumber' },
+                                { text: 'Expense No.', dataIndex: 'exp_no', width: 120, align: 'center' },
+                                { text: 'Subject', dataIndex: 'subject_exp' },
+                                { 
+                                    text: 'Date Created', 
+                                    dataIndex: 'date', 
+                                    width: 120,  
+                                    align: 'center',
+                                    renderer: (e) => {
+                                        return e.data ? e.data.date_short : '';
                                     }
-                                    return '';
+                                },
+                                { 
+                                    text: 'Amounts (IDR)', 
+                                    dataIndex: 'amounts', 
+                                    align: 'right', 
+                                    width: 150,
+                                    renderer: (e) => {
+                                        return e.data ? e.data.amounts_formatted : '-';
+                                    }
+                                },
+                                { 
+                                    text: 'Status', 
+                                    dataIndex: 'status_name', 
+                                    width: 150,
+                                    renderer: (e) => {
+                                        if (e.data) {
+                                            return `<iron-icon icon="image:lens" style="color: ${e.data.status_color}"></iron-icon>&nbsp;<span>${e.data.status_name}</span>`;
+                                        }
+                                        return '';
+                                    }
+                                },
+                                { 
+                                    text: 'Action',
+                                    type: 'action',
+                                    width: 300,
+                                    renderer: (e) => {
+                                        if (e.data) {
+                                            let status = e.data.status;
+                                            let buttons = `<paper-button on-tap="__onViewTap" class="btn-muted btn-icon" title="View"><iron-icon icon="search"></iron-icon></paper-button>`;
+
+                                            if (e.data.editable) {
+                                                buttons += `
+                                                    <paper-button on-tap="__onEditTap" class="btn-amber btn-icon" title="Edit"><iron-icon icon="image:edit"></iron-icon></paper-button>
+                                                    <paper-button on-tap="__onDeleteTap" class="btn-danger btn-icon" title="Delete"><iron-icon icon="clear"></iron-icon></paper-button>
+                                                `;
+                                                if (e.data.has_items) {
+                                                    buttons += `<paper-button on-tap="__onSubmitTap" class="btn-info btn-icon" title="Submit"><iron-icon icon="done"></iron-icon></paper-button>`;
+                                                }
+                                            }
+                                            return buttons;
+                                        }
+                                        return '';
+                                    }
                                 }
-                            }
-                        ]
+                            ]
+                        }
+                    };
+                }
+                ready() {
+                    super.ready();
+                    this.$.grid.context = this;
+                }
+                handleRouteParams(module, action, id) {
+                    if (action) return;
+                    if ( ! this.$.grid.__loaded) {
+                        this.$.grid.__loaded = true;
+                        this.$.grid.load();
                     }
-                };
-            }
-            ready() {
-                super.ready();
-                this.$.grid.context = this;
-            }
-            handleRouteParams(module, action, id) {
-                if (action) return;
-                if ( ! this.$.grid.__loaded) {
-                    this.$.grid.__loaded = true;
-                    this.$.grid.load();
                 }
-            }
-            handleResizing(width, height) {
-                if (this.$.grid) {
-                    this.$.grid.resize();
+                handleResizing(width, height) {
+                    if (this.$.grid) {
+                        this.$.grid.resize();
+                    }
                 }
-            }
-            __onAddTap() {
-                this.set('route.path', '/expense/expense/add');
-            }
-            __onEditTap(e) {
-                this.set('route.path', '/expense/expense/edit/' + e.data.id_exp);
-            }
-            __onDeleteTap(e) {
-                let data = e.data;
-                if (data.id_exp) {
-                    this.confirm('Confirm', `Are you sure you want to delete ${data.exp_no} ?`).then(b => {
+                __onAddTap() {
+                    this.set('route.path', '/expense/expense/add');
+                }
+                __onEditTap(e) {
+                    this.set('route.path', '/expense/expense/edit/' + e.data.id_exp);
+                }
+                __onDeleteTap(e) {
+                    let data = e.data;
+                    if (data.id_exp) {
+                        this.confirm('Confirm', `Are you sure you want to delete ${data.exp_no} ?`).then(b => {
+                            if (b) {
+                                this.$.ajax.DELETE('/expense/' + data.id_exp).then(() => {
+                                    this.$.grid.load();
+                                });
+                            }
+                        });    
+                    }
+                    
+                }
+                __onViewTap(e) {
+                    this.set('route.path', '/expense/expense/view/' + e.data.id_exp);
+                }
+                __onSubmitTap(e) {
+                    this.confirm('Confirm', `Are you sure you want to submit ${e.data.exp_no} ?`).then(b => {
                         if (b) {
-                            this.$.ajax.DELETE('/expense/' + data.id_exp).then(() => {
+                            this.$.ajax.POST('/expense/' + e.data.id_exp + '/submit').then(() => {
                                 this.$.grid.load();
                             });
                         }
-                    });    
+                    });   
                 }
-                
             }
-            __onViewTap(e) {
-                this.set('route.path', '/expense/expense/view/' + e.data.id_exp);
-            }
-            __onSubmitTap(e) {
-                this.confirm('Confirm', `Are you sure you want to submit ${e.data.exp_no} ?`).then(b => {
-                    if (b) {
-                        this.$.ajax.POST('/expense/' + e.data.id_exp + '/submit').then(() => {
-                            this.$.grid.load();
-                        });
-                    }
-                });   
-            }
+            customElements.define(ExpenseListPage.is, ExpenseListPage);
         }
-        customElements.define(ExpenseListPage.is, ExpenseListPage);
     </script>
 </dom-module>

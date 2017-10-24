@@ -1,5 +1,5 @@
 <?php
-namespace App\Expense\Models;
+namespace App\Finance\Models;
 
 class Task extends \Micro\Model {
 
@@ -13,9 +13,9 @@ class Task extends \Micro\Model {
             )
         );
     }
-
+    
     public function getSource() {
-        return 'expense_task';
+        return 'fa_task';
     }
 
     public function toArray($columns = NULL) {
@@ -23,7 +23,7 @@ class Task extends \Micro\Model {
         
         $data = array_merge($data, $this->expense->toArray());
         $data['amounts_formatted'] = number_format($data['amounts'], 2, ',', '.');
-
+        
         return $data;
     }
 
