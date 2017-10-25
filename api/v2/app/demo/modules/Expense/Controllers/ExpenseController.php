@@ -15,10 +15,10 @@ class ExpenseController extends \Micro\Controller {
         $catagory = empty($catagory) ? 'expense' : $catagory;
 
         return Expense::get()
-            ->where('catagory = :catagory:', array('catagory' => $catagory))
             ->join('App\Statuses\Models\Status', 'a.status_id = status', 'a', 'left')
             ->sortable()
             ->filterable()
+            ->andWhere('catagory = :catagory:', array('catagory' => $catagory))
             ->paginate();
     }
 

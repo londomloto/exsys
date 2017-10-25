@@ -143,6 +143,8 @@ class ModelQuery {
             }
         }
 
+        // print_r($this->__builder->getQuery()->getSql());
+
         return $this;
     }
 
