@@ -208,7 +208,7 @@
 
     </template>
     <script>
-        class TasksTripAction extends KctView {
+        class TasksTicketAction extends KctView {
             static get is() {
                 return 'tasks-ticket-action';
             }
@@ -323,6 +323,6 @@
                 this.dispatchEvent(new CustomEvent('back-tap'));
             }
         }
-        customElements.define(TasksTripAction.is, TasksTripAction);
+        customElements.define(TasksTicketAction.is, TasksTicketAction);
     </script>
 </dom-module>
