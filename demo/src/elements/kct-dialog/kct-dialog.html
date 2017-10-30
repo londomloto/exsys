@@ -73,18 +73,6 @@
         <slot id="slot"></slot>
     </template>
 
-    <template id="dialog-template">
-        <paper-dialog id="dialog" modal>
-            <kct-vbox class="dialog-content">
-                <div class="dialog-header"></div>
-                <div class="dialog-body flex">
-                    <div class="dialog-body-content"></div>
-                </div>
-                <div class="dialog-footer"></div>
-            </kct-vbox>
-        </paper-dialog>
-    </template>
-
     <script>
         {
             let __ID = 0;
@@ -110,7 +98,19 @@
                 }
 
                 static get dialogTemplate() {
-                    return document.importNode(Polymer.DomModule.import(KctDialog.is, '#dialog-template'), true);
+                    let template = document.createElement('template');
+                    template.innerHTML = `
+                        <paper-dialog id="dialog" modal>
+                            <kct-vbox class="dialog-content">
+                                <div class="dialog-header"></div>
+                                <div class="dialog-body flex">
+                                    <div class="dialog-body-content"></div>
+                                </div>
+                                <div class="dialog-footer"></div>
+                            </kct-vbox>
+                        </paper-dialog>
+                    `;
+                    return template;
                 }
 
                 constructor() {

@@ -8,41 +8,7 @@
 <link rel="import" href="../kct-layouts/kct-hbox.html">
 
 <dom-module id="kct-view">
-
-    <template id="masker-template" preserve-content>
-        <style>
-            .masker-overlay { 
-                position: absolute;
-                left: 0;
-                top: 2px;
-                bottom: 0;
-                right: 0;
-                background: rgba(0,0,0,0.05);
-            }
-            .masker-card {
-                position: relative;
-                left: 50%;
-                top: 50%;
-            }
-            .masker-text {
-                padding-left: 1rem; 
-                padding-top: 3px;
-            }
-        </style>
-        <div id="masker" class="masker-overlay">
-            <paper-card id="masker-card" class="masker-card">
-                <div class="card-content">
-                    <kct-hbox>
-                        <div class="masker-spin">
-                            <paper-spinner active></paper-spinner>
-                        </div>
-                        <div class="masker-text flex">[[ maskerMessage ]]</div>
-                    </kct-hbox>
-                </div>
-            </paper-card>
-        </div>
-    </template>
-
+    
     <script>
 
         class KctView extends Mixins(Polymer.Element).use(Mixins.Location, Mixins.Resolver) {
@@ -78,7 +44,43 @@
                 let masker = this.$.masker;
 
                 if ( ! masker) {
-                    let maskerTemplate = document.importNode(Polymer.DomModule.import(KctView.is, '#masker-template'), true);
+
+                    let maskerTemplate = document.createElement('template');
+
+                    maskerTemplate.innerHTML = `
+                        <style>
+                            .masker-overlay { 
+                                position: absolute;
+                                left: 0;
+                                top: 2px;
+                                bottom: 0;
+                                right: 0;
+                                background: rgba(0,0,0,0.05);
+                            }
+                            .masker-card {
+                                position: relative;
+                                left: 50%;
+                                top: 50%;
+                            }
+                            .masker-text {
+                                padding-left: 1rem; 
+                                padding-top: 3px;
+                            }
+                        </style>
+                        <div id="masker" class="masker-overlay">
+                            <paper-card id="masker-card" class="masker-card">
+                                <div class="card-content">
+                                    <kct-hbox>
+                                        <div class="masker-spin">
+                                            <paper-spinner active></paper-spinner>
+                                        </div>
+                                        <div class="masker-text flex">[[ maskerMessage ]]</div>
+                                    </kct-hbox>
+                                </div>
+                            </paper-card>
+                        </div>
+                    `;
+
                     let maskerInstance = this._stampTemplate(maskerTemplate);
 
                     this.shadowRoot.appendChild(maskerInstance);

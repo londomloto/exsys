@@ -102,8 +102,7 @@
                 },
 
                 run: function() {
-                    window.Polymer = window.Polymer || {};
-                    window.Polymer.dom = 'shadow';
+                    
 
                     prepare().then(() => {
                         load();
@@ -122,9 +121,15 @@
                         let d = defer();
 
                         if (app.supports.WEB_COMPONENT) {
+                            window.Polymer = window.Polymer || {};
+                            window.Polymer.dom = 'shadow';
+
                             d.resolve();
                         } else {
                             
+                            window.Polymer = window.Polymer || {};
+                            window.Polymer.dom = 'shady';      
+
                             var script = document.createElement('script');
                             // script.async = true;
                             script.src = 'bower_components/webcomponentsjs/webcomponents-loader.js';
