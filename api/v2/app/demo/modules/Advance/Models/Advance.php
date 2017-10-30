@@ -103,7 +103,7 @@ class Advance extends \Micro\Model {
         $amounts = 0;
 
         foreach($this->items as $elem) {
-            $line = $elem->currency_rate * $elem->amounts;
+            $line = ($elem->currency_rate * $elem->amounts);
             $amounts += $line;
         }
 
@@ -145,6 +145,40 @@ class Advance extends \Micro\Model {
         }
 
         return FALSE;
+    }
+
+    public function getSummary() {
+        $summary = array();
+
+        $items = $this->items->filter(function($row){ return $row; });
+
+        usort($items, function($a, $b){
+            $va = $a->currency_id;
+            $vb = $b->currency_id;
+
+            if ($va == $vb) return 0;
+            return $va < $vb ? -1 : 1;
+        });
+
+        foreach($items as $row) {
+            $item = $row->toArray();
+            $code = $item['currency_code'];
+
+            if ( ! isset($summary[$code])) {
+                $summary[$code] = array(
+                    'currency_id' => $item['currency_id'],
+                    'currency_name' => $item['currency_name'],
+                    'currency_code' => $item['currency_code'],
+                    'currency_rate' => $item['currency_rate'],
+                    'summary_value' => 0
+                );
+            }
+
+            $summary[$code]['summary_value'] += ($item['amounts']);
+        }
+
+        $summary = array_values($summary);
+        return $summary;
     }
 
 }

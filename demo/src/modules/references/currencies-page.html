@@ -2,6 +2,7 @@
 <link rel="import" href="../../elements/kct-view/kct-view.html">
 <link rel="import" href="../../elements/kct-grid/kct-grid.html">
 <link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../elements/kct-checkbox/kct-checkbox.html">
 <link rel="import" href="../../elements/kct-dialog/kct-dialog.html">
 
 <dom-module id="currencies-page">
@@ -35,7 +36,8 @@
                 <div slot="dialog-body">
                     <paper-input label="Currency Name" value="{{ selectedRecord.currency_name }}"></paper-input>
                     <paper-input label="Currency Code" value="{{ selectedRecord.currency_code }}"></paper-input>
-                    <paper-input label="Currency Rate" value="{{ selectedRecord.currency_rate }}"></paper-input>
+                    <paper-input label="Currency Rate" value="{{ selectedRecord.currency_rate }}" allowed-pattern="[0-9.]"></paper-input>
+                    <kct-checkbox value="{{ selectedRecord.currency_acceptable }}">Acceptable currency (used by application)</kct-checkbox>
                 </div>
                 <div slot="dialog-footer">
                     <paper-button on-tap="__onEditorSaveTap">Save</paper-button>
@@ -69,6 +71,15 @@
                                 align: 'right',
                                 renderer: (e) => {
                                     return e.data ? e.data.currency_rate_formatted : '';
+                                }
+                            },
+                            {
+                                text: 'Acceptable',
+                                dataIndex: 'currency_acceptable',
+                                align: 'center',
+                                width: 100,
+                                renderer: (e) => {
+                                    return e.data ? (e.data.currency_acceptable == 1 ? '<iron-icon icon="done"></iron-icon>' : '' ) : '';
                                 }
                             },
                             {

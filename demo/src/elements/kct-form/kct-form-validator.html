@@ -17,6 +17,7 @@
             constructor() {
                 super();
                 this.__collections = [];
+                this.__node = null;
                 this.__invalidChangeHandler = this.__onNodeInvalidChange.bind(this);
             }
             ready() {
@@ -70,8 +71,10 @@
                             });
 
                             if (this.manualCollect) {
-                                this.__bindEvent();
+                                this.__bindEvent();    
                             }
+                            
+                            this.dispatchEvent(new CustomEvent('ready'));
                         }
 
                         defer.resolve();
@@ -82,13 +85,9 @@
                 return defer.promise;
             }
             validate() {
-                let valid = true;
                 this.__collections.forEach(item => {
                     item.node.validate();
-                    valid = valid && ( ! item.node.invalid );
                 });
-
-                this.set('invalid', ! valid);
             }
             __bindEvent() {
 
@@ -101,10 +100,8 @@
                         }
                         
                         this.__collections.forEach(item => {
-                            if ('invalid' in item.node) {
-                                item.node.addEventListener('invalid-changed', this.__invalidChangeHandler);
-                            }
-                        }); 
+                            item.node.addEventListener('invalid-changed', this.__invalidChangeHandler);
+                        });
                     }
                 );
                 Polymer.enqueueDebouncer(this.__listening);
@@ -114,9 +111,26 @@
                     item.node.removeEventListener('invalid-changed', this.__invalidChangeHandler);
                 });
             }
+
             __onNodeInvalidChange(e) {
                 if (this.autoValidate) {
-                    this.validate();
+
+                    this.__validating = Polymer.Debouncer.debounce(
+                        this.__validating,
+                        Polymer.Async.timeOut.after(100),
+                        () => {
+                            let valid = true;
+
+                            this.__collections.forEach(item => {
+                                valid = valid && ( ! item.node.invalid);
+                            });
+
+                            this.set('invalid', ! valid);
+                        }
+                    );
+
+                    Polymer.enqueueDebouncer(this.__validating);
+                    
                 }
             }
         }

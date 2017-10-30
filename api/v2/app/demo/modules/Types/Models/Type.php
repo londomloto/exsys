@@ -10,10 +10,15 @@ class Type extends \Micro\Model {
     public function isRoot() {
         return is_null($this->parent_id);
     }
+
+    public function isTravelling() {
+        return $this->type_code == 'travelling';
+    }
     
     public function toArray($columns = NULL) {
         $data = parent::toArray($columns);
         $data['type_group'] = $this->isRoot() ? 'Type' : 'Purpose';
+        $data['is_travelling'] = $this->isTravelling();
         return $data;
     }
 

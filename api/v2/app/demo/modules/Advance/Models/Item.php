@@ -31,9 +31,11 @@ class Item extends \Micro\Model {
         $data = parent::toArray($columns);
         $data['amounts_formatted'] = number_format($this->amounts, 2, ',', '.');
         $data['currency_name'] = '';
+        $data['currency_code'] = '';
 
         if ($this->currency) {
-            $data['currency_name'] = $this->currency->currency_code;
+            $data['currency_code'] = $this->currency->currency_code;
+            $data['currency_name'] = $this->currency->currency_name;
         }
 
         return $data;

@@ -188,31 +188,25 @@
                 static get properties() {
                     return {
                         trueValue: { type: String, value: '1' },
-                        falseValue: { type: String, value: '0' },
-                        value: { type: String, notify: true}
+                        falseValue: { type: String, value: '0' }
                     };
                 }
 
-                static get observers() {
-                    return [
-                        '__checkedChanged(checked)',
-                        '__valueChanged(value)'
-                    ];
+                // @Override
+                _valueChanged() {
+                    if (this.value === undefined || this.value === null) {
+                        this.value = this.falseValue;
+                    }
+                    if (this.disabled) {
+                        return;
+                    }
+                    this.checked = this.value == this.trueValue;
                 }
 
-                ready() {
-                    super.ready();
-                    this.set('value', this.falseValue);
-                }
-
-                __checkedChanged(checked) {
-                    let value = checked ? this.trueValue : this.falseValue;
-                    this.set('value', value);
-                }
-
-                __valueChanged(value) {
-                    let checked = value == this.trueValue;
-                    this.set('checked', checked);
+                // @Override
+                _checkedChanged() {
+                    super._checkedChanged();
+                    this.value = this.checked ? this.trueValue : this.falseValue;
                 }
             }
             customElements.define(KctCheckbox.is, KctCheckbox);

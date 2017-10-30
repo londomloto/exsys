@@ -103,14 +103,14 @@
                             <paper-button on-tap="__onAddItemTap" class="btn-sm btn-primary"><iron-icon icon="add"></iron-icon>&nbsp;Add Item</paper-button>
                         </div>
                         <div class="table-responsive">
-                            <table class="striped">
+                            <table class="table striped">
                                 <thead>
                                     <tr>
                                         <th width="50">No.</th>
                                         <th>Description</th>
-                                        <th class="text-center" width="100">Currency</th>
-                                        <th class="text-right">Amounts</th>
-                                        <th></th>
+                                        <th width="100">Currency</th>
+                                        <th width="150" class="text-right">Amounts</th>
+                                        <th width="120"></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -118,7 +118,7 @@
                                         <tr>
                                             <td>[[ __computeNo(index) ]]</td>
                                             <td>[[ item.description ]]</td>
-                                            <td class="text-center">[[ item.currency_name ]]</td>
+                                            <td>[[ item.currency_code ]]</td>
                                             <td class="text-right">[[ item.amounts_formatted ]]</td>
                                             <td class="text-right">
                                                 <paper-button on-tap="__onItemEditTap" class="btn-xs btn-amber">Edit</paper-button>
@@ -137,10 +137,10 @@
                     <div class="card-content">
                         <kct-hbox>
                             <div class="flex">
-                                <paper-button class="btn-md btn-blue-grey" on-tap="__onBackTap" hidden$="[[ dialogMode ]]"><iron-icon icon="arrow-back"></iron-icon>&nbsp;Back</paper-button>
+                                <paper-button class="btn-blue-grey" on-tap="__onBackTap" hidden$="[[ dialogMode ]]"><iron-icon icon="arrow-back"></iron-icon>&nbsp;Back</paper-button>
                             </div>
                             <div class="flex text-right">
-                                <paper-button class="btn-md btn-primary" on-tap="__onNextTap" disabled$="[[ __formInvalid ]]">Next&nbsp;<iron-icon icon="arrow-forward"></iron-icon></paper-button>
+                                <paper-button class="btn-primary" on-tap="__onNextTap" disabled$="[[ __formInvalid ]]">Next&nbsp;<iron-icon icon="arrow-forward"></iron-icon></paper-button>
                             </div>
                         </kct-hbox>
                     </div>
@@ -254,7 +254,6 @@
                 this.__loadReferences().then(() => {
                     this.$.ajax.GET('/advance/' + id).then(res => {
                         this.unmask();
-
                         this.set('record', res.data);
                         this.__loadItems();
                         this.$.validator.validate();
@@ -267,6 +266,7 @@
             __purposesChanged() {
                 let required = this.__purposes.length > 0;
                 this.set('__comboPurposeRequired', required);
+
                 this.$['combo-purpose'].validate();
                 this.$['text-purpose'].validate();
             }
@@ -294,7 +294,11 @@
                 }).then(res => {
                     this.set('types', res.data);
 
-                    this.$.ajax.GET('/currencies').then(res => {
+                    this.$.ajax.GET('/currencies', {
+                        params: {
+                            currency_acceptable: 1
+                        }
+                    }).then(res => {
                         this.set('currencies', res.data);
                     });
 
@@ -411,7 +415,7 @@
             __onItemEditTap(e) {
                 let item = e.model.item;
                 this.set('item', item);
-                this.$['item-editor'].open();   
+                this.$['item-editor'].open();
                 this.$['item-validator'].validate();
             }
             __onItemDeleteTap(e) {

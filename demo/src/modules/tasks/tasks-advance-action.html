@@ -35,9 +35,9 @@
                 <paper-card class="block">
                     <div class="card-content">
                         <div class="action-buttons text-right">
-                            <paper-button on-tap="__onConfirmTap" class="btn-md btn-green">Approve</paper-button>
-                            <paper-button on-tap="__onRejectTap" class="btn-md btn-red">Reject</paper-button>
-                            <paper-button on-tap="__onRequestTap" class="btn-md btn-amber">Request Change</paper-button>    
+                            <paper-button on-tap="__onConfirmTap" class="btn-green">Approve</paper-button>
+                            <paper-button on-tap="__onRejectTap" class="btn-red">Reject</paper-button>
+                            <paper-button on-tap="__onRequestTap" class="btn-amber">Request Change</paper-button>    
                         </div>
                     </div>
                 </paper-card>
@@ -80,51 +80,59 @@
                     <div class="card-content">
                         <h3 class="block-title">Advance Items</h3>
 
-                        <table class="striped">
-                            <thead>
-                                <th width="50">No.</th>
-                                <th>Description</th>
-                                <th width="100" class="text-center">Currency</th>
-                                <th class="text-right">Amounts</th>
-                            </thead>
-                            <tbody>
-                                <template is="dom-repeat" items="[[ record.items ]]">
-                                    <tr>
-                                        <td>[[ __computeNo(index) ]]</td>
-                                        <td>[[ item.description ]]</td>
-                                        <td class="text-center">[[ item.currency_name ]]</td>
-                                        <td class="text-right">[[ item.amounts_formatted ]]</td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
+                        <div class="table-responsive">
+                            <table class="table striped">
+                                <thead>
+                                    <th width="50">No.</th>
+                                    <th>Description</th>
+                                    <th width="100" class="text-center">Currency</th>
+                                    <th class="text-right">Amounts</th>
+                                </thead>
+                                <tbody>
+                                    <template is="dom-repeat" items="[[ record.items ]]">
+                                        <tr>
+                                            <td>[[ __computeNo(index) ]]</td>
+                                            <td>[[ item.description ]]</td>
+                                            <td class="text-center">[[ item.currency_code ]]</td>
+                                            <td class="text-right">[[ item.amounts_formatted ]]</td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        
                     </div>
                 </paper-card>
                 <paper-card class="block">
                     <div class="card-content">
 
                         <h3 class="block-title">Advance History</h3>
+                        
+                        <div class="table-responsive">
+                            <table  class="table striped">
+                                <thead>
+                                    <th width="50">No.</th>
+                                    <th width="120">Date</th>
+                                    <th>Status</th>
+                                    <th>User</th>
+                                    <th>Notes</th>
+                                </thead>
+                                <tbody>
+                                    <template is="dom-repeat" items="[[ record.history ]]">
+                                        <tr>
+                                            <td>[[ __computeNo(index) ]]</td>
+                                            <td>[[ item.date_short ]]</td>
+                                            <td>[[ item.status_name ]]</td>
+                                            <td>[[ item.user_act_name ]]</td>
+                                            <td>[[ item.notes ]]</td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
 
-                        <table  class="striped">
-                            <thead>
-                                <th width="50">No.</th>
-                                <th width="120">Date</th>
-                                <th>Status</th>
-                                <th>User</th>
-                                <th>Notes</th>
-                            </thead>
-                            <tbody>
-                                <template is="dom-repeat" items="[[ record.history ]]">
-                                    <tr>
-                                        <td>[[ __computeNo(index) ]]</td>
-                                        <td>[[ item.date_short ]]</td>
-                                        <td>[[ item.status_name ]]</td>
-                                        <td>[[ item.user_act_name ]]</td>
-                                        <td>[[ item.notes ]]</td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
+                        
 
                     </div>
                 </paper-card>

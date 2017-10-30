@@ -14,9 +14,9 @@ class ItemsController extends \Micro\Controller {
             case 'grid':
                 return Item::combo();
             case 'parent':
-                return Item::get()->where('parent_id IS NULL')->paginate();
+                return Item::get()->where('parent_id IS NULL')->filterable()->sortable()->paginate();
             default:
-                return Item::get()->paginate();
+                return Item::get()->filterable()->sortable()->paginate();
         }
     }
 

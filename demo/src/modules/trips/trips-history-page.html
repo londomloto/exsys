@@ -5,6 +5,7 @@
 <link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../../elements/kct-layouts/kct-vbox.html">
 <link rel="import" href="../../elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../elements/kct-dialog/kct-dialog.html">
 <link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
 
 <dom-module id="trips-history-page">
@@ -70,30 +71,37 @@
                     <div class="card-content">
                         <h3 class="block-title">Trip Items</h3>
 
-                        <table  class="striped">
-                            <thead>
-                                <th width="50">No.</th>
-                                <th width="150" class="text-center">Departure Date</th>
-                                <th>Origin</th>
-                                <th>Destination</th>
-                                <th width="150" class="text-center">Transport</th>
-                                <th width="80" class="text-center">Visa</th>
-                                <th>Request</th>
-                            </thead>
-                            <tbody>
-                                <template is="dom-repeat" items="[[ record.items ]]">
-                                    <tr>
-                                        <td>[[ __computeNo(index) ]]</td>
-                                        <td class="text-center">[[ item.departure_date_short ]]</td>
-                                        <td>[[ item.origin ]]</td>
-                                        <td>[[ item.destination ]]</td>
-                                        <td class="text-center">[[ item.transport_name ]]</td>
-                                        <td class="text-center">[[ __computeVisa(item.visa) ]]</td>
-                                        <td>[[ item.special_request ]]</td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
+                        <div class="table-responsive">
+                            <table  class="table striped">
+                                <thead>
+                                    <th width="40">No.</th>
+                                    <th width="150">Departure</th>
+                                    <th>Origin</th>
+                                    <th>Destination</th>
+                                    <th width="150" class="text-center">Transport</th>
+                                    <th width="80" class="text-center">Visa</th>
+                                    <th>Request</th>
+                                    <th></th>
+                                </thead>
+                                <tbody>
+                                    <template is="dom-repeat" items="[[ record.items ]]">
+                                        <tr>
+                                            <td>[[ __computeNo(index) ]]</td>
+                                            <td>[[ item.departure_date_short ]]</td>
+                                            <td>[[ item.origin ]]</td>
+                                            <td>[[ item.destination ]]</td>
+                                            <td class="text-center">[[ item.transport_name ]]</td>
+                                            <td class="text-center">[[ __computeVisa(item.visa) ]]</td>
+                                            <td>[[ item.special_request ]]</td>
+                                            <td class="text-right">
+                                                <paper-button on-tap="__onViewTicketTap" class="btn-xs btn-primary" hidden$="[[ !record.trip.ticket_approved ]]">Ticket</paper-button>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                        
                     </div>
                 </paper-card>
 
@@ -101,26 +109,29 @@
                     <div class="card-content">
                         <h3 class="block-title">Advance History</h3>
 
-                        <table class="striped">
-                            <thead>
-                                <th width="50">No.</th>
-                                <th width="120">Date</th>
-                                <th>Status</th>
-                                <th>User</th>
-                                <th>Notes</th>
-                            </thead>
-                            <tbody>
-                                <template is="dom-repeat" items="[[ record.history ]]">
-                                    <tr>
-                                        <td>[[ __computeNo(index) ]]</td>
-                                        <td>[[ item.date_short ]]</td>
-                                        <td>[[ item.status_name ]]</td>
-                                        <td>[[ item.user_act_name ]]</td>
-                                        <td>[[ item.notes ]]</td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
+                        <div class="table-responsive">
+                            <table class="table striped">
+                                <thead>
+                                    <th width="40">No.</th>
+                                    <th width="120">Date</th>
+                                    <th>Status</th>
+                                    <th>User</th>
+                                    <th>Notes</th>
+                                </thead>
+                                <tbody>
+                                    <template is="dom-repeat" items="[[ record.history ]]">
+                                        <tr>
+                                            <td>[[ __computeNo(index) ]]</td>
+                                            <td>[[ item.date_short ]]</td>
+                                            <td>[[ item.status_name ]]</td>
+                                            <td>[[ item.user_act_name ]]</td>
+                                            <td>[[ item.notes ]]</td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                        
 
                     </div>
                 </paper-card>
@@ -131,6 +142,19 @@
             <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to list" on-tap="__onBackTap"></paper-fab>
         </div>
 
+        <kct-dialog id="ticket-editor" title="Ticket Detail" width="400" height="100%">
+            <template preserve-content>
+                <div slot="dialog-body">
+                    <paper-input label="Transport Name" value="[[ itemRecord.transport_name ]]"></paper-input>
+                    <paper-input label="Transport Departure Time" value="[[ itemRecord.transport_departure_time ]]"></paper-input>
+                    <paper-input label="Transport Price (IDR)" value="[[ itemRecord.transport_prices_formatted ]]"></paper-input>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onTicketEditorCloseTap">Close</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
     </template>
     <script>
         class TripsHistoryPage extends KctView {
@@ -140,13 +164,16 @@
 
             static get properties() {
                 return {
-                    record: { type: Object }
+                    record: { type: Object },
+                    itemRecord: { type: Object }
                 };
             }
             handleRouteParams(module, action, id) {
                 if (action != 'view') return;
                 this.mask('Loading...');
                 this.$.ajax.GET('/trips/' + id + '/view').then(res => {
+
+                    let record = res.data;
                     this.set('record', res.data);
                     this.unmask();
                 });
@@ -156,6 +183,14 @@
             }
             __computeVisa(visa) {
                 return visa == '1' ? 'Yes' : '-';
+            }
+            __onViewTicketTap(e) {
+                let item = e.model.item;
+                this.set('itemRecord', item);
+                this.$['ticket-editor'].open();
+            }
+            __onTicketEditorCloseTap() {
+                this.$['ticket-editor'].close();
             }
             __onBackTap() {
                 this.set('route.path', '/trips');

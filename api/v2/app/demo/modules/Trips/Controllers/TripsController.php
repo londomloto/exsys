@@ -207,7 +207,7 @@ class TripsController extends \Micro\Controller {
                         'trip' => $trip->id_trip,
                         'user' => $user['su_id']
                     )
-                ))->delete();    
+                ))->delete();
             } else if ($user['su_grade_type'] == 'approver') {
                 $tasks = Task::get()
                     ->where('id_trip = :trip: AND a.grade_limit <= :limit:', array(
@@ -233,6 +233,10 @@ class TripsController extends \Micro\Controller {
             } else {
                 if ($user['su_grade_limit'] >= 15000000) {
                     $status = 4;
+                    // create ticketing task 
+                    
+                    $trip->requestTicket();
+
                 } else {
                     $status = 3;
                 }
@@ -281,6 +285,54 @@ class TripsController extends \Micro\Controller {
 
             // update status
             $trip->status = 10;
+            $trip->save();
+        }
+
+        return array(
+            'success' => TRUE
+        );
+    }
+
+    public function finishTicketByIdAction($id) {
+        $trip = Trip::get($id)->data;
+        $user = $this->auth->user();
+
+        if ($trip) {
+
+            // delete tasks
+            \App\Tickets\Models\Task::find(array(
+                'id_trip = :trip: AND su_id = :user:',
+                'bind' => array(
+                    'trip' => $trip->id_trip,
+                    'user' => $user['su_id']
+                )
+            ))->delete();
+
+            $trip->ticket_status = 1;
+            $trip->save();
+        }
+
+        return array(
+            'success' => TRUE
+        );
+    }   
+
+    public function rejectTicketByIdAction($id) {
+        $trip = Trip::get($id)->data;
+        $user = $this->auth->user();
+
+        if ($trip) {
+
+            // delete tasks
+            \App\Tickets\Models\Task::find(array(
+                'id_trip = :trip: AND su_id = :user:',
+                'bind' => array(
+                    'trip' => $trip->id_trip,
+                    'user' => $user['su_id']
+                )
+            ))->delete();
+
+            $trip->ticket_status = 2;
             $trip->save();
         }
 

@@ -14,6 +14,7 @@
                 height: 100%;
                 background-color: var(--paper-grey-100);
             }
+            
             tr.group-row,
             tr.separator {
                 border-bottom: 1px solid #d0d0d0;
@@ -32,13 +33,16 @@
                 text-decoration: underline;
                 color: var(--paper-grey-500);
             }
+            [hidden] {
+                display: none;
+            }
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
 
         <kct-vbox>
             <page-header-block icon="history" description="Expense History">
-                <paper-button class="btn-indigo"><iron-icon icon="print"></iron-icon>&nbsp;Print Document</paper-button>
+                
             </page-header-block>
             <div class="flex scroll-y padding">
 
@@ -84,52 +88,149 @@
                     </div>
                 </paper-card>
 
+                <paper-card class="block" hidden$="[[ !record.has_advance ]]">
+                    <div class="card-content">
+                        <h3 class="block-title">Currencies Exchange</h3>
+                        <div class="table-responsive">
+                            <table class="table striped">
+                                <thead>
+                                    <tr>
+                                        <th width="40">No.</th>
+                                        <th width="100">Date</th>
+                                        <th>Remarks</th>
+                                        <th width="150" class="text-right">From Amounts</th>
+                                        <th width="150" class="text-right">To Amounts</th>
+                                        <th width="100" class="text-right">Rates</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template is="dom-repeat" items="[[ record.exchanges ]]">
+                                        <tr>
+                                            <td>[[ __computeNo(index) ]]</td>
+                                            <td>[[ item.exchange_date_short ]]</td>
+                                            <td>[[ item.remarks ]]</td>
+                                            <td class="text-right">[[ item.from_display ]]</td>
+                                            <td class="text-right">[[ item.to_display ]]</td>
+                                            <td class="text-right">[[ item.rates ]]</td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </paper-card>
+
                 <paper-card  class="block">
                     <div class="card-content">
                         <h3 class="block-title">Expense Items</h3>
 
-                        <table>
-                            <thead>
-                                <th width="50">No.</th>
-                                <th>Description</th>
-                                <th width="100">Payment</th>
-                                <th width="100" class="text-center">Currency</th>
-                                <th width="150" class="text-right">Amounts</th>
-                            </thead>
-                            <tbody>
-                                <template is="dom-repeat" items="[[ record.items ]]" as="group">
-                                    <tr class="group-row">
-                                        <td colspan="5"><iron-icon icon="label-outline"></iron-icon>&nbsp; [[ group.group_name ]]</td>
+                        <div class="table-responsive">
+                            <table class="table" hidden$="[[ !record.expense.is_travelling ]]">
+                                <thead>
+                                    <th width="50">No.</th>
+                                    <th>Description</th>
+                                    <th width="100">Payment</th>
+                                    <th width="100">Currency</th>
+                                    <th width="150" class="text-right">Amounts</th>
+                                </thead>
+                                <tbody>
+                                    <template is="dom-repeat" items="[[ record.items ]]" as="group">
+                                        <tr class="group-row">
+                                            <td colspan="5"><iron-icon icon="label-outline"></iron-icon>&nbsp; [[ group.group_name ]]</td>
+                                        </tr>
+                                        <template is="dom-repeat" items="[[ group.group_items ]]">
+                                            <tr>
+                                                <td>[[ item.item_seq ]]</td>
+                                                <td>[[ item.item_name ]]</td>
+                                                <td>[[ item.payment_type_name ]]</td>
+                                                <td>[[ item.currency_name ]]</td>
+                                                <td class="text-right">[[ item.amounts_formatted ]]</td>
+                                            </tr>
+                                            <tr class="form-row">
+                                                <td></td>
+                                                <td colspan="3">
+                                                    <kct-column columns="3">
+                                                        <template is="dom-repeat" items="[[ item.item_forms ]]" as="form">
+                                                            <div class="item-form">
+                                                                <div class="label">[[ form.item_form_label ]]</div>
+                                                                <div class="value">[[ form.item_form_display ]]</div>
+                                                            </div>
+                                                        </template> 
+                                                    </kct-column>
+                                                </td>
+                                                <td></td>
+                                            </tr>
+                                            <tr class="separator">
+                                                <td colspan="5"></td>
+                                            </tr>
+                                        </template>
+                                    </template>
+                                </tbody>
+                            </table>
+
+                            <table class="table striped" hidden$="[[ record.expense.is_travelling ]]">
+                                <thead>
+                                    <tr>
+                                        <th width="40">No.</th>
+                                        <th width="100">Date</th>
+                                        <th>Description</th>
+                                        <th width="100">Payment</th>
+                                        <th width="100">Currency</th>
+                                        <th width="100" class="text-right">Rates</th>
+                                        <th width="120" class="text-right">Amounts</th>
                                     </tr>
-                                    <template is="dom-repeat" items="[[ group.group_items ]]">
+                                </thead>
+                                <tbody>
+                                    <template is="dom-repeat" items="[[ record.items ]]" as="group">
+                                        <template is="dom-repeat" items="[[ group.group_items ]]">
+                                            <tr>
+                                                <td>[[ item.item_seq ]]</td>
+                                                <td>[[ item.item_date_short ]]</td>
+                                                <td>[[ item.item_name ]]</td>
+                                                <td>[[ item.payment_type_name ]]</td>
+                                                <td>[[ item.currency_code ]]</td>
+                                                <td class="text-right">[[ item.currency_rate_exchanged ]]</td>
+                                                <td class="text-right">[[ item.amounts_formatted ]]</td>
+                                            </tr>
+                                        </template>
+                                    </template>
+                                    
+                                </tbody>
+                            </table>
+
+                        </div>
+
+                        
+                    </div>
+                </paper-card>
+
+                <paper-card class="block">
+                    <div class="card-content">
+                        <h3 class="block-title">Expense Summary</h3>
+                        <div class="table-responsive">
+                            <table class="table bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Description</th>
+                                        <th class="text-right">Amounts</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template is="dom-repeat" items="[[ record.summary.expense ]]">
                                         <tr>
-                                            <td>[[ item.item_seq ]]</td>
-                                            <td>[[ item.item_name ]]</td>
-                                            <td>[[ item.payment_type_name ]]</td>
-                                            <td class="text-center">[[ item.currency_name ]]</td>
-                                            <td class="text-right">[[ item.amounts_formatted ]]</td>
-                                        </tr>
-                                        <tr class="form-row">
-                                            <td></td>
-                                            <td colspan="3">
-                                                <kct-column columns="3">
-                                                    <template is="dom-repeat" items="[[ item.item_forms ]]" as="form">
-                                                        <div class="item-form">
-                                                            <div class="label">[[ form.item_form_label ]]</div>
-                                                            <div class="value">[[ form.item_form_display ]]</div>
-                                                        </div>
-                                                    </template> 
-                                                </kct-column>
-                                            </td>
-                                            <td></td>
-                                        </tr>
-                                        <tr class="separator">
-                                            <td colspan="5"></td>
+                                            <td>[[ item.expense_label ]]</td>
+                                            <td class="text-right">[[ item.expense_value_formatted ]]</td>
                                         </tr>
                                     </template>
-                                </template>
-                            </tbody>
-                        </table>
+                                    <template is="dom-repeat" items="[[ record.summary.remains ]]">
+                                        <tr>
+                                            <td>[[ item.remains_label ]]</td>
+                                            <td class="text-right">[[ item.remains_value_formatted ]]</td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </paper-card>
 
@@ -137,27 +238,28 @@
                     <div class="card-content">
                         <h3 class="block-title">Expense History</h3>
 
-                        <table class="striped">
-                            <thead>
-                                <th width="50">No.</th>
-                                <th width="120">Date</th>
-                                <th>Status</th>
-                                <th>User</th>
-                                <th>Notes</th>
-                            </thead>
-                            <tbody>
-                                <template is="dom-repeat" items="[[ record.history ]]">
-                                    <tr>
-                                        <td>[[ __computeNo(index) ]]</td>
-                                        <td>[[ item.date_short ]]</td>
-                                        <td>[[ item.status_name ]]</td>
-                                        <td>[[ item.user_act_name ]]</td>
-                                        <td>[[ item.notes ]]</td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
-
+                        <div class="table-responsive">
+                            <table class="table striped">
+                                <thead>
+                                    <th width="50">No.</th>
+                                    <th width="120">Date</th>
+                                    <th>Status</th>
+                                    <th>User</th>
+                                    <th>Notes</th>
+                                </thead>
+                                <tbody>
+                                    <template is="dom-repeat" items="[[ record.history ]]">
+                                        <tr>
+                                            <td>[[ __computeNo(index) ]]</td>
+                                            <td>[[ item.date_short ]]</td>
+                                            <td>[[ item.status_name ]]</td>
+                                            <td>[[ item.user_act_name ]]</td>
+                                            <td>[[ item.notes ]]</td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </paper-card>
             </div>
@@ -179,13 +281,12 @@
                     record: { type: Object }
                 };
             }
-            ready() {
-                super.ready();
-            }
             handleRouteParams(module, action, id) {
                 if (action != 'view') return;
 
                 this.mask('Loading...');
+                this.set('record', {});
+
                 this.$.ajax.GET('/expense/' + id + '/view').then(res => {
                     this.set('record', res.data);
                     this.unmask();

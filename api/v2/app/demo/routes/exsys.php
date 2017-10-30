@@ -20,6 +20,8 @@ Router::group(array(
 ))
 ->get('/{id}/test', 'test')
 ->get('/{id}/view', 'viewById')
+->get('/{id}/currencies', 'currenciesById')
+->get('/{id}/summary', 'summaryById')
 ->post('/{id}/submit', 'submitById')
 ->post('/{id}/upload', 'uploadById')
 ->post('/{id}/reject', 'rejectById')
@@ -40,4 +42,6 @@ Router::group(array(
 ->post('/{id}/upload', 'uploadById')
 ->post('/{id}/reject', 'rejectById')
 ->post('/{id}/approve', 'approveById')
-->post('/{id}/request', 'requestById');
+->post('/{id}/request', 'requestById')
+->post('/{id}/finish-ticket', 'finishTicketById')
+->post('/{id}/reject-ticket', 'rejectTicketById');

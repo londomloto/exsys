@@ -64,51 +64,57 @@
                     <div class="card-content">
                         <h3 class="block-title">Advance Items</h3>
 
-                        <table  class="striped">
-                            <thead>
-                                <th width="50">No.</th>
-                                <th>Description</th>
-                                <th width="100" class="text-center">Currency</th>
-                                <th width="150" class="text-right">Amounts</th>
-                            </thead>
-                            <tbody>
-                                <template is="dom-repeat" items="[[ record.items ]]">
-                                    <tr>
-                                        <td>[[ __computeNo(index) ]]</td>
-                                        <td>[[ item.description ]]</td>
-                                        <td class="text-center">[[ item.currency_name ]]</td>
-                                        <td class="text-right">[[ item.amounts_formatted ]]</td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
+                        <div class="table-responsive">
+                            <table class="table striped">
+                                <thead>
+                                    <th width="50">No.</th>
+                                    <th>Description</th>
+                                    <th width="100">Currency</th>
+                                    <th width="150" class="text-right">Amounts</th>
+                                </thead>
+                                <tbody>
+                                    <template is="dom-repeat" items="[[ record.items ]]">
+                                        <tr>
+                                            <td>[[ __computeNo(index) ]]</td>
+                                            <td>[[ item.description ]]</td>
+                                            <td>[[ item.currency_code ]]</td>
+                                            <td class="text-right">[[ item.amounts_formatted ]]</td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        
                     </div>
                 </paper-card>
 
                 <paper-card class="block">
                     <div class="card-content">
                         <h3 class="block-title">Advance History</h3>
-
-                        <table class="striped">
-                            <thead>
-                                <th width="50">No.</th>
-                                <th width="120">Date</th>
-                                <th>Status</th>
-                                <th>User</th>
-                                <th>Notes</th>
-                            </thead>
-                            <tbody>
-                                <template is="dom-repeat" items="[[ record.history ]]">
-                                    <tr>
-                                        <td>[[ __computeNo(index) ]]</td>
-                                        <td>[[ item.date_short ]]</td>
-                                        <td>[[ item.status_name ]]</td>
-                                        <td>[[ item.user_act_name ]]</td>
-                                        <td>[[ item.notes ]]</td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
+                        <div class="table-responsive">
+                            <table class="table striped">
+                                <thead>
+                                    <th width="50">No.</th>
+                                    <th width="120">Date</th>
+                                    <th>Status</th>
+                                    <th>User</th>
+                                    <th>Notes</th>
+                                </thead>
+                                <tbody>
+                                    <template is="dom-repeat" items="[[ record.history ]]">
+                                        <tr>
+                                            <td>[[ __computeNo(index) ]]</td>
+                                            <td>[[ item.date_short ]]</td>
+                                            <td>[[ item.status_name ]]</td>
+                                            <td>[[ item.user_act_name ]]</td>
+                                            <td>[[ item.notes ]]</td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                        
 
                     </div>
                 </paper-card>

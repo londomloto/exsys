@@ -67,7 +67,7 @@
                     <kct-column columns="3">
                         <div class="p-r">
                             <h3 class="m-b">Account Information</h3>
-                            <paper-input id="email" label="Email address" type="email" value="{{ record.su_email }}" required error-message="Valid email address is required"></paper-input>
+                            <paper-input id="email" label="Email address" type="email" value="{{ record.su_email }}" required auto-validate error-message="Valid email address is required"></paper-input>
                             <paper-input label="Password" type="password" value="{{ password1 }}"></paper-input>
                             <paper-input label="Password confirm" type="password" value="{{ password2 }}"></paper-input>
                             <kct-checkbox value="{{ record.su_active }}">Check to activate this user</kct-checkbox>

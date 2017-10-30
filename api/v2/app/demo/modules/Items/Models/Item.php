@@ -44,7 +44,7 @@ class Item extends \Micro\Model {
     }
 
     public static function combo() {
-        $items = self::get()->execute()->filter(function($elem){ return $elem; });
+        $items = self::get()->filterable()->execute()->filter(function($elem){ return $elem; });
         $combo = array();
         self::__createGrid($items, NULL, $combo, $level = 0);
 

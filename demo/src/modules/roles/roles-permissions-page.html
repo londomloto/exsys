@@ -20,11 +20,18 @@
                 overflow-y: scroll;
                 overflow-x: hidden;
             }
+
             .header-container::-webkit-scrollbar { -webkit-appearance: none; }
             .header-container::-webkit-scrollbar:vertical { width: 8px; }
             .header-container::-webkit-scrollbar:horizontal { height: 8px; }
             .header-container::-webkit-scrollbar-thumb { background-color: rgba(0, 0, 0, .3); }
-            .header-container::-webkit-scrollbar-track { background-color: rgba(0, 0, 0, .2); }`
+            .header-container::-webkit-scrollbar-track { background-color: rgba(0, 0, 0, .2); }
+
+            .body-container::-webkit-scrollbar { -webkit-appearance: none; }
+            .body-container::-webkit-scrollbar:vertical { width: 8px; }
+            .body-container::-webkit-scrollbar:horizontal { height: 8px; }
+            .body-container::-webkit-scrollbar-thumb { background-color: rgba(0, 0, 0, .3); }
+            .body-container::-webkit-scrollbar-track { background-color: rgba(0, 0, 0, .2); }
             
             table {
                 border-collapse: collapse;
@@ -32,11 +39,13 @@
             }
             
             td, th {
-                font-size: 14px;
+                font-size: 13px;
             }
-            
+
             th {
                 padding: 8px 16px;
+                font-weight: 500;
+                border-bottom: 1px solid #ddd;
             }
             th.column-input {
                 padding-left: 0;
@@ -46,13 +55,10 @@
             td {
                 padding: 0 16px;
                 height: 32px;
-                font-size: 13px;
+                font-weight: 300;
                 vertical-align: middle;
                 /*padding: 6px 16px;
                 font-size: 13px;*/
-            }
-            th {
-                border-bottom: 1px solid #ddd;
             }
             th > span {
                 display: block;
@@ -76,7 +82,7 @@
                 border-left: 1px solid #dfdfdf;
             }
             tr.level-1 td {
-                font-weight: 500;
+                font-weight: 400;
             }
             tr.level-2 td:first-child {
                 padding-left: 44px;
@@ -89,7 +95,7 @@
             .scroll-overlay {
                 position: absolute;
                 background-color: #fff;
-                top: 55px;
+                top: 44px;
                 right: 0;
                 width: 8px;
                 height: 49px;
@@ -105,8 +111,8 @@
             }
             vaadin-combo-box {
                 padding: 0;
-                --paper-input-container-input: { font-size: 16px; font-weight: 500;  };
-                --paper-input-container-label: { font-size: 16px; font-weight: 500;  };
+                --paper-input-container-input: { font-size: 13px; font-weight: 500;  };
+                --paper-input-container-label: { font-size: 13px; font-weight: 500;  };
                 --paper-input-container-underline: { display: none; };
                 --paper-input-container-underline-focus: { display: none; };
             }

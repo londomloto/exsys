@@ -39,7 +39,8 @@ class ExpenseController extends \Micro\Controller {
 
         $data['expense'] = $expense->toArray();
         $data['items'] = $expense->getGroupedItems();
-
+        $data['summary'] = $expense->getSummary();
+        $data['exchanges'] = $expense->exchanges->filter(function($elem){ return $elem->toArray(); });
         $data['history'] = $expense->getHistory(array('order' => 'exp_history_id ASC'))->filter(function($elem){
             return $elem->toArray();
         });
@@ -389,5 +390,37 @@ class ExpenseController extends \Micro\Controller {
         }
 
         return Expense::none();
+    }
+
+    public function currenciesByIdAction($id) {
+        $expense = Expense::get($id)->data;
+        $currencies = array();
+
+        if ($expense) {
+            $currencies = $expense->getCurrencies();
+        }
+
+        return array(
+            'success' => TRUE,
+            'data' => $currencies
+        );
+    }
+
+    public function summaryByIdAction($id) {
+        $expense = Expense::get($id)->data;
+
+        $summary = array(
+            'expense' => array(),
+            'remains' => array()
+        );
+
+        if ($expense) {
+            $summary = $expense->getSummary();
+        }
+
+        return array(
+            'success' => TRUE,
+            'data' => $summary
+        );
     }
 }

@@ -141,6 +141,9 @@
                 width: 120px;
                 height: calc(120px * 0.35);
             }
+            .btn-login[disabled] {
+                background-color: var(--paper-green-500);
+            }
         </style>
 
         <kct-auth id="auth" config="[[ config ]]" on-load="__onAuthLoaded"></kct-auth>
@@ -204,7 +207,7 @@
                                 
                             </div>
                             <div class="m-t">
-                                <paper-button id="submit" raised disabled$="[[ invalid ]]" on-tap="__onLoginButtonTap" class="btn-login btn-raised btn-green">Login</paper-button>
+                                <paper-button id="submit" raised disabled$="[[ invalid ]]" on-tap="__onLoginButtonTap" class="btn-md btn-login btn-raised btn-green">Login</paper-button>
                             </div>
                             <div class="text-center m-t-lg">
                                 <p class="m-b-xs">Forgot your password? <a href="javascript:;">click here</a></p>

@@ -30,16 +30,27 @@
                 display: none;
             }
             .wrapper {
-                padding: 7px;
+                padding: 2px;
                 background-color: var(--paper-grey-100);
             }
             :host([extra-size]) .wrapper {
-                padding: 11px 3px;
+                padding: 5px 3px;
             }
             paper-menu-button {
                 padding: 0;
             }
+            paper-checkbox {
+                font-size: 13px;
+                --paper-checkbox-margin: 0;
+
+            }
             paper-input {
+                --paper-input-container-label: { 
+                    font-size: 14px;
+                };
+                --paper-input-container-input: { 
+                    font-size: 14px;
+                };
                 --paper-input-container-underline: {
                     display: none;
                 };
@@ -49,6 +60,7 @@
             }
             paper-item {
                 --paper-item-selected: { font-weight: normal;  };
+                --paper-item-min-height: 36px;
             }
             .item-divider {
                 height: 1px;

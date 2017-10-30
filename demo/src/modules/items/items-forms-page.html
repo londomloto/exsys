@@ -134,27 +134,31 @@
                                 <div>
                                     <div hidden$="[[ ! item.hasOptions ]]" class="p-l-sm">
                                         
-                                        <table>
-                                            <thead>
-                                                <tr>
-                                                    <th width="60">Value</th>
-                                                    <th>Label</th>
-                                                    <th width="150"></th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <template is="dom-repeat" items="[[ item.option ]]" as="elem">
+                                        <div class="table-responsive">
+                                            <table class="table">
+                                                <thead>
                                                     <tr>
-                                                        <td>[[ elem.value ]]</td>
-                                                        <td>[[ elem.text ]]</td>
-                                                        <td class="text-right">
-                                                            <paper-button on-tap="__onEditOptionTap" class="btn-xs btn-amber">Edit</paper-button> 
-                                                            <paper-button on-tap="__onDeleteOptionTap" class="btn-xs btn-danger">Delete</paper-button>
-                                                        </td>
+                                                        <th width="60">Value</th>
+                                                        <th>Label</th>
+                                                        <th width="150"></th>
                                                     </tr>
-                                                </template>
-                                            </tbody>
-                                        </table>
+                                                </thead>
+                                                <tbody>
+                                                    <template is="dom-repeat" items="[[ item.option ]]" as="elem">
+                                                        <tr>
+                                                            <td>[[ elem.value ]]</td>
+                                                            <td>[[ elem.text ]]</td>
+                                                            <td class="text-right">
+                                                                <paper-button on-tap="__onEditOptionTap" class="btn-xs btn-amber">Edit</paper-button> 
+                                                                <paper-button on-tap="__onDeleteOptionTap" class="btn-xs btn-danger">Delete</paper-button>
+                                                            </td>
+                                                        </tr>
+                                                    </template>
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        
                                     </div>
                                 </div>
                             </kct-column>

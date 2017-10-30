@@ -12,17 +12,20 @@
                 width: var(--kct-dialog-width);
                 height: var(--kct-dialog-height);
             }
+
             .dialog-content {
                 padding: 0;
                 margin: 0;
             }
             .dialog-header {
                 padding: 1.5rem;
+                @apply --dialog-header;
             }
             .dialog-header h3 {
-                font-size: 18px;
+                font-size: 14px;
                 font-weight: 400;
                 margin: 0;
+                text-transform: uppercase;
             }
             .dialog-body {
                 padding: 0 1.5rem 1.5rem 1.5rem;
@@ -33,14 +36,26 @@
                 overflow-y: auto;
             }
 
+            :host([fit-content]) .dialog-body { padding: 0; }
+            :host([fit-content]) .dialog-body-content, 
+            :host([fit-content]) .dialog-body-content > div { height: 100%; }
+
             .dialog-body::-webkit-scrollbar { -webkit-appearance: none; }
             .dialog-body::-webkit-scrollbar:vertical { width: 8px; }
             .dialog-body::-webkit-scrollbar:horizontal { height: 8px; }
             .dialog-body::-webkit-scrollbar-thumb { background-color: rgba(0, 0, 0, .3); }
             .dialog-body::-webkit-scrollbar-track { background-color: rgba(0, 0, 0, .2); }
 
+            .dialog-body paper-tabs {
+                --paper-tabs-selection-bar-color: var(--app-primary);
+                --paper-tab-content: {
+                    font-size: 15px;
+                    font-weight: 300;
+                };
+            }
+
             .dialog-footer {
-                background-color: var(--kct-dialog-accent, var(--app-primary));
+                background-color: var(--app-primary);
                 padding: 8px;
                 text-align: center;
                 margin-bottom: 0;
@@ -50,8 +65,8 @@
             }
             .dialog-footer paper-button[disabled] {
                 background: transparent;
-                opacity: .5;
-                color: #ffffff;
+                opacity: .3;
+                cursor: not-allowed;
             }
         </style>
 
@@ -84,14 +99,13 @@
                         width: { type: String },
                         height: { type: String },
                         scrollable: { type: Boolean, value: false },
-                        accent: { type: String }
+                        fitContent: { type: Boolean, value: false, reflectToAttribute: true }
                     }
                 }
                 static get observers() {
                     return [
                         '__sizeChanged(width, height)',
-                        '__titleChanged(title)',
-                        '__accentChanged(accent)'
+                        '__titleChanged(title)'
                     ];
                 }
 
@@ -104,7 +118,12 @@
 
                     this.__context = null;
                     this.__guid = 'kct_dialog_' + (++__ID);
-                    this.__stampped = false;
+
+                    this.__stamp = { done: false };
+                    this.__stamp.promise = new Promise((res, rej) => {
+                        this.__stamp.resolve = res;
+                        this.__stamp.reject = rej;
+                    });
 
                     this.__has = {
                         header: false,
@@ -119,7 +138,6 @@
                 
                 ready() {
                     super.ready();
-                    
                     this.__context = (this.parentNode && this.parentNode.host) || this;
 
                     Polymer.RenderStatus.afterNextRender(this, () => {
@@ -127,10 +145,20 @@
                     });
                 }
 
+                __stamping() {
+                    if (this.__stamp.done) {
+                        return Promise.resolve();
+                    } else {
+                        return this.__stamp.promise;
+                    }
+                }
+
                 __stampDialog() {
                     let customTemplate = this.$.slot.assignedNodes().find((e) => { 
                         return e instanceof HTMLTemplateElement; 
                     });
+
+                    let dialogTemplate = KctDialog.dialogTemplate;
 
                     if ( ! customTemplate) {
                         customTemplate = document.createElement('template');
@@ -138,31 +166,27 @@
                             customTemplate.innerHTML = this.constructor.customTemplate;
                         }
                     }
-                    
+
+                    // parse styles
+                    let styleContext = this.__context || this;
+                    let styleBaseURI = styleContext.constructor.importPath 
+                        ? Polymer.ResolveUrl.resolveUrl(styleContext.constructor.importPath) : '';
+
+                    let styleContent = Polymer.StyleGather.cssFromTemplate(customTemplate, styleBaseURI);
+
+                    if (styleContent) {
+                        let customStyle = document.createElement('style');
+                        customStyle.textContent = styleContent;
+                        dialogTemplate.content.insertBefore(customStyle, dialogTemplate.content.firstChild);
+                    }
+
                     if (window.ShadyCSS) {
-                        window.ShadyCSS.prepareTemplate(customTemplate, 'kct-dialog');
+                        window.ShadyCSS.prepareTemplate(dialogTemplate, styleContext.localName);
                     }
 
                     let customHeader = customTemplate.content.querySelector('[slot="dialog-header"]'),
                         customBody = customTemplate.content.querySelector('[slot="dialog-body"]'),
                         customFooter = customTemplate.content.querySelector('[slot="dialog-footer"]');
-
-                    let dialogTemplate = KctDialog.dialogTemplate;
-
-                    // parse styles
-                    let styleBaseURI = '';
-
-                    if (this.constructor.importPath) {
-                        styleBaseURI = Polymer.ResolveUrl.resolveUrl(this.constructor.importPath);
-                    }
-
-                    let styleContent = Polymer.StyleGather.cssFromTemplate(customTemplate, styleBaseURI);
-                    
-                    if (styleContent) {
-                        let customStyle = document.createElement('style');
-                        customStyle.textContent = styleContent;
-                        this.shadowRoot.insertBefore(customStyle, this.$.slot);
-                    }
 
                     if (customHeader) {
                         this.__has.header = true;
@@ -201,24 +225,17 @@
                         this.$.dialog.addEventListener('iron-overlay-opened', this.__openedHandler);
                     }
 
-                    this.__stampped = true;
-                }
-
-                connectedCallback() {
-                    super.connectedCallback();
-
-                    if ( ! this.__relocating && this.$.dialog) {
-                        this.$.dialog.addEventListener('iron-overlay-opened', this.__openedHandler);
-                        this.$.dialog.addEventListener('iron-overlay-closed', this.__closedHandler);
-                    }
+                    this.__stamp.done = true;
+                    this.__stamp.resolve();
                 }
 
                 disconnectedCallback() {
+
                     if ( ! this.__relocating && this.$.dialog) {
                         this.$.dialog.removeEventListener('iron-overlay-opened', this.__openedHandler);
                         this.$.dialog.removeEventListener('iron-overlay-closed', this.__closedHandler);
                     }
-                    
+
                     super.disconnectedCallback();
                 }
 
@@ -235,12 +252,6 @@
                     this.__restore();
                     this.$.dialog.close();
                 }   
-
-                __accentChanged(accent) {
-                    this.updateStyles({
-                        '--kct-dialog-accent': accent
-                    });
-                }
 
                 __relocate() {
                     let owner = (this.parentNode && this.parentNode.host) || this.parentNode;
@@ -264,9 +275,11 @@
                 }
 
                 __titleChanged(title) {
-                    if (this.__stampped && ! this.__has.header) {
-                        this.delegate('title', this.title);
-                    }
+                    this.__stamping().then(() => {
+                        if ( ! this.__has.header) {
+                            this.delegate('title', this.title);
+                        }
+                    });
                 }
 
                 __sizeChanged(width, height) {

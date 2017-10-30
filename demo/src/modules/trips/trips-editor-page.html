@@ -131,20 +131,22 @@
                             <paper-input label="Need advance?" value="{{ record.adv_desc }}" on-tap="__onInputAdvanceTap" readonly></paper-input>
                             
                         </kct-form-validator>
-
-                        <div class="m-t" hidden="[[ record.id_trip ]]">
-                            <kct-hbox>
-                                <div class="flex">
-                                    <paper-button class="btn-md btn-blue-grey" on-tap="__onBackTap"><iron-icon icon="arrow-back"></iron-icon>&nbsp;Back</paper-button>
-                                </div>
-                                <div class="flex text-right">
-                                    <paper-button class="btn-md btn-primary" on-tap="__onNextTap" disabled$="[[ __tripInvalid ]]">Next&nbsp;<iron-icon icon="arrow-forward"></iron-icon></paper-button>
-                                </div>
-                            </kct-hbox>
-                        </div>
                         
                     </div>
                     
+                </paper-card>
+
+                <paper-card class="block" hidden="[[ record.id_trip ]]">
+                    <div class="card-content">
+                        <kct-hbox>
+                            <div class="flex">
+                                <paper-button class="btn-blue-grey" on-tap="__onBackTap"><iron-icon icon="arrow-back"></iron-icon>&nbsp;Back</paper-button>
+                            </div>
+                            <div class="flex text-right">
+                                <paper-button class="btn-primary" on-tap="__onNextTap" disabled$="[[ __tripInvalid ]]">Next&nbsp;<iron-icon icon="arrow-forward"></iron-icon></paper-button>
+                            </div>
+                        </kct-hbox>
+                    </div>
                 </paper-card>
 
                 <paper-card class="block" hidden="[[ ! record.id_trip ]]">
@@ -155,15 +157,14 @@
                             <paper-button on-tap="__onAddItemTap" class="btn-sm btn-primary"><iron-icon icon="add"></iron-icon>&nbsp;Add Item</paper-button>
                         </div>
                         <div class="table-responsive">
-                            <table>
+                            <table class="table striped">
                                 <thead>
                                     <tr>
                                         <th width="50">No.</th>
                                         <th width="150" class="text-center">Departure Date</th>
                                         <th>Origin</th>
                                         <th>Destination</th>
-                                        <th 
-                                        >Transport</th>
+                                        <th>Transport</th>
                                         <th width="80" class="text-center">Visa</th>
                                         <th>Request</th>
                                         <td width="150"></td>

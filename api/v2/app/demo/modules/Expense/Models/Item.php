@@ -17,6 +17,15 @@ class Item extends \Micro\Model {
         );
 
         $this->hasOne(
+            'currency_offset_id',
+            'App\Currencies\Models\Currency',
+            'currency_id',
+            array(
+                'alias' => 'CurrencyOffset'
+            )
+        );
+
+        $this->hasOne(
             'item_id',
             'App\Items\Models\Item',
             'item_id',
@@ -68,10 +77,12 @@ class Item extends \Micro\Model {
 
         $data['amounts_formatted'] = number_format($this->amounts, 2, ',', '.');
         $data['currency_name'] = '';
-        $data['item_name'] = NULL;
+        $data['currency_code'] = '';
+        $data['item_name'] = $this->description;
         $data['item_parent_id'] = NULL;
         $data['item_parent_name'] = NULL;
         $data['payment_type_name'] = $this->payment_type == 1 ? 'Cash' : 'Credit Card';
+        $data['item_date_short'] = date('d/m/Y', strtotime($this->item_date));
 
         if ($this->masterItem) {
             $data['item_name'] = $this->masterItem->item_name;
@@ -82,7 +93,8 @@ class Item extends \Micro\Model {
         }
 
         if ($this->currency) {
-            $data['currency_name'] = $this->currency->currency_code;
+            $data['currency_code'] = $this->currency->currency_code;
+            $data['currency_name'] = $this->currency->currency_name;
         }
 
         $forms = ItemForm::get()

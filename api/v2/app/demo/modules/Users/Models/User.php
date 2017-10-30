@@ -233,7 +233,7 @@ class User extends \Micro\Model {
                         if ($max == self::MAX_LIMIT) {
                             $loop = false;
                         }
-                    } else if ($amounts > $min && $amounts <= $max) {
+                    } else if ($amounts >= $min && $amounts <= $max) {
                         $stack[] = array(
                             'user_id' => $user->superior->su_id,
                             'user_fullname' => $user->superior->su_fullname,

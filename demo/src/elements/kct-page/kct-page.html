@@ -29,20 +29,39 @@
                 ];
             }
 
+            constructor() {
+                super();
+
+                this.__ready = { done: false };
+                
+                this.__ready.promise = new Promise((res, rej) => {
+                    this.__ready.resolve = res;
+                    this.__ready.reject = rej;
+                });
+            }
+
             ready() {
                 super.ready();
-                this.__stampPage();
+                
+                this.__ready.done = true;
+                this.__ready.resolve();
             }
 
             __typeChanged(type) {
                 if (type) {
-                    this.__stampPage();
+                    if (this.__ready.done) {
+                        this.__stampPage();
+                    } else {
+                        this.__ready.promise.then(() => {
+                            this.__stampPage();
+                        });
+                    }
                 }
             }
 
             __stampPage() {
                 let existing = this.shadowRoot.querySelector('#page');
-
+                
                 if (existing) {
                     this.shadowRoot.removeChild(existing);
                 }

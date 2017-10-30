@@ -4,7 +4,8 @@ namespace App\Expense\Models;
 use App\Expense\Models\Task,
     App\Expense\Models\History,
     App\Users\Models\User,
-    App\Statuses\Models\Status;
+    App\Statuses\Models\Status,
+    App\Currencies\Models\Currency;
 
 class Expense extends \Micro\Model {
     
@@ -80,6 +81,15 @@ class Expense extends \Micro\Model {
                 'alias' => 'Advance'
             )
         );
+
+        $this->hasMany(
+            'id_exp',
+            'App\Expense\Models\Exchange',
+            'id_exp',
+            array(
+                'alias' => 'Exchanges'
+            )
+        );
     }
 
     public function getSource() {
@@ -105,8 +115,9 @@ class Expense extends \Micro\Model {
         $data['date_start_short'] = date('d/m/Y', $time_start);
         $data['date_end_short'] = date('d/m/Y', $time_end);
         $data['period'] = date('F Y', $time_start);
-        $data['has_items'] = $this->items->count() > 0 ? 1 : 0;
+        $data['has_items'] = $this->items->count() > 0 ? TRUE : FALSE;
         $data['amounts_formatted'] = number_format($data['amounts'], 2, ',', '.');
+        $data['is_travelling'] = TRUE;
         
         if ($this->lastStatus) {
             $data['status_name'] = $this->lastStatus->status_name;
@@ -115,6 +126,7 @@ class Expense extends \Micro\Model {
 
         if ($this->expenseType) {
             $data['type_name'] = $this->expenseType->type_name;
+            $data['is_travelling'] = $this->expenseType->isTravelling();
         }
 
         if ($this->expensePurpose) {
@@ -127,7 +139,10 @@ class Expense extends \Micro\Model {
             $data['user_fullname'] = $this->user->su_fullname;
         }
 
+        $data['has_advance'] = FALSE;
+
         if ($this->advance) {
+            $data['has_advance'] = TRUE;
             $data['adv_no'] = $this->advance->adv_no;
         }
 
@@ -177,10 +192,11 @@ class Expense extends \Micro\Model {
     }
 
     public function updateAmounts() {
+        // compute amounts from items
         $amounts = 0;
 
         foreach($this->items as $elem) {
-            $line = $elem->currency_rate * $elem->amounts;
+            $line = ($elem->currency_rate * $elem->amounts);
             $amounts += $line;
         }
 
@@ -305,5 +321,189 @@ class Expense extends \Micro\Model {
         $this->save();
     }
 
-    
+    public function getCurrencies() {
+        $result = array();
+        $offset1 = Currency::offset();
+
+        if ($this->exchanges->count() > 0) {
+
+            $exchanges = $this->exchanges->filter(function($row){ return $row; });
+            
+            usort($exchanges, function($a, $b){
+                $va = $a->to_currency_id;
+                $vb = $b->to_currency_id;
+                if ($va == $vb) return 0;
+                return $va < $vb ? -1 : 1;
+            });
+
+            foreach($exchanges as $row) {
+                // from
+                $code = $row->from->currency_code;
+
+                if ( ! isset($result[$code])) {
+                    $curr = $row->from->toArray();
+                    $curr['currency_rate_exchanged'] = 0;
+                    $curr['currency_offset_id'] = $offset1->currency_id;
+                    $curr['currency_offset_code'] = $offset1->currency_code;
+
+                    $result[$code] = $curr;
+                }
+
+                // to
+                $code = $row->to->currency_code;
+
+                if ( ! isset($result[$code])) {
+                    $curr = $row->to->toArray();
+                    $offset2 = self::__defineExchangeOffset($exchanges, $row->to_currency_id);
+
+                    $curr['currency_rate'] = 0;
+                    $curr['currency_rate_exchanged'] = $row->rates;
+                    $curr['currency_offset_id'] = NULL;
+                    $curr['currency_offset_code'] = NULL;
+                    
+                    if ( ! is_null($offset2)) {
+                        $curr['currency_offset_id'] = $offset2->from->currency_id;
+                        $curr['currency_offset_code'] = $offset2->from->currency_code;    
+                    }
+
+                    if ($row->rates > 0 && ! is_null($offset2)) {
+                        $curr['currency_rate'] = ($offset2->from->currency_rate / $row->rates);
+                    }
+
+                    $curr['currency_rate_formatted'] = number_format($curr['currency_rate'], 2, ',', '.');
+                    $result[$code] = $curr;
+                }
+            }
+        }
+
+        // add from master currencies
+        $currencies = \App\Currencies\Models\Currency::find('currency_acceptable = 1');
+
+        foreach($currencies as $row) {
+            $code = $row->currency_code;
+
+            if ( ! isset($result[$code])) {
+                $curr = $row->toArray();
+                $curr['currency_rate_exchanged'] = 0;
+                $curr['currency_offset_id'] = $offset1->currency_id;
+                $curr['currency_offset_code'] = $offset1->currency_code;
+                $result[$code] = $curr;
+            }
+        }
+
+        $result = array_values($result);
+
+        return $result;
+    }
+
+    public function getSummary() {
+        $summary = array(
+            'expense' => array(),
+            'remains' => array()
+        );
+
+        $items = $this->items->filter(function($row){ return $row; });
+        
+        usort($items, function($a, $b){
+            $va = $a->currency_id;
+            $vb = $b->currency_id;
+
+            if ($va == $vb) return 0;
+            return $va < $vb ? -1 : 1;
+        });
+
+        $expense = array();
+        $replica = array();
+
+        foreach($items as $row) {
+            $item = $row->toArray();
+            $code = $item['currency_code'];
+
+            if ( ! isset($expense[$code])) {
+
+                $expense[$code] = array(
+                    'currency_id' => $item['currency_id'],
+                    'currency_name' => $item['currency_name'],
+                    'currency_code' => $item['currency_code'],
+                    'currency_rate' => $item['currency_rate'],
+                    'currency_rate_exchanged' => $item['currency_rate_exchanged'],
+                    'currency_offset_id' => $item['currency_offset_id'],
+                    'currency_offset_code' => $row->currencyOffset ? $row->currencyOffset->currency_code : '',
+                    'expense_value' => 0,
+                    'expense_label' => 'Expense total in '.$code.' ('.$item['currency_name'].')'
+                );
+
+                $replica[$expense[$code]['currency_offset_code']] = $expense[$code];
+            }
+
+            $expense[$code]['expense_value'] += ($row->amounts);
+            $expense[$code]['expense_value_formatted'] = number_format($expense[$code]['expense_value'], 2, ',', '.');
+            
+            $replica[$expense[$code]['currency_offset_code']] = $expense[$code];
+        }
+
+        $summary['expense'] = array_values($expense);
+
+        $remains = array();
+        $expense = array();
+
+        if ($this->advance) {
+
+            foreach($this->advance->getSummary() as $sum) {
+                $code = $sum['currency_code'];
+
+                $remains[$code] = array(
+                    'currency_id' => $sum['currency_id'],
+                    'currency_name' => $sum['currency_name'],
+                    'currency_code' => $sum['currency_code'],
+                    'currency_rate' => $sum['currency_rate'],
+                    'remains_value' => $sum['summary_value'],
+                    'remains_label' => 'Advance remains in '.$code.' ('.$sum['currency_name'].')'
+                );
+
+                // update expense
+                $expense[$code] = array(
+                    'currency_id' => $sum['currency_id'],
+                    'currency_name' => $sum['currency_name'],
+                    'currency_code' => $sum['currency_code'],
+                    'currency_rate' => $sum['currency_rate'],
+                    'expense_value' => 0,
+                    'expense_label' => 'Expense total in '.$code.' ('.$sum['currency_name'].')'
+                );
+
+                if (isset($replica[$code])) {
+                    $line = $replica[$code];
+                    if ($line['currency_rate_exchanged'] > 0) {
+                        $expense[$code]['expense_value'] = round(($line['expense_value'] / $line['currency_rate_exchanged']), 2);
+                        $remains[$code]['remains_value'] = ($remains[$code]['remains_value'] - $expense[$code]['expense_value']);
+                    }
+                }
+
+                $expense[$code]['expense_value_formatted'] = number_format($expense[$code]['expense_value'], 2, ',', '.');
+                $remains[$code]['remains_value_formatted'] = number_format($remains[$code]['remains_value'], 2, ',', '.');
+            }
+        }
+
+        $summary['expense'] = array_merge($summary['expense'], array_values($expense));
+        $summary['remains'] = array_values($remains);
+
+        return $summary;
+    }
+
+    private static function __defineExchangeOffset($exchanges, $to) {
+        $rows = array_filter($exchanges, function($elem) use ($to){
+            return $elem->to_currency_id == $to;
+        });
+
+        $rows = array_values($rows);
+
+        usort($rows, function($a, $b){
+            $va = $a->to_amounts;
+            $vb = $b->to_amounts;
+            if ($va == $vb) return 0;
+            return $va < $vb ? 1 : -1;
+        });
+
+        return isset($rows[0]) ? $rows[0] : NULL;
+    }
 }

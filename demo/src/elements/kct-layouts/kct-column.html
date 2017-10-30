@@ -8,6 +8,7 @@
 
                 --kct-column-columns: 1;
                 --kct-column-gutter: 0.8rem;
+                --kct-column-spacer: 0.8rem;
 
                 margin-left: calc(var(--kct-column-gutter) * -1);
                 margin-right: calc(var(--kct-column-gutter) * -1);
@@ -38,8 +39,8 @@
                         flex-basis: calc((100% - 0.1px - (var(--kct-column-gutter, 0px) * var(--kct-column-columns, 1))) / var(--kct-column-columns, 1));
 
                 max-width: calc((100% - 0.1px - (var(--kct-column-gutter, 0px) * var(--kct-column-columns, 1))) / var(--kct-column-columns, 1));
-                margin-bottom: var(--kct-column-gutter, 0px);
                 margin-right: var(--kct-column-gutter, 0px);
+                margin-bottom: var(--kct-column-spacer, 0px);
                 height: var(--grid-item-height);
                 box-sizing: border-box;
             }
@@ -69,12 +70,13 @@
                 static get properties() {
                     return {
                         columns: { type: Number, notify: true, value: 1 },
-                        gutter: { type: String, notify: true, value: '0.8rem' }
+                        gutter: { type: String, notify: true, value: '0.8rem' },
+                        spacer: { type: String, notify: true, value: '0.8rem' }
                     };
                 }
                 static get observers() {
                     return [
-                        '__propsChanged(columns, gutter)',
+                        '__propsChanged(columns, gutter, spacer)',
                         '__sizeChanged(size)'
                     ];
                 }
@@ -87,7 +89,7 @@
                     this.__q2 = null;
                     this.__q3 = null;
                 }
-                __propsChanged(columns, gutter) {
+                __propsChanged(columns, gutter, spacer) {
                     let styles = {};
 
                     if (columns) {
@@ -122,6 +124,11 @@
 
                     if (gutter) {
                         styles['--kct-column-gutter'] = gutter;
+                        styles['--kct-column-spacer'] = gutter;
+                    }
+
+                    if (spacer) {
+                        styles['--kct-column-spacer'] = spacer;
                     }
 
                     this.updateStyles(styles);

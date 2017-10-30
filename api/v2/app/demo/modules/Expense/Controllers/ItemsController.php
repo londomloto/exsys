@@ -24,9 +24,11 @@ class ItemsController extends \Micro\Controller {
                 $items = $result->data->filter(function($elem){ return $elem->toArray(); });
                 
                 usort($items, function($a, $b){
-                    $va = $a['item_parent_id'];
-                    $vb = $b['item_parent_id'];
+                    $va = empty($a['item_parent_id']) ? $a['exp_item_id'] : $a['item_parent_id'];
+                    $vb = empty($b['item_parent_id']) ? $b['exp_item_id'] : $b['item_parent_id'];
+
                     if ($va == $vb) return 0;
+
                     return $va < $vb ? -1 : 1;
                 });
 
@@ -62,6 +64,12 @@ class ItemsController extends \Micro\Controller {
 
     public function createAction() {
         $post = $this->request->getJson();
+
+        // fixup $post
+        if (empty($post['item_id'])) {
+            $post['item_id'] = NULL;
+        }
+
         $data = new Item();
         if ($data->save($post)) {
 
@@ -89,6 +97,12 @@ class ItemsController extends \Micro\Controller {
 
     public function updateAction($id) {
         $post = $this->request->getJson();
+
+        // fixup $post
+        if (empty($post['item_id'])) {
+            $post['item_id'] = NULL;
+        }
+
         $query = Item::get($id);
 
         if ($query->data) {

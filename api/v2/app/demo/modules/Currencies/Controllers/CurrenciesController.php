@@ -7,6 +7,7 @@ class CurrenciesController extends \Micro\Controller {
 
     public function findAction() {
         return Currency::get()
+            ->filterable()
             ->sortable()
             ->paginate();
     }

@@ -1,6 +1,8 @@
 <?php
 namespace App\Trips\Models;
 
+use App\Users\Models\User;
+
 class Trip extends \Micro\Model {
 
     public function initialize() {
@@ -119,7 +121,34 @@ class Trip extends \Micro\Model {
         
         $data['amounts_formatted'] = number_format($data['amounts'], 2, ',', '.');
 
+        $data['ticket_approvable'] = FALSE;
+        $data['ticket_approved'] = $this->ticket_status == 1 ? TRUE : FALSE;
+
+        foreach($this->items as $item) {
+            if ( ! empty($item->transport_operator)) {
+                $data['ticket_approvable'] = TRUE;
+                break;
+            }
+        }
+
         return $data;
+    }
+
+    public function requestTicket() {
+
+        $user = \Micro\App::getDefault()->auth->user();
+        $subscribers = User::findInRoles(array('ticketing'));
+
+        foreach($subscribers as $sub) {
+            $task = new \App\Tickets\Models\Task();
+
+            $task->id_trip = $this->id_trip;
+            $task->su_id = $sub->su_id;
+            $task->is_allowed = 1;
+            
+            $task->save();
+        }
+
     }
 
 }

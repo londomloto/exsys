@@ -22,6 +22,7 @@ class Item extends \Micro\Model {
         $data = parent::toArray($columns);
         $data['departure_date_short'] = date('d/m/Y', strtotime($data['departure_date']));
         $data['transport_name'] = $data['transport'] == 1 ? 'Air Plane' : 'Train';
+        $data['transport_prices_formatted'] = number_format($data['transport_prices'], 2, ',', '.');
         return $data;
     }
 
