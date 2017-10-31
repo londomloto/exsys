@@ -159,7 +159,7 @@
             .grid-statusbar paper-button,
             .grid-statusbar ::slotted(paper-button) {
                 font-weight: 400;
-                padding: 0.25em 0.57em !important;
+                padding: 0.25em 0.75em !important;
                 font-size: 13px !important;
 
                 --iron-icon-width: 18px;
@@ -661,8 +661,22 @@
                     
                 }
 
+                deferAutoresize() {
+                    if ( ! this.__deferAutoresize) {
+                        this.__deferAutoresize = true;
+                        this.resize();
+                    }
+                }
+
                 load(options = {}) {
                     return this.__buildStore();
+                }
+
+                deferAutoload(options = {}) {
+                    if ( ! this.__deferAutoload) {
+                        this.__deferAutoload = true;
+                        this.load(options);
+                    }
                 }
 
                 __setupGrid() {

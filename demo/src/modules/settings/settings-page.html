@@ -38,12 +38,6 @@
                 };
             }
 
-            static get observers() {
-                return [
-                    '__stateChanged(state.*)'
-                ];
-            }
-
             handleResizing(width, height) {
                 this.set('height', height);
                 this.set('width', width);
@@ -59,19 +53,14 @@
                 }
             }
 
-            __stateChanged(changed) {
-                let module = this.state.module;
-                if (module == 'settings') {
-                    if (this.state.setting) {
-                        if (this.get('page') != 'group') {
-                            (this.set('page', 'group'));  
-                        }
-                    } else {
-                        this.set('page', 'index');
-                    }
+            handleRouteParams(setting) {
+                if (setting === undefined) {
+                    this.set('page', 'index');
+                } else {
+                    this.set('page', 'group');
                 }
             }
-
+            
             __onPageActivate(e) {
                 let pageNode = e.detail.activeItem;
                 if (pageNode && pageNode.activate) {

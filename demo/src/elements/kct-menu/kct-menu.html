@@ -55,9 +55,39 @@
                 transform: rotate(180deg);
                 transition: transform 0.3s ease;
             }
+            .menu-header {
+                color: var(--paper-grey-500);
+                font-size: 12px;
+                text-transform: uppercase;
+                margin: 12px 0;
+                position: relative;
+                padding-left: 10px;
+            }
+            .menu-header span {
+                position: relative;
+                z-index: 2;
+                background: #fff;
+                padding: 0 8px;
+            }
+            .menu-header::before {
+                content: '';
+                display: block;
+                height: 1px;
+                border-bottom: 1px solid var(--paper-grey-300);
+                position: absolute;
+                left: 0;
+                right: 0;
+                top: 50%;
+                margin-top: -1px;
+            }
         </style>
-        <paper-listbox>
+        <paper-listbox selectable="paper-item">
             <template is="dom-repeat" items="[[ menus ]]">
+                <template is="dom-if" if="[[ item.smn_group ]]">
+                    <div class="menu-header">
+                        <span>[[ item.smn_group ]]</span>
+                    </div>
+                </template>
                 <paper-item data-visible$="[[ item.smn_visible ]]" on-tap="__onItemTap" class$="[[ item.smn_class ]]">
                     <div class="gutt"></div>
                     <div class="icon"><iron-icon icon="[[ item.smn_icon ]]"></iron-icon></div>

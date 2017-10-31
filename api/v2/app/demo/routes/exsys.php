@@ -10,7 +10,11 @@ Router::group(array(
 ->post('/{id}/upload', 'uploadById')
 ->post('/{id}/reject', 'rejectById')
 ->post('/{id}/approve', 'approveById')
-->post('/{id}/request', 'requestById');
+->post('/{id}/request', 'requestById')
+->post('/{id}/fa-receive', 'faReceiveById')
+->post('/{id}/fa-approve', 'faApproveById')
+->post('/{id}/fa-reject', 'faRejectById')
+->post('/{id}/fa-request', 'faRequestById');
 
 
 Router::group(array(

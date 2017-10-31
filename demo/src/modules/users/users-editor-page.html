@@ -1,19 +1,14 @@
 <link rel="import" href="../../../bower_components/paper-input/paper-input.html">
 <link rel="import" href="../../../bower_components/paper-button/paper-button.html">
-<link rel="import" href="../../../bower_components/paper-radio-button/paper-radio-button.html">
 <link rel="import" href="../../../bower_components/paper-toggle-button/paper-toggle-button.html">
-<link rel="import" href="../../../bower_components/vaadin-combo-box/vaadin-combo-box.html">
-<link rel="import" href="../../../bower_components/vaadin-material-theme/vaadin-date-picker.html">
-<link rel="import" href="../../../bower_components/vaadin-date-picker/vaadin-date-picker.html">
 <link rel="import" href="../../elements/kct-view/kct-view.html">
 <link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../../elements/kct-file/kct-file-input.html">
 <link rel="import" href="../../elements/kct-checkbox/kct-checkbox.html">
-<link rel="import" href="../../elements/kct-layouts/kct-hbox.html">
 <link rel="import" href="../../elements/kct-layouts/kct-vbox.html">
 <link rel="import" href="../../elements/kct-layouts/kct-column.html">
 <link rel="import" href="../../elements/kct-form/kct-form-validator.html">
-<link rel="import" href="../../elements/kct-radio-group/kct-radio-group.html">
+<link rel="import" href="../../elements/kct-combobox/kct-combobox.html">
 <link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
 
 <dom-module id="users-editor-page">
@@ -72,24 +67,30 @@
                             <paper-input label="Password confirm" type="password" value="{{ password2 }}"></paper-input>
                             <kct-checkbox value="{{ record.su_active }}">Check to activate this user</kct-checkbox>
 
-                            
                         </div>
                         <div class="p-r">
                             <h3 class="m-b">Personal Information</h3>
-                            <paper-input id="fullname" label="Full Name" value="{{ record.su_fullname }}" required auto-validate error-message="Full name is required"></paper-input>
-                            <vaadin-combo-box 
+                            <paper-input 
+                                id="fullname" 
+                                label="Full Name" 
+                                value="{{ record.su_fullname }}" 
+                                required auto-validate error-message="Full name is required"></paper-input>
+
+                            <kct-combobox 
+                                url="/positions" 
                                 label="Position" 
                                 value="{{ record.su_position_id }}" 
-                                items="[[ positions ]]" 
+                                page-size="10" 
                                 item-label-path="pos_name" 
-                                item-value-path="pos_id"></vaadin-combo-box> 
+                                item-value-path="pos_id"></kct-combobox>
 
-                            <vaadin-combo-box 
+                            <kct-combobox 
+                                url="/grades" 
                                 label="Grade" 
                                 value="{{ record.su_grade_id }}" 
-                                items="[[ grades ]]" 
-                                item-value-path="grade_id" 
-                                item-label-path="grade_code">
+                                page-size="10" 
+                                item-label-path="grade_code" 
+                                item-value-path="grade_id">
                                 <template>
                                     <style>
                                         .info { font-size: 13px; text-transform: uppercase; color: #777;  }
@@ -98,8 +99,8 @@
                                         <div class="name">[[ item.grade_code ]]</div>
                                         <div class="info">[[ item.grade_desc ]] - [[ item.grade_type ]]</div>    
                                     </div>
-                                </template>        
-                            </vaadin-combo-box>
+                                </template>                
+                            </kct-combobox>
                             
                             <kct-file-input label="Avatar" value="{{ record.su_avatar }}" file="{{ avatar }}"></kct-file-input>
                         </div>
@@ -133,10 +134,8 @@
             static get properties() {
                 return {
                     page: { type: String, value: 'profile' },
-                    record: { type: Object, value: () => ({ su_active: '1' }) },
                     roles: { type: Array },
-                    grades: { type: Array },
-                    positions: { type: Array }
+                    record: { type: Object, value: () => ({ su_active: '1' }) }
                 };
             }
 
@@ -221,23 +220,9 @@
                 });
             }
 
-            __loadPositions() {
-                return this.$.ajax.GET('/positions').then(res => {
-                    this.set('positions', res.data);
-                });
-            }
-
-            __loadGrades() {
-                return this.$.ajax.GET('/grades').then(res => {
-                    this.set('grades', res.data);
-                });
-            }
-
             __loadReferences() {
                 return Promise.all([
-                    this.__loadRoles(),
-                    this.__loadPositions(),
-                    this.__loadGrades()
+                    this.__loadRoles()
                 ]);
             }
 

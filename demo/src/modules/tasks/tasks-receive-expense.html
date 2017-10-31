@@ -7,24 +7,15 @@
 <link rel="import" href="../../elements/kct-message/kct-prompt.html">
 <link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
 
-<dom-module id="tasks-fa-approval-action">
+<dom-module id="tasks-receive-expense">
     <template>
         <style include="theme-helper">
             :host {
-                height: var(--tasks-fa-approval-action-height, 500px);
+                height: 100%;
                 background-color: var(--paper-grey-100);
             }
             .action-buttons paper-button {
                 min-width: 90px;
-            }
-            .display-field {
-                font-size: 14px;
-                padding: 5px 0;
-            }
-            .display-field > label:first-child {
-                font-weight: 500;
-                display: inline-block;
-                width: 100px;
             }
             tr.group-row,
             tr.separator {
@@ -44,19 +35,20 @@
                 text-decoration: underline;
                 color: var(--paper-grey-500);
             }
+            [hidden] {
+                display: none;
+            }
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
         
         <kct-vbox>
-            <page-header-block icon="done" description="FA Approval Action"></page-header-block>
+            <page-header-block icon="done" description="Receive expense action"></page-header-block>
             <div class="flex scroll-y padding">
                 <paper-card class="block">
                     <div class="card-content">
                         <div class="action-buttons text-right">
-                            <paper-button on-tap="__onConfirmTap" class="btn-md btn-green">Approve</paper-button>
-                            <paper-button on-tap="__onRejectTap" class="btn-md btn-red">Reject</paper-button>
-                            <paper-button on-tap="__onRequestTap" class="btn-md btn-amber">Request Change</paper-button>    
+                            <paper-button on-tap="__onReceiveTap" class="btn-cyan">Receive Document</paper-button>
                         </div>
                     </div>
                 </paper-card>
@@ -93,33 +85,62 @@
                                 </div>
                             </div>
                             <div>
+                                <div class="display-field" hidden$="[[ !record.expense.adv_no ]]">
+                                    <label>Advance: </label>
+                                    <div><a href="#" on-click="__onAdvanceTap">[[ record.expense.adv_no ]]</a></div>
+                                </div>
                                 <div class="display-field">
-                                    <label>Status: </label>
+                                    <label>Current Status: </label>
                                     <div>[[ record.expense.status_name ]]</div>
-                                </div>
-                                <div class="display-field">
-                                    <label>Received By: </label>
-                                    <div>[[ record.expense.received_by_name ]]</div>
-                                </div>
-                                <div class="display-field">
-                                    <label>Received Date: </label>
-                                    <div>[[ record.expense.received_date_short ]]</div>
                                 </div>
                             </div>
                         </kct-column>
                     </div>
                 </paper-card>
-                <paper-card class="block">
+
+                <paper-card class="block" hidden$="[[ !record.expense.has_advance ]]">
+                    <div class="card-content">
+                        <h3 class="block-title">Currencies Exchange</h3>
+                        <div class="table-responsive">
+                            <table class="table striped">
+                                <thead>
+                                    <tr>
+                                        <th width="40" class="text-center">No.</th>
+                                        <th width="100">Date</th>
+                                        <th>Remarks</th>
+                                        <th width="150" class="text-right">From Amounts</th>
+                                        <th width="150" class="text-right">To Amounts</th>
+                                        <th width="100" class="text-right">Rates</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template is="dom-repeat" items="[[ record.exchanges ]]">
+                                        <tr>
+                                            <td class="text-center">[[ __computeNo(index) ]]</td>
+                                            <td>[[ item.exchange_date_short ]]</td>
+                                            <td>[[ item.remarks ]]</td>
+                                            <td class="text-right">[[ item.from_display ]]</td>
+                                            <td class="text-right">[[ item.to_display ]]</td>
+                                            <td class="text-right">[[ item.rates ]]</td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </paper-card>
+
+                <paper-card  class="block">
                     <div class="card-content">
                         <h3 class="block-title">Expense Items</h3>
 
                         <div class="table-responsive">
-                            <table class="table">
+                            <table class="table" hidden$="[[ !record.expense.is_travelling ]]">
                                 <thead>
-                                    <th width="50">No.</th>
+                                    <th width="40" class="text-center">No.</th>
                                     <th>Description</th>
                                     <th width="100">Payment</th>
-                                    <th width="100" class="text-center">Currency</th>
+                                    <th width="100">Currency</th>
                                     <th width="150" class="text-right">Amounts</th>
                                 </thead>
                                 <tbody>
@@ -129,10 +150,10 @@
                                         </tr>
                                         <template is="dom-repeat" items="[[ group.group_items ]]">
                                             <tr>
-                                                <td>[[ item.item_seq ]]</td>
+                                                <td class="text-center">[[ item.item_seq ]]</td>
                                                 <td>[[ item.item_name ]]</td>
                                                 <td>[[ item.payment_type_name ]]</td>
-                                                <td class="text-center">[[ item.currency_name ]]</td>
+                                                <td>[[ item.currency_name ]]</td>
                                                 <td class="text-right">[[ item.amounts_formatted ]]</td>
                                             </tr>
                                             <tr class="form-row">
@@ -156,18 +177,82 @@
                                     </template>
                                 </tbody>
                             </table>
+
+                            <table class="table striped" hidden$="[[ record.expense.is_travelling ]]">
+                                <thead>
+                                    <tr>
+                                        <th width="40" class="text-center">No.</th>
+                                        <th width="100">Date</th>
+                                        <th>Description</th>
+                                        <th width="100">Payment</th>
+                                        <th width="100">Currency</th>
+                                        <th width="100" class="text-right">Rates</th>
+                                        <th width="120" class="text-right">Amounts</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template is="dom-repeat" items="[[ record.items ]]" as="group">
+                                        <template is="dom-repeat" items="[[ group.group_items ]]">
+                                            <tr>
+                                                <td class="text-center">[[ item.item_seq ]]</td>
+                                                <td>[[ item.item_date_short ]]</td>
+                                                <td>[[ item.item_name ]]</td>
+                                                <td>[[ item.payment_type_name ]]</td>
+                                                <td>[[ item.currency_code ]]</td>
+                                                <td class="text-right">[[ item.currency_rate_displayed ]]</td>
+                                                <td class="text-right">[[ item.amounts_formatted ]]</td>
+                                            </tr>
+                                        </template>
+                                    </template>
+                                    
+                                </tbody>
+                            </table>
+
                         </div>
+
                         
                     </div>
                 </paper-card>
+
+                <paper-card class="block">
+                    <div class="card-content">
+                        <h3 class="block-title">Expense Summary</h3>
+                        <div class="table-responsive">
+                            <table class="table bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Description</th>
+                                        <th class="text-right">Amounts</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template is="dom-repeat" items="[[ record.summary.expense ]]">
+                                        <tr>
+                                            <td>[[ item.expense_label ]]</td>
+                                            <td class="text-right">[[ item.expense_value_formatted ]]</td>
+                                        </tr>
+                                    </template>
+                                    <template is="dom-repeat" items="[[ record.summary.remains ]]">
+                                        <tr>
+                                            <td>[[ item.remains_label ]]</td>
+                                            <td class="text-right">[[ item.remains_value_formatted ]]</td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </paper-card>
+
                 <paper-card class="block">
                     <div class="card-content">
 
                         <h3 class="block-title">Expense History</h3>
+
                         <div class="table-responsive">
                             <table  class="table striped">
                                 <thead>
-                                    <th width="50">No.</th>
+                                    <th width="40" class="text-center">No.</th>
                                     <th width="120">Date</th>
                                     <th>Status</th>
                                     <th>User</th>
@@ -176,7 +261,7 @@
                                 <tbody>
                                     <template is="dom-repeat" items="[[ record.history ]]">
                                         <tr>
-                                            <td>[[ __computeNo(index) ]]</td>
+                                            <td class="text-center">[[ __computeNo(index) ]]</td>
                                             <td>[[ item.date_short ]]</td>
                                             <td>[[ item.status_name ]]</td>
                                             <td>[[ item.user_act_name ]]</td>
@@ -197,28 +282,29 @@
             <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to list" on-tap="__onBackTap"></paper-fab>
         </div>
 
-        <kct-prompt id="task-prompt" title="[[ actionTitle ]]" message="Type your reason"></kct-prompt>
+        <kct-prompt id="task-prompt" title="[[ actionTitle ]]" message="Additional notes (remarks)"></kct-prompt>
 
     </template>
     <script>
-        class TasksFaApprovalAction extends KctView {
+        class TasksReceiveExpense extends KctView {
             static get is() {
-                return 'tasks-fa-approval-action';
+                return 'tasks-receive-expense';
             }
             static get properties() {
                 return {
                     record: { type: Object },
-                    task: { type: Object },
                     actionTitle: { type: String, value: 'Approval' }
                 }
             }
-            static get observers() {
-                return [
-                    '__taskChanged(task.*)'
-                ];
+            handleRouteParams(context, id) {
+                if (context != 'expense') return;
+                
+                this.$.ajax.GET('/expense/' + id + '/view').then(res => {
+                    this.set('record', res.data);
+                });
             }
             handleResizing(width, height) {
-                this.updateStyles({'--tasks-fa-approval-action-height': height + 'px'});
+                
             }
             __computeNo(index) {
                 return index + 1;
@@ -226,65 +312,30 @@
             __computeVisa(visa) {
                 return visa == '1' ? 'Yes' : '-';
             }
-            __taskChanged() {
-                if (this.task) {
-                    this.$.ajax.GET('/expense/' + this.task.id_exp + '/view').then(res => {
-                        this.set('record', res.data);
-                    });  
-                }
-            }
-            __onRejectTap() {
-                if ( ! this.record && ! this.record.expense) {
-                    return;
-                }
-
-                this.set('actionTitle', 'Rejection');
-
-                this.$['task-prompt'].open().then(r => {
-                    if (r.action == 'submit') {
-                        let notes = r.value || '';
-                        this.$.ajax.POST('/expense/' + this.record.expense.id_exp + '/fa-reject', { notes: notes }).then(() => {
-                            this.__onBackTap();
-                        });
-                    }
-                });
-            }
-            __onConfirmTap() {
+            __onReceiveTap() {
                 if ( ! this.record && ! this.record.expense) {
                     return;
                 }
                 
-                this.set('actionTitle', 'Approval');
+                this.set('actionTitle', 'Receive');
 
                 this.$['task-prompt'].open().then(r => {
                     if (r.action == 'submit') {
                         let notes = r.value || '';
-                        this.$.ajax.POST('/expense/' + this.record.expense.id_exp + '/fa-approve', { notes: notes }).then(() => {
+                        this.$.ajax.POST('/expense/' + this.record.expense.id_exp + '/fa-receive', { notes: notes }).then(() => {
                             this.__onBackTap();
                         });
                     }
                 });
             }
-            __onRequestTap() {
-                if ( ! this.record && ! this.record.expense) {
-                    return;
-                }
-
-                this.set('actionTitle', 'Request Change');
-
-                this.$['task-prompt'].open().then(r => {
-                    if (r.action == 'submit') {
-                        let notes = r.value || '';
-                        this.$.ajax.POST('/expense/' + this.record.expense.id_exp + '/fa-request', { notes: notes }).then(() => {
-                            this.__onBackTap();
-                        });
-                    }
-                });
+            __onAdvanceTap(e) {
+                e.preventDefault();
+                this.set('route.path', '/advance/advance/view/' + this.record.expense.adv_ref);
             }
             __onBackTap() {
-                this.dispatchEvent(new CustomEvent('back-tap'));
+                this.set('route.path', '/tasks/tasks-receive');
             }
         }
-        customElements.define(TasksFaApprovalAction.is, TasksFaApprovalAction);
+        customElements.define(TasksReceiveExpense.is, TasksReceiveExpense);
     </script>
 </dom-module>

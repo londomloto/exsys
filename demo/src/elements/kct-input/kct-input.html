@@ -1,0 +1,34 @@
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+
+<dom-module id="kct-input">
+    <template>
+        <paper-input></paper-input>
+    </template>
+    <script>
+        {
+            class KctInput extends Polymer.Element {
+                static get is() {
+                    return 'kct-input';
+                }
+
+                static get properties() {
+                    return {
+                        mask: { type: String }
+                    };
+                }
+
+                static get observers() {
+                    return [
+                        '__maskChanged(mask)'
+                    ];
+                }
+
+                __maskChanged(mask) {
+
+                }
+            }
+
+            customElements.define(KctInput.is, KctInput);
+        }
+    </script>
+</dom-module>

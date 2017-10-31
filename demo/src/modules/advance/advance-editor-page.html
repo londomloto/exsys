@@ -36,7 +36,8 @@
         <kct-vbox>
             
             <page-header-block title="EDITOR" description="Advance Request" icon="description" hidden$="[[ dialogMode ]]">
-                <paper-button hidden="[[ ! record.id_adv ]]"  disabled$="[[ __formInvalid ]]" class="btn-primary" on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Save Changes</paper-button>
+                <paper-button hidden="[[ ! record.id_adv ]]"  disabled$="[[ __formInvalid ]]" class="btn-primary" on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Update</paper-button>
+                <paper-button hidden="[[ ! record.id_adv ]]"  disabled$="[[ __formInvalid ]]" class="btn-cyan" on-tap="__onSubmitTap"><iron-icon icon="done-all"></iron-icon>&nbsp;Submit</paper-button>
             </page-header-block>
 
             <div class="flex scroll-y padding">
@@ -47,14 +48,10 @@
                         <kct-form-validator id="validator" invalid="{{ __formInvalid }}" auto-validate>
                             
                             <paper-input label="Subject" value="{{ record.subject_adv }}" required auto-validate error-message="Subject is required"></paper-input>    
-                            
+
                             <kct-column columns="2">
-                                <div>
-                                    <vaadin-date-picker label="Start Date" value="{{ record.date_start }}" required auto-validate error-message="Start date is required"></vaadin-date-picker>
-                                </div>
-                                <div>
-                                    <vaadin-date-picker label="End Date" value="{{ record.date_end }}" required auto-validate error-message="End date is required"></vaadin-date-picker>
-                                </div>
+                                <vaadin-date-picker label="Start Date" value="{{ record.date_start }}" required auto-validate error-message="Start date is required"></vaadin-date-picker>
+                                <vaadin-date-picker label="End Date" value="{{ record.date_end }}" required auto-validate error-message="End date is required"></vaadin-date-picker>
                             </kct-column>
 
                             <vaadin-combo-box 
@@ -63,7 +60,7 @@
                                 items="[[ types ]]" 
                                 item-value-path="type_id" 
                                 item-label-path="type_name" 
-                                on-change="__onTypeChange" 
+                                on-change="__onComboTypeChange" 
                                 required 
                                 auto-validate 
                                 error-message="Type is required"></vaadin-combo-box>
@@ -100,13 +97,13 @@
                     <div class="card-content">
                         <h3 class="block-title">Advance Items</h3>
                         <div class="m-b">
-                            <paper-button on-tap="__onAddItemTap" class="btn-sm btn-primary"><iron-icon icon="add"></iron-icon>&nbsp;Add Item</paper-button>
+                            <paper-button on-tap="__onAddItemTap" class="btn-sm btn-cyan"><iron-icon icon="add"></iron-icon>&nbsp;Add Item</paper-button>
                         </div>
                         <div class="table-responsive">
                             <table class="table striped">
                                 <thead>
                                     <tr>
-                                        <th width="50">No.</th>
+                                        <th width="40" class="text-center">No.</th>
                                         <th>Description</th>
                                         <th width="100">Currency</th>
                                         <th width="150" class="text-right">Amounts</th>
@@ -116,7 +113,7 @@
                                 <tbody>
                                     <template is="dom-repeat" items="[[ items ]]">
                                         <tr>
-                                            <td>[[ __computeNo(index) ]]</td>
+                                            <td class="text-center">[[ __computeNo(index) ]]</td>
                                             <td>[[ item.description ]]</td>
                                             <td>[[ item.currency_code ]]</td>
                                             <td class="text-right">[[ item.amounts_formatted ]]</td>
@@ -163,19 +160,22 @@
             on-closed="__onItemEditorClosed">
             <template preserve-content>
                 <div slot="dialog-body">
+
+                    <style include="theme-helper"></style>
+
                     <kct-form-validator id="item-validator" invalid="{{ __itemInvalid }}" auto-validate>
-                        <paper-input label="Description" value="{{ item.description }}" required auto-validate error-message="Description is required"></paper-input>
+                        <paper-input label="Description" value="{{ item.description }}" tabindex="0" autofocus required auto-validate error-message="Description is required"></paper-input>
                         <vaadin-combo-box 
                             label="Currency" 
                             value="{{ item.currency_id }}"
                             items="[[ currencies ]]" 
                             item-value-path="currency_id" 
-                            item-label-path="currency_name" 
+                            item-label-path="currency_display" 
                             on-change="__onCurrencyChange" 
                             required 
                             auto-validate 
                             error-message="Currency is required"></vaadin-combo-box>
-                        <paper-input allowed-pattern="[0-9.]" label="Amounts" value="{{ item.amounts }}" required auto-validate error-message="Amounts is required"></paper-input>    
+                        <paper-input class="text-right" allowed-pattern="[0-9.]" label="Amounts" value="{{ item.amounts }}" required auto-validate error-message="Amounts is required"></paper-input>    
                     </kct-form-validator>
                     
                 </div>
@@ -214,26 +214,28 @@
                 this.__purposes = [];
                 this.__comboPurposeRequired = false;
             }
-            handleRouteParams(module, action, id) {
+            handleRouteParams(action, id) {
                 if (['add', 'edit'].indexOf(action) == -1) return;
-
-                this.set('items', []);
-                this.set('record', {});
-
+                
                 if (action == 'edit') {
                     this.mask('Loading...');
-
                     this.__loadReferences().then(() => {
                         this.$.ajax.GET('/advance/' + id).then(res => {
                             this.unmask();
 
                             this.set('record', res.data);
+                            
+                            this.__handlePurpose();
                             this.__loadItems();
+
                             this.$.validator.validate();
                         });
                     });
                 } else {
                     this.__loadReferences().then(() => {
+                        this.set('items', []);
+                        this.set('record', {});
+                        this.__handlePurpose();
                         this.$.validator.validate();
                     });
                 }
@@ -263,9 +265,17 @@
             saveDocument() {
                 return this.__saveChanges();
             }
+            __handlePurpose() {
+                let purposes = [];
+                
+                if (this.record.type) {
+                    purposes = this.purposes.filter(t => t.parent_id == this.record.type);
+                }
+
+                this.set('__purposes', purposes);
+            }
             __purposesChanged() {
-                let required = this.__purposes.length > 0;
-                this.set('__comboPurposeRequired', required);
+                this.set('__comboPurposeRequired', this.__purposes.length > 0);
 
                 this.$['combo-purpose'].validate();
                 this.$['text-purpose'].validate();
@@ -372,16 +382,22 @@
                     this.toast('Success', 'Data has been saved');
                 });
             }
+            __onSubmitTap(e) {
+                this.confirm('Confirm', `Are you sure you want to submit ${this.record.adv_no}?`).then(b => {
+                    if (b) {
+                        this.$.ajax.POST('/advance/' + this.record.id_adv + '/submit').then(() => {
+                            this.__onBackTap();
+                        });
+                    }
+                });   
+            }
             __onNextTap() {
                 this.__saveChanges();
             }
 
-            __onTypeChange(e) {
-                let type = e.target.value;
-                let purposes = this.purposes.filter(p => p.parent_id == type);
-                
-                this.set('__purposes', purposes);
+            __onComboTypeChange(e) {
                 this.set('record.purpose', '');
+                this.__handlePurpose();
             }
             __onAttachTap() {
                 this.$.attachment.browse();

@@ -2,7 +2,8 @@
 <link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../../elements/kct-grid/kct-grid.html">
 <link rel="import" href="../../elements/kct-pages/kct-pages.html">
-<link rel="import" href="tasks-receive-action.html">
+<link rel="import" href="tasks-receive-expense.html">
+<link rel="import" href="tasks-receive-advance.html">
 
 <dom-module id="tasks-receive-page">
     <template>
@@ -11,13 +12,13 @@
             :host {
                 height: var(--tasks-receive-page-height, 600px);
             }
-            kct-pages {
+            #pages {
                 display: block;
                 height: 100%;
             }
         </style>
         
-        <kct-pages selected="{{ page }}" attr-for-selected="id">
+        <kct-pages id="pages" selected="{{ page }}" attr-for-selected="id">
             <kct-grid 
                 id="grid" 
                 url="/finance/tasks?display=receive-request" 
@@ -30,12 +31,14 @@
                 pagination 
                 autoload>
 
-                    <template preserve-content>
-                        <style include="theme-helper"></style>
-                    </template>
+                <template preserve-content>
+                    <style include="theme-helper"></style>
+                </template>
 
             </kct-grid>
-            <tasks-receive-action id="action" task="[[ task ]]" on-back-tap="__onActionBackTap"></tasks-receive-action>
+
+            <tasks-receive-expense id="expense" route="{{ route }}" state="[[ state ]]"></tasks-receive-expense>
+            <tasks-receive-advance id="advance" route="{{ route }}" state="[[ state ]]"></tasks-receive-advance>
         </kct-pages>
 
     </template>
@@ -46,15 +49,14 @@
             }
             static get properties() {
                 return {
-                    title: { type: String, value: 'Expense Task', notify: true },
+                    title: { type: String, value: 'Receive Tasks', notify: true },
                     page: { type: String, value: 'grid' },
-                    task: { type: Object },
                     columns: { 
                         type: Array,
                         value: [
                             { type: 'rownumber' },
-                            { text: 'Expense No.', dataIndex: 'exp_no', width: 120, align: 'center' },
-                            { text: 'Subject', dataIndex: 'subject_exp' },
+                            { text: 'Document No.', dataIndex: 'ref_no', width: 120, align: 'center' },
+                            { text: 'Subject', dataIndex: 'subject' },
                             { text: 'Proposed By', dataIndex: 'user_fullname' },
                             { text: 'Date Created', dataIndex: 'date_short', width: 120, align: 'center' },
                             { 
@@ -88,14 +90,26 @@
             }
             handleResizing(width, height) {
                 this.updateStyles({'--tasks-receive-page-height': height + 'px'});
-                this.$.action.handleResizing(width, height);
+
+                if (this.page == 'grid') {
+                    this.$.grid.resize();
+                } else {
+                    this.$[this.page] && this.$[this.page].handleResizing(width, height);
+                }
             }
-            handleRouteParams() {
-                
+            handleRouteParams(context, id) {
+                if (context) {
+                    this.set('page', context);
+                } else {
+                    this.set('page', 'grid');
+                    
+                    this.$.grid.deferAutoresize();
+                    this.$.grid.load();
+                }
             }
             __onViewTap(e) {
-                this.set('task', e.data);
-                this.set('page', 'action');
+                let context = e.data.module;
+                this.set('route.path', '/tasks/tasks-receive/' + context + '/' + e.data.id_ref);
             }
             __onActionBackTap() {
                 this.set('page', 'grid');

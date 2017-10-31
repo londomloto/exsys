@@ -107,17 +107,12 @@
                     super.ready();
                     this.$.grid.context = this;
                 }
-                handleRouteParams(module, action, id) {
+                handleRouteParams(action, id) {
                     if (action) return;
-                    if ( ! this.$.grid.__loaded) {
-                        this.$.grid.__loaded = true;
-                        this.$.grid.load();
-                    }
+                    this.$.grid && this.$.grid.deferAutoload();
                 }
                 handleResizing(width, height) {
-                    if (this.$.grid) {
-                        this.$.grid.resize();
-                    }
+                    this.$.grid && this.$.grid.resize();
                 }
                 __onAddTap() {
                     this.set('route.path', '/expense/expense/add');

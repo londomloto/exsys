@@ -21,7 +21,7 @@
 
         <kct-vbox>
             <page-header-block icon="history" description="Trip History">
-                <paper-button class="btn-indigo"><iron-icon icon="print"></iron-icon>&nbsp;Print Document</paper-button>
+                
             </page-header-block>
             <div class="flex scroll-y padding">
 
@@ -58,9 +58,13 @@
                                 </div>
                             </div>
                             <div>
-                                <div class="display-field">
+                                <div class="display-field" hidden$="[[ !record.trip.adv_no ]]">
                                     <label>Advance: </label>
-                                    <div>[[ record.trip.adv_no ]]</div>
+                                    <div><a href="#" on-click="__onAdvanceTap">[[ record.trip.adv_no ]]</a></div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Status: </label>
+                                    <div>[[ record.trip.status_name ]]</div>
                                 </div>
                             </div>
                         </kct-column>
@@ -168,7 +172,7 @@
                     itemRecord: { type: Object }
                 };
             }
-            handleRouteParams(module, action, id) {
+            handleRouteParams(action, id) {
                 if (action != 'view') return;
                 this.mask('Loading...');
                 this.$.ajax.GET('/trips/' + id + '/view').then(res => {
@@ -191,6 +195,10 @@
             }
             __onTicketEditorCloseTap() {
                 this.$['ticket-editor'].close();
+            }
+            __onAdvanceTap(e) {
+                e.preventDefault();
+                this.set('route.path', '/advance/advance/view/' + this.record.trip.adv_ref);
             }
             __onBackTap() {
                 this.set('route.path', '/trips');

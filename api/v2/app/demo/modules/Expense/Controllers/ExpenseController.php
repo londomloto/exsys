@@ -218,9 +218,10 @@ class ExpenseController extends \Micro\Controller {
         if ($expense) {
             // delete tasks
             \App\Finance\Models\Task::find(array(
-                'id_exp = :expense: AND catagory = :catagory:',
+                'id_ref = :expense: AND module = :module: AND action = :action:',
                 'bind' => array(
-                    'catagory' => 'receive-request',
+                    'module' => 'expense',
+                    'action' => 'receive-request',
                     'expense' => $expense->id_exp
                 )
             ))->delete();
@@ -246,9 +247,10 @@ class ExpenseController extends \Micro\Controller {
         if ($expense) {
             // delete tasks
             \App\Finance\Models\Task::find(array(
-                'id_exp = :expense: AND catagory = :catagory:',
+                'id_ref = :expense: AND module = :module: AND action = :action:',
                 'bind' => array(
-                    'catagory' => 'approval-request',
+                    'module' => 'expense',
+                    'action' => 'approval-request',
                     'expense' => $expense->id_exp
                 )
             ))->delete();
@@ -286,9 +288,10 @@ class ExpenseController extends \Micro\Controller {
         if ($expense) {
             // delete tasks
             \App\Finance\Models\Task::find(array(
-                'id_exp = :expense: AND catagory = :catagory:',
+                'id_exp = :expense: AND module = :module: AND action = :action:',
                 'bind' => array(
-                    'catagory' => 'approval-request',
+                    'module' => 'expense',
+                    'action' => 'approval-request',
                     'expense' => $expense->id_exp
                 )
             ))->delete();

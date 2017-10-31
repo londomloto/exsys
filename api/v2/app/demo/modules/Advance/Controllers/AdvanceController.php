@@ -5,7 +5,8 @@ use App\Advance\Models\Advance,
     App\Advance\Models\History,
     App\Advance\Models\Task,
     App\System\Models\Autonumber,
-    App\Users\Models\User;
+    App\Users\Models\User,
+    App\Statuses\Models\Status;
 
 class AdvanceController extends \Micro\Controller {
 
@@ -37,14 +38,12 @@ class AdvanceController extends \Micro\Controller {
         $advance = Advance::get($id)->data;
 
         $data['advance'] = $advance->toArray();
-
-        $data['items'] = $advance->items->filter(function($elem){
-            return $elem->toArray();
-        });
-
+        $data['items'] = $advance->items->filter(function($elem){ return $elem->toArray(); });
         $data['history'] = $advance->getHistory(array('order' => 'adv_history_id ASC'))->filter(function($elem){
             return $elem->toArray();
-        });
+        }); 
+
+        $data['summary'] = $advance->getSummary();
 
         return array(
             'success' => TRUE,
@@ -66,9 +65,9 @@ class AdvanceController extends \Micro\Controller {
 
         if ($data->save($post)) {
             return Advance::get($data->id_adv);
-        } else {
+        }/* else {
             print_r($data->getMessages());
-        }
+        }*/
 
         return Advance::none();
     }
@@ -143,10 +142,12 @@ class AdvanceController extends \Micro\Controller {
                 )
             ))->delete();
 
+            $status = Status::val('reject');
+
             // tambah history
             $history = new History();
             $history->id_adv = $advance->id_adv;
-            $history->status_id = 7;
+            $history->status_id = $status;
             $history->user_act = $user['su_id'];
             $history->date = date('Y-m-d H:i:s');
             $history->notes = $post['notes'];
@@ -154,7 +155,7 @@ class AdvanceController extends \Micro\Controller {
             $history->save();
 
             // update status
-            $advance->status = 7;
+            $advance->status = $status;
             $advance->save();
         }
 
@@ -199,12 +200,12 @@ class AdvanceController extends \Micro\Controller {
             $status = NULL;
 
             if ($user['su_grade_type'] == 'verificator') {
-                $status = 9;
+                $status = Status::val('verified');
             } else {
                 if ($user['su_grade_limit'] >= 15000000) {
-                    $status = 4;
+                    $status = Status::val('final-approved');
                 } else {
-                    $status = 3;
+                    $status = Status::val('approved');
                 }
             }
 
@@ -218,6 +219,10 @@ class AdvanceController extends \Micro\Controller {
             // update status
             $advance->status = $status;
             $advance->save();
+
+            if ($status == Status::val('final-approved')) {
+                $advance->faSubmit('receive-request');
+            }
         }
 
         return array(
@@ -239,10 +244,12 @@ class AdvanceController extends \Micro\Controller {
                 )
             ))->delete();
 
+            $status = Status::val('change-request');
+
             // tambah history
             $history = new History();
             $history->id_adv = $advance->id_adv;
-            $history->status_id = 10;
+            $history->status_id = $status;
             $history->user_act = $user['su_id'];
             $history->date = date('Y-m-d H:i:s');
             $history->notes = $post['notes'];
@@ -250,8 +257,76 @@ class AdvanceController extends \Micro\Controller {
             $history->save();
 
             // update status
-            $advance->status = 10;
+            $advance->status = $status;
             $advance->save();
+        }
+
+        return array(
+            'success' => TRUE
+        );
+    }
+
+    public function faReceiveByIdAction($id) {
+        $advance = Advance::get($id)->data;
+        $user = $this->auth->user();
+
+        if ($advance) {
+            // delete tasks
+            \App\Finance\Models\Task::find(array(
+                'id_ref = :advance: AND module = :module: AND action = :action:',
+                'bind' => array(
+                    'module' => 'advance',
+                    'action' => 'receive-request',
+                    'advance' => $advance->id_adv
+                )
+            ))->delete();
+            
+            $advance->received_by = $user['su_id'];
+            $advance->received_date = date('Y-m-d H:i:s');
+            
+            if ($advance->save()) {
+                $advance->faSubmit('approval-request');
+            }
+        }
+
+        return array(
+            'success' => TRUE
+        );
+    }
+
+    public function faApproveByIdAction($id) {
+        $advance = Advance::get($id)->data;
+        $user = $this->auth->user();
+        $post = $this->request->getJson();
+
+        if ($advance) {
+            // delete tasks
+            \App\Finance\Models\Task::find(array(
+                'id_ref = :advance: AND module = :module: AND action = :action:',
+                'bind' => array(
+                    'module' => 'advance',
+                    'action' => 'approval-request',
+                    'advance' => $advance->id_adv
+                )
+            ))->delete();
+
+            // tambah history
+            $history = new History();
+            $history->id_adv = $advance->id_adv;
+
+            $status = Status::val('fa-approved');
+            $notes = isset($post['notes']) ? $post['notes'] : '-';
+
+            $history->status_id = $status;
+            $history->user_act = $user['su_id'];
+            $history->date = date('Y-m-d H:i:s');
+            $history->notes = $notes;
+            $history->save();
+
+            // update status
+            $advance->status = $status;
+            $advance->save();
+
         }
 
         return array(

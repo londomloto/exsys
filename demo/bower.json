@@ -51,12 +51,10 @@
     "vaadin-combo-box": "^2.0.0",
     "vaadin-charts": "^5.0.0",
     "crypto-js": "^3.1.9",
-    "paper-dialog-scrollable": "PolymerElements/paper-dialog-scrollable#^2.1.0",
     "vaadin-date-picker": "vaadin/vaadin-date-picker#^2.0.5",
     "vaadin-material-theme": "vaadin/vaadin-material-theme#^0.3.0",
     "web-animations-js": "^2.3.1",
-    "shadydom": "webcomponents/shadydom#v1.0.0",
-    "paper-time-picker": "1.2.0-rc2"
+    "shadydom": "webcomponents/shadydom#v1.0.0"
   },
   "resolutions": {
     "polymer": "^2.0.0",

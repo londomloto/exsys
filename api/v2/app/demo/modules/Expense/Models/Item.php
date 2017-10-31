@@ -97,6 +97,8 @@ class Item extends \Micro\Model {
             $data['currency_name'] = $this->currency->currency_name;
         }
 
+        $data['currency_rate_displayed'] = number_format($data['currency_rate_appraised'], 2, ',', '.');
+
         $forms = ItemForm::get()
             ->columns(array(
                 'App\Items\Models\ItemForm.item_form_id',

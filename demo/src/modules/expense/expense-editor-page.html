@@ -73,7 +73,7 @@
         <kct-vbox>
             <page-header-block title="EDITOR" description="Expense Document" icon="description">
                 <paper-button hidden$="[[ __expenseIsPhantom ]]"  disabled$="[[ __expenseInvalid ]]" class="btn-primary" on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Update</paper-button>
-                <paper-button hidden$="[[ __expenseIsPhantom ]]"  disabled$="[[ __expenseInvalid ]]" class="btn-info" on-tap="__onSubmitTap"><iron-icon icon="done-all"></iron-icon>&nbsp;Submit</paper-button>
+                <paper-button hidden$="[[ __expenseIsEmpty ]]"  disabled$="[[ __expenseInvalid ]]" class="btn-cyan" on-tap="__onSubmitTap"><iron-icon icon="done-all"></iron-icon>&nbsp;Submit</paper-button>
             </page-header-block>
 
             <div class="flex scroll-y padding">
@@ -88,12 +88,8 @@
                                 <paper-input label="Subject" value="{{ expenseRecord.subject_exp }}" required auto-validate error-message="Subject is required"></paper-input>
                                 
                                 <kct-column columns="2" gutter="1.5rem" spacer="0px">
-                                    <div>
-                                        <vaadin-date-picker label="Start Date" value="{{ expenseRecord.date_start }}" required auto-validate error-message="Start date is required"></vaadin-date-picker>
-                                    </div>
-                                    <div>
-                                        <vaadin-date-picker label="End Date" value="{{ expenseRecord.date_end }}" required auto-validate error-message="End date is required"></vaadin-date-picker>
-                                    </div>
+                                    <vaadin-date-picker label="Start Date" value="{{ expenseRecord.date_start }}" required auto-validate error-message="Start date is required"></vaadin-date-picker>
+                                    <vaadin-date-picker label="End Date" value="{{ expenseRecord.date_end }}" required auto-validate error-message="End date is required"></vaadin-date-picker>
                                 </kct-column>
                                     
                                 <vaadin-combo-box 
@@ -122,6 +118,7 @@
                                             <paper-input 
                                                 label="Number of Participants" 
                                                 value="{{ expenseRecord.participant }}" 
+                                                class="text-right" 
                                                 allowed-pattern="[0-9]" 
                                                 required$="[[ !__expenseIsTravelling ]]" 
                                                 auto-validate error-message="Participants is required"></paper-input>
@@ -268,7 +265,7 @@
                                                 <td>[[ item.item_name ]]</td>
                                                 <td>[[ item.payment_type_name ]]</td>
                                                 <td>[[ item.currency_code ]]</td>
-                                                <td class="text-right">[[ item.currency_rate_exchanged ]]</td>
+                                                <td class="text-right">[[ item.currency_rate_displayed ]]</td>
                                                 <td class="text-right">[[ item.amounts_formatted ]]</td>
                                                 <td class="text-right">
                                                     <paper-button on-tap="__onItemEditTap" class="btn-xs btn-amber">Edit</paper-button>
@@ -386,7 +383,7 @@
                         <div id="indicator" class="text-center m-t" hidden$="[[ !__stampingForm ]]">
                             <paper-spinner-lite active></paper-spinner-lite>
                         </div>
-                        
+
                         <div id="dynamic-wrapper"></div>
 
                         <vaadin-combo-box 
@@ -452,15 +449,16 @@
                             <div>
                                 <paper-input 
                                     label="Exchange Rates" 
-                                    value="{{ itemRecord.currency_rate_exchanged }}" 
-                                    allowed-pattern="[0-9.]" 
-                                    required auto-validate error-message="Rates is required"></paper-input>
+                                    value="{{ itemRecord.currency_rate_appraised }}" 
+                                    class="text-right" 
+                                    required auto-validate error-message="Exchange rates is required"></paper-input>
                             </div>
                         </kct-column>
 
                         <paper-input 
                             label="Amounts" 
                             value="{{ itemRecord.amounts }}" 
+                            class="text-right" 
                             allowed-pattern="[0-9.]" 
                             required auto-validate error-message="Amounts is required"></paper-input>
 
@@ -607,6 +605,7 @@
                     '__typeChanged(expenseRecord.type)',
                     '__purposesChanged(__masterPurposes.*)',
                     '__computePhantom(expenseRecord.id_exp)',
+                    '__computeEmpty(expenseItems.*)',
                     '__computeExpenseHasAdvance(expenseRecord.adv_ref)',
                     '__computeExpenseHasExchange(expenseRecord.id_exp, expenseRecord.adv_ref)'
                 ];
@@ -615,6 +614,7 @@
                 super();
 
                 this.__expenseIsPhantom = true;
+                this.__expenseIsEmpty = true;
                 this.__expenseIsTravelling = true;
                 this.__expenseHidden = true;
                 this.__expenseHasAdvance = false;
@@ -624,7 +624,7 @@
                 this.__comboPurposeRequired = false;
                 this.__stampingForm = false;
             }
-            handleRouteParams(module, action, id) {
+            handleRouteParams(action, id) {
                 if (['add', 'edit'].indexOf(action) == -1) return;
 
                 // load master items
@@ -671,6 +671,9 @@
 
                 this.set('__expenseIsPhantom', phantom);
             }
+            __computeEmpty(changed) {
+                this.set('__expenseIsEmpty', this.expenseItems.length == 0);
+            }
             __computeNo(index) {
                 return (index + 1);
             }
@@ -714,8 +717,9 @@
 
                 function loadAdvance() {
                     return this.$.ajax.GET('/advance', {
-                        // advance yang sudah 'fa-approved' atau '5';
-                        params: JSON.stringify({ status: 4 })
+                        params: { 
+                            status_code: 'fa-approved' 
+                        }
                     }).then(res => {
                         let advance = [{ id_adv: '0', subject_adv: 'None' }];
                         Array.prototype.push.apply(advance, res.data);
@@ -1052,7 +1056,8 @@
                 let value = e.target.value;
                 
                 this.set('itemRecord.currency_rate', 0);
-                this.set('itemRecord.currency_rate_exchanged', 0);
+                this.set('itemRecord.currency_rate_exchanged', 1);
+                this.set('itemRecord.currency_rate_appraised', 1);
                 this.set('itemRecord.currency_offset_id', null);
 
                 if (value) {
@@ -1060,6 +1065,7 @@
                     if (currency) {
                         this.set('itemRecord.currency_rate', currency.currency_rate);
                         this.set('itemRecord.currency_rate_exchanged', currency.currency_rate_exchanged);
+                        this.set('itemRecord.currency_rate_appraised', currency.currency_rate_appraised);
                         this.set('itemRecord.currency_offset_id', currency.currency_offset_id);
                     }
                 }

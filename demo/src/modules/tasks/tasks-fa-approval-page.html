@@ -2,7 +2,8 @@
 <link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../../elements/kct-grid/kct-grid.html">
 <link rel="import" href="../../elements/kct-pages/kct-pages.html">
-<link rel="import" href="tasks-fa-approval-action.html">
+<link rel="import" href="tasks-fa-approval-expense.html">
+<link rel="import" href="tasks-fa-approval-advance.html">
 
 <dom-module id="tasks-fa-approval-page">
     <template>
@@ -30,12 +31,13 @@
                 pagination 
                 autoload>
 
-                    <template preserve-content>
-                        <style include="theme-helper"></style>
-                    </template>
+                <template preserve-content>
+                    <style include="theme-helper"></style>
+                </template>
 
             </kct-grid>
-            <tasks-fa-approval-action id="action" task="[[ task ]]" on-back-tap="__onActionBackTap"></tasks-fa-approval-action>
+            <tasks-fa-approval-expense id="expense" route="{{ route }}" state="[[ state ]]"></tasks-fa-approval-expense>
+            <tasks-fa-approval-advance id="advance" route="{{ route }}" state="[[ state ]]"></tasks-fa-approval-advance>
         </kct-pages>
 
     </template>
@@ -46,15 +48,14 @@
             }
             static get properties() {
                 return {
-                    title: { type: String, value: 'Expense Task', notify: true },
+                    title: { type: String, value: 'Finance Tasks', notify: true },
                     page: { type: String, value: 'grid' },
-                    task: { type: Object },
                     columns: { 
                         type: Array,
                         value: [
                             { type: 'rownumber' },
-                            { text: 'Expense No.', dataIndex: 'exp_no', width: 120, align: 'center' },
-                            { text: 'Subject', dataIndex: 'subject_exp' },
+                            { text: 'Document No.', dataIndex: 'ref_no', width: 120, align: 'center' },
+                            { text: 'Subject', dataIndex: 'subject' },
                             { text: 'Proposed By', dataIndex: 'user_fullname' },
                             { text: 'Date Created', dataIndex: 'date_short', width: 120, align: 'center' },
                             { 
@@ -88,18 +89,25 @@
             }
             handleResizing(width, height) {
                 this.updateStyles({'--tasks-fa-approval-page-height': height + 'px'});
-                this.$.action.handleResizing(width, height);
+
+                if (this.page == 'grid') {
+                    this.$.grid.resize();
+                } else {
+                    this.$[this.page] && this.$[this.page].handleResizing(width, height);    
+                }
             }
-            handleRouteParams() {
-                
+            handleRouteParams(context, id) {
+                if (context) {
+                    this.set('page', context);
+                } else {
+                    this.set('page', 'grid');
+                    this.$.grid.deferAutoresize();
+                    this.$.grid.load();
+                }
             }
             __onViewTap(e) {
-                this.set('task', e.data);
-                this.set('page', 'action');
-            }
-            __onActionBackTap() {
-                this.set('page', 'grid');
-                this.$.grid.load();
+                let context = e.data.module;
+                this.set('route.path', '/tasks/tasks-fa-approval/' + context + '/' + e.data.id_ref);
             }
         }
         customElements.define(TasksFaApprovalPage.is, TasksFaApprovalPage);

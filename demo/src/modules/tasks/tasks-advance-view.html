@@ -6,24 +6,15 @@
 <link rel="import" href="../../elements/kct-message/kct-prompt.html">
 <link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
 
-<dom-module id="tasks-advance-action">
+<dom-module id="tasks-advance-view">
     <template>
         <style include="theme-helper">
             :host {
-                height: var(--tasks-advance-action-height, 500px);
+                height: 100%;
                 background-color: var(--paper-grey-100);
             }
             .action-buttons paper-button {
                 min-width: 90px;
-            }
-            .display-field {
-                font-size: 14px;
-                padding: 5px 0;
-            }
-            .display-field > label:first-child {
-                font-weight: 500;
-                display: inline-block;
-                width: 100px;
             }
         </style>
 
@@ -44,7 +35,7 @@
                 <paper-card class="block">
                     <div class="card-content">
                         <h3 class="block-title">[[ record.advance.adv_no ]]</h3>
-                        <kct-column columns="2" gutter="1.5rem">
+                        <kct-column columns="3" gutter="1.5rem">
                             <div>
                                 <div class="display-field">
                                     <label>Subject: </label>
@@ -71,6 +62,12 @@
                                 <div class="display-field">
                                     <label>End Date: </label>
                                     <div>[[ record.advance.date_end_short ]]</div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="display-field">
+                                    <label>Current Status: </label>
+                                    <div>[[ record.advance.status_name ]]</div>
                                 </div>
                             </div>
                         </kct-column>
@@ -104,6 +101,31 @@
                         
                     </div>
                 </paper-card>
+
+                <paper-card class="block">
+                    <div class="card-content">
+                        <h3 class="block-title">Advance Summary</h3>
+                        <div class="table-responsive">
+                            <table class="table bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Description</th>
+                                        <th width="120" class="text-right">Amounts</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template is="dom-repeat" items="[[ record.summary ]]">
+                                        <tr>
+                                            <td>[[ item.summary_label ]]</td>
+                                            <td class="text-right">[[ item.summary_value_formatted ]]</td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </paper-card>
+
                 <paper-card class="block">
                     <div class="card-content">
 
@@ -143,38 +165,32 @@
             <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to list" on-tap="__onBackTap"></paper-fab>
         </div>
 
-        <kct-prompt id="task-prompt" title="[[ actionTitle ]]" message="Type your reason"></kct-prompt>
+        <kct-prompt id="task-prompt" title="[[ actionTitle ]]" message="Additional notes (remarks)"></kct-prompt>
 
     </template>
     <script>
-        class TasksAdvanceAction extends KctView {
+        class TasksAdvanceView extends KctView {
             static get is() {
-                return 'tasks-advance-action';
+                return 'tasks-advance-view';
             }
             static get properties() {
                 return {
                     record: { type: Object },
-                    task: { type: Object },
                     actionTitle: { type: String, value: 'Approval' }
                 }
             }
-            static get observers() {
-                return [
-                    '__taskChanged(task.*)'
-                ];
+            handleRouteParams(action, id) {
+                if ( ! action) return;
+
+                this.$.ajax.GET('/advance/' + id + '/view').then(res => {
+                    this.set('record', res.data);
+                }); 
             }
             handleResizing(width, height) {
-                this.updateStyles({'--tasks-advance-action-height': height + 'px'});
+                
             }
             __computeNo(index) {
                 return index + 1;
-            }
-            __taskChanged() {
-                if (this.task) {
-                    this.$.ajax.GET('/advance/' + this.task.id_adv + '/view').then(res => {
-                        this.set('record', res.data);
-                    });  
-                }
             }
             __onRejectTap() {
                 if ( ! this.record && ! this.record.advance) {
@@ -225,9 +241,9 @@
                 });
             }
             __onBackTap() {
-                this.dispatchEvent(new CustomEvent('back-tap'));
+                this.set('route.path', '/tasks/tasks-advance');
             }
         }
-        customElements.define(TasksAdvanceAction.is, TasksAdvanceAction);
+        customElements.define(TasksAdvanceView.is, TasksAdvanceView);
     </script>
 </dom-module>

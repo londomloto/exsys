@@ -96,6 +96,11 @@ class Expense extends \Micro\Model {
         return 'expense_table';
     }
 
+    public function beforeSave() {
+        $this->type = $this->type == '' ? NULL : $this->type;
+        $this->purpose = $this->purpose == '' ? NULL : $this->purpose;
+    }
+
     public function toArray($columns = NULL) {
         $data = parent::toArray($columns);
         $data['editable'] = FALSE;
@@ -162,8 +167,8 @@ class Expense extends \Micro\Model {
         });
 
         usort($items, function($a, $b){
-            $va = (int)$a['item_parent_id'];
-            $vb = (int)$b['item_parent_id'];
+            $va = empty($a['item_parent_id']) ? $a['exp_item_id'] : $a['item_parent_id'];
+            $vb = empty($b['item_parent_id']) ? $b['exp_item_id'] : $b['item_parent_id'];
 
             if ($va == $vb) return 0;
             return $va < $vb ? -1 : 1;
@@ -240,11 +245,11 @@ class Expense extends \Micro\Model {
 
     }
 
-    public function faSubmit($request) {
+    public function faSubmit($action) {
         $user = \Micro\App::getDefault()->auth->user();
 
         // broadcast tasks to fa subscriber
-        switch($request) {
+        switch($action) {
             case 'receive-request';
                 $subscribers = User::findInRoles(array('fa-receiver'));
                 break;
@@ -255,11 +260,12 @@ class Expense extends \Micro\Model {
         
         foreach($subscribers as $sub) {
             $task = new \App\Finance\Models\Task();
-
-            $task->id_exp = $this->id_exp;
+            
+            $task->module = 'expense';
+            $task->id_ref = $this->id_exp;
             $task->su_id = $sub->su_id;
             $task->is_allowed = 1;
-            $task->catagory = $request;
+            $task->action = $action;
             
             $task->save();
         }
@@ -342,9 +348,10 @@ class Expense extends \Micro\Model {
 
                 if ( ! isset($result[$code])) {
                     $curr = $row->from->toArray();
-                    $curr['currency_rate_exchanged'] = 0;
-                    $curr['currency_offset_id'] = $offset1->currency_id;
-                    $curr['currency_offset_code'] = $offset1->currency_code;
+                    $curr['currency_rate_exchanged'] = 1;
+                    $curr['currency_rate_appraised'] = $row->from->currency_rate;
+                    $curr['currency_offset_id'] = $row->from->currency_id;
+                    $curr['currency_offset_code'] = $row->from->currency_code;
 
                     $result[$code] = $curr;
                 }
@@ -358,6 +365,7 @@ class Expense extends \Micro\Model {
 
                     $curr['currency_rate'] = 0;
                     $curr['currency_rate_exchanged'] = $row->rates;
+                    $curr['currency_rate_appraised'] = $row->rates;
                     $curr['currency_offset_id'] = NULL;
                     $curr['currency_offset_code'] = NULL;
                     
@@ -367,7 +375,7 @@ class Expense extends \Micro\Model {
                     }
 
                     if ($row->rates > 0 && ! is_null($offset2)) {
-                        $curr['currency_rate'] = ($offset2->from->currency_rate / $row->rates);
+                        $curr['currency_rate'] = round(($offset2->from->currency_rate / $row->rates), 2);
                     }
 
                     $curr['currency_rate_formatted'] = number_format($curr['currency_rate'], 2, ',', '.');
@@ -384,7 +392,8 @@ class Expense extends \Micro\Model {
 
             if ( ! isset($result[$code])) {
                 $curr = $row->toArray();
-                $curr['currency_rate_exchanged'] = 0;
+                $curr['currency_rate_exchanged'] = $row->currency_rate;
+                $curr['currency_rate_appraised'] = $row->currency_rate;
                 $curr['currency_offset_id'] = $offset1->currency_id;
                 $curr['currency_offset_code'] = $offset1->currency_code;
                 $result[$code] = $curr;
@@ -433,16 +442,36 @@ class Expense extends \Micro\Model {
                     'expense_label' => 'Expense total in '.$code.' ('.$item['currency_name'].')'
                 );
 
-                $replica[$expense[$code]['currency_offset_code']] = $expense[$code];
+                //$replica[$expense[$code]['currency_offset_code']] = $expense[$code];
+                //$replica[$expense[$code]['currency_offset_code']]['expense_value'] = 0;
             }
 
             $expense[$code]['expense_value'] += ($row->amounts);
             $expense[$code]['expense_value_formatted'] = number_format($expense[$code]['expense_value'], 2, ',', '.');
             
-            $replica[$expense[$code]['currency_offset_code']] = $expense[$code];
+            //$replica[$expense[$code]['currency_offset_code']]['expense_value'] += ($row->amounts);
         }
 
         $summary['expense'] = array_values($expense);
+        
+        $inverse = array();
+
+        foreach($summary['expense'] as $row) {
+            $code = $row['currency_offset_code'];
+            
+            if ( ! isset($inverse[$code])) {
+                $inverse[$code] = array(
+                    'expense_value' => 0
+                );
+            }
+            
+            $inverse[$code]['expense_value'] += 0;
+
+            if ($row['currency_rate_exchanged'] > 0) {
+                $inverse[$code]['expense_value'] += round(($row['expense_value'] / $row['currency_rate_exchanged']), 2);    
+            }
+            
+        }
 
         $remains = array();
         $expense = array();
@@ -471,12 +500,11 @@ class Expense extends \Micro\Model {
                     'expense_label' => 'Expense total in '.$code.' ('.$sum['currency_name'].')'
                 );
 
-                if (isset($replica[$code])) {
-                    $line = $replica[$code];
-                    if ($line['currency_rate_exchanged'] > 0) {
-                        $expense[$code]['expense_value'] = round(($line['expense_value'] / $line['currency_rate_exchanged']), 2);
-                        $remains[$code]['remains_value'] = ($remains[$code]['remains_value'] - $expense[$code]['expense_value']);
-                    }
+                if (isset($inverse[$code])) {
+                    $line = $inverse[$code];
+
+                    $expense[$code]['expense_value'] = $line['expense_value'];
+                    $remains[$code]['remains_value'] = ($remains[$code]['remains_value'] - $line['expense_value']);
                 }
 
                 $expense[$code]['expense_value_formatted'] = number_format($expense[$code]['expense_value'], 2, ',', '.');

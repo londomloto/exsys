@@ -1,4 +1,3 @@
-<link rel="import" href="../../../bower_components/paper-menu-button/paper-menu-button.html">
 <link rel="import" href="../../../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../../../bower_components/paper-card/paper-card.html">
 <link rel="import" href="../../../bower_components/paper-button/paper-button.html">
@@ -50,19 +49,18 @@
                 border-radius: 50%;
                 background-color: #fff;
                 background-size: cover;
-                @apply --shadow-elevation-2dp;
                 z-index: 3;
             }
 
             .card-info {
                 line-height: 1.3rem;
                 color: var(--paper-grey-600);
-                --iron-icon-width: 18px;
-                --iron-icon-height: 18px;
+                --iron-icon-width: 14px;
+                --iron-icon-height: 14px;
             }
 
             .card-info p { font-size: 13px;  }
-            .card-info iron-icon { position: relative; top: -2px;  }
+            .card-info iron-icon { position: relative; top: -1px;  }
 
         </style>
 
@@ -82,7 +80,7 @@
             
             <div class="flex scroll-y page-content">
                 <div class="padding">
-                    <kct-column columns="5">
+                    <kct-column columns="4">
                         <template is="dom-repeat" items="[[ users ]]">
 
                             <paper-card>

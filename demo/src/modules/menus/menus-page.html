@@ -52,12 +52,13 @@
                     columns="{{ columns }}" 
                     selected="{{ selected }}" 
                     page-size="100" 
+                    selection-model="row" 
                     hide-header 
                     autoload></kct-grid>
             </div>
         </kct-vbox>
         
-        <kct-dialog id="editor" title="Menu Editor" width="400" height="100%">
+        <kct-dialog id="editor" title="Menu Editor" width="400" height="100%" scrollable>
             <template preserve-content>
                 <div slot="dialog-body">
                     <vaadin-combo-box 
@@ -82,6 +83,9 @@
                         item-label-path="sm_title"></vaadin-combo-box>
 
                     <paper-input label="Order" value="{{ selected.smn_order }}"></paper-input>
+
+                    <paper-input label="Group Label" value="{{ selected.smn_group }}"></paper-input>
+                    
                     <kct-checkbox value="{{ selected.smn_visible }}" true-value="1" false-value="0">
                         <label>Check to toggle visibility</label>
                     </kct-checkbox>

@@ -11,9 +11,9 @@ class TasksController extends  \Micro\Controller {
         $display = (isset($params['display']) && ! empty($params['display'])) ? $params['display'] : 'approval-request';
 
         return Task::get()
-            ->join('App\Expense\Models\Expense', 'a.id_exp = App\Finance\Models\Task.id_exp', 'a', 'left')
+            // ->join('App\Expense\Models\Expense', 'a.id_exp = App\Finance\Models\Task.id_exp', 'a', 'left')
             ->where('su_id = :user:', array('user' => $user['su_id']))
-            ->andWhere('App\Finance\Models\Task.catagory = :catagory:', array('catagory' => $display))
+            ->andWhere('App\Finance\Models\Task.action = :action:', array('action' => $display))
             ->paginate();
     }
 

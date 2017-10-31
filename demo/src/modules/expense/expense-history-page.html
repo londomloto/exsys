@@ -79,9 +79,13 @@
                                 </div>
                             </div>
                             <div>
-                                <div class="display-field">
+                                <div class="display-field" hidden$="[[ !record.expense.adv_no ]]">
                                     <label>Advance: </label>
-                                    <div>[[ record.expense.adv_no ]]</div>
+                                    <div><a href="#" on-click="__onAdvanceTap">[[ record.expense.adv_no ]]</a></div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Status: </label>
+                                    <div>[[ record.expense.status_name ]]</div>
                                 </div>
                             </div>
                         </kct-column>
@@ -189,7 +193,7 @@
                                                 <td>[[ item.item_name ]]</td>
                                                 <td>[[ item.payment_type_name ]]</td>
                                                 <td>[[ item.currency_code ]]</td>
-                                                <td class="text-right">[[ item.currency_rate_exchanged ]]</td>
+                                                <td class="text-right">[[ item.currency_rate_displayed ]]</td>
                                                 <td class="text-right">[[ item.amounts_formatted ]]</td>
                                             </tr>
                                         </template>
@@ -281,7 +285,7 @@
                     record: { type: Object }
                 };
             }
-            handleRouteParams(module, action, id) {
+            handleRouteParams(action, id) {
                 if (action != 'view') return;
 
                 this.mask('Loading...');
@@ -294,6 +298,10 @@
             }
             __computeNo(index) {
                 return index + 1;
+            }
+            __onAdvanceTap(e) {
+                e.preventDefault();
+                this.set('route.path', '/advance/advance/view/' + this.record.expense.adv_ref);
             }
             __onBackTap() {
                 this.set('route.path', '/expense');

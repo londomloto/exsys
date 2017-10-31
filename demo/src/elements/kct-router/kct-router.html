@@ -280,9 +280,8 @@
                                 route.active = false;
 
                                 if (matches) {
-
                                     let params = [];
-
+                                    
                                     route.active = true;
                                     route.params = [];
                                     route.path = path.replace(/\/$/, '');
@@ -292,12 +291,17 @@
                                             let name = route.placeholder[index];
                                             let data = null;
 
-                                            if (name == 'page') {
+                                            if (name == 'module') {
+                                                data = matches[index];
+                                                route.module = data;
+                                                // Array.prototype.push.apply(params, [data]);
+                                            } else if (name == 'page') {
                                                 data = matches[index];
                                                 route.page = data + '-page';
+                                                // Array.prototype.push.apply(params, [data]);
                                             } else {
                                                 if (name == 'params') {
-                                                    data = matches[index].split(/\//);
+                                                    data = matches[index].replace(/\/$/, '').split(/\//);
                                                     Array.prototype.push.apply(params, data);
                                                 } else {
                                                     data = matches[index].replace(/\/$/, '');

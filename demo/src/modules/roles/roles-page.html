@@ -33,10 +33,7 @@
              * @Override
              */
             handleRouteParams(setting, action, id) {
-                
-                if (setting != 'roles') {
-                    return;
-                }
+                if (setting != 'roles') return;
                 
                 switch(action) {
                     case 'add':

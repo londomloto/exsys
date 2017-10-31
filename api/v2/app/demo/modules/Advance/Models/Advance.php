@@ -3,7 +3,8 @@ namespace App\Advance\Models;
 
 use App\Advance\Models\History,
     App\Advance\Models\Task,
-    App\Users\Models\User;
+    App\Users\Models\User,
+    Phalcon\Mvc\Model\Relation;
 
 class Advance extends \Micro\Model {
 
@@ -36,6 +37,15 @@ class Advance extends \Micro\Model {
         );
 
         $this->hasOne(
+            'received_by',
+            'App\Users\Models\User',
+            'su_id',
+            array(
+                'alias' => 'Receiver'
+            )
+        );
+
+        $this->hasOne(
             'purpose',
             'App\Types\Models\Type',
             'type_id',
@@ -49,7 +59,22 @@ class Advance extends \Micro\Model {
             'App\Advance\Models\Item',
             'id_adv',
             array(
-                'alias' => 'Items'
+                'alias' => 'Items',
+                'foreignKey' => array(
+                    'action' => Relation::ACTION_CASCADE
+                )
+            )
+        );
+
+        $this->hasMany(
+            'id_adv',
+            'App\Advance\Models\Task',
+            'id_adv',
+            array(
+                'alias' => 'Tasks',
+                'foreignKey' => array(
+                    'action' => Relation::ACTION_CASCADE
+                )
             )
         );
 
@@ -58,7 +83,10 @@ class Advance extends \Micro\Model {
             'App\Advance\Models\History',
             'id_adv',
             array(
-                'alias' => 'History'
+                'alias' => 'History',
+                'foreignKey' => array(
+                    'action' => Relation::ACTION_CASCADE
+                )
             )
         );
     }
@@ -67,8 +95,14 @@ class Advance extends \Micro\Model {
         return 'advance_table';
     }
 
+    public function beforeSave() {
+        $this->type = $this->type == '' ? NULL : $this->type;
+        $this->purpose = $this->purpose == '' ? NULL : $this->purpose;
+    }
+
     public function toArray($columns = NULL) {
         $data = parent::toArray($columns);
+
         $data['status_name'] = '';
         $data['type_name'] = '';
         $data['purpose_name'] = '';
@@ -94,6 +128,12 @@ class Advance extends \Micro\Model {
 
         if ($this->user) {
             $data['user_fullname'] = $this->user->su_fullname;
+        }
+
+        $data['received_date_short'] = date('d/m/Y', strtotime($this->received_date));
+
+        if ($this->receiver) {
+            $data['received_by_name'] = $this->receiver->su_fullname;
         }
 
         return $data;
@@ -147,6 +187,31 @@ class Advance extends \Micro\Model {
         return FALSE;
     }
 
+    public function faSubmit($action) {
+        $user = \Micro\App::getDefault()->auth->user();
+
+        // broadcast tasks to fa subscriber
+        switch($action) {
+            case 'receive-request';
+                $subscribers = User::findInRoles(array('fa-receiver'));
+                break;
+            case 'approval-request':
+                $subscribers = User::findInRoles(array('fa-approver'));
+                break;
+        }
+        
+        foreach($subscribers as $sub) {
+            $task = new \App\Finance\Models\Task();
+            $task->module = 'advance';
+            $task->id_ref = $this->id_adv;
+            $task->su_id = $sub->su_id;
+            $task->is_allowed = 1;
+            $task->action = $action;
+            
+            $task->save();
+        }
+    }
+
     public function getSummary() {
         $summary = array();
 
@@ -170,11 +235,13 @@ class Advance extends \Micro\Model {
                     'currency_name' => $item['currency_name'],
                     'currency_code' => $item['currency_code'],
                     'currency_rate' => $item['currency_rate'],
-                    'summary_value' => 0
+                    'summary_value' => 0,
+                    'summary_label' => 'Total advance in '.$code.' ('.$item['currency_name'].')'
                 );
             }
 
             $summary[$code]['summary_value'] += ($item['amounts']);
+            $summary[$code]['summary_value_formatted'] = number_format($summary[$code]['summary_value'], 2, ',', '.');
         }
 
         $summary = array_values($summary);

@@ -57,7 +57,7 @@
                     pageItem.handleResizing(width, height);
                 }
             }
-            handleRouteParams(module, action) {
+            handleRouteParams(action) {
                 switch(action) {
                     case 'add':
                     case 'edit':
@@ -68,7 +68,6 @@
                         break;
                     default:
                         this.set('page', 'list');
-
                 }
             }
             __pageChanged(page) {

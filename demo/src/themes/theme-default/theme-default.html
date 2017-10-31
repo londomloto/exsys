@@ -342,18 +342,28 @@
             }
 
             .btn-md {
-                padding: 0.8em 0.75em;
+                padding: 0.8em 1.25em;
                 font-size: 16px;
             }
 
             .btn-sm {
-                padding: 0.3em 0.5em;
+                padding: 0.3em 0.75em;
                 font-size: 12px;
             }
 
             .btn-xs {
                 padding: 0.3em 0.5em;
                 font-size: 10px;
+            }
+
+            .btn-sm iron-icon {
+                --iron-icon-width: 18px;
+                --iron-icon-height: 18px;
+            }
+
+            .btn-xs iron-icon {
+                --iron-icon-width: 16px;
+                --iron-icon-height: 16px;
             }
 
             /** icon */
@@ -367,16 +377,10 @@
             .icon-64 { --iron-icon-width: 64px; --iron-icon-height: 64px; }
 
             /** paper-input */
-            paper-input[readonly] {
-                --paper-input-container-input: {
-                    color: #999;
-                }
-                --paper-input-container-underline: {
-                    border-color: transparent;
-                }
-                --paper-input-container-underline-focus: {
-                    border-color: transparent;
-                }
+            
+            paper-input.text-right {
+                text-align: left !important;
+                --paper-input-container-input: { text-align: right; };
             }
 
             /** vaadin-combo-box */
@@ -480,7 +484,7 @@
             }
             paper-card.block .block-title {
                 font-size: 18px;
-                font-weight: 400;
+                font-weight: 300;
                 margin-bottom: 1rem;
                 border-bottom: 1px solid var(--app-primary);
                 padding-bottom: 8px;
@@ -498,7 +502,7 @@
                 display: block;
             }
             .display-field > label {
-                font-weight: 500;
+                font-weight: 400;
                 width: 120px;
                 color: var(--app-primary);
             }

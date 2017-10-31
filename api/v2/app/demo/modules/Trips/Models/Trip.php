@@ -74,6 +74,11 @@ class Trip extends \Micro\Model {
         return 'trip_table';
     }
 
+    public function beforeSave() {
+        $this->type = $this->type == '' ? NULL : $this->type;
+        $this->purpose = $this->purpose == '' ? NULL : $this->purpose;
+    }
+
     public function getAmounts() {
         $amounts = 0;
 

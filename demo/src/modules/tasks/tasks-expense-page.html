@@ -2,7 +2,7 @@
 <link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../../elements/kct-grid/kct-grid.html">
 <link rel="import" href="../../elements/kct-pages/kct-pages.html">
-<link rel="import" href="tasks-expense-action.html">
+<link rel="import" href="tasks-expense-view.html">
 
 <dom-module id="tasks-expense-page">
     <template>
@@ -30,12 +30,12 @@
                 pagination 
                 autoload>
 
-                    <template preserve-content>
-                        <style include="theme-helper"></style>
-                    </template>
+                <template preserve-content>
+                    <style include="theme-helper"></style>
+                </template>
 
             </kct-grid>
-            <tasks-expense-action id="action" task="[[ task ]]" on-back-tap="__onActionBackTap"></tasks-expense-action>
+            <tasks-expense-view id="view" task="[[ task ]]" route="{{ route }}" state="[[ state ]]"></tasks-expense-view>
         </kct-pages>
 
     </template>
@@ -46,9 +46,8 @@
             }
             static get properties() {
                 return {
-                    title: { type: String, value: 'Expense Task', notify: true },
+                    title: { type: String, value: 'Expense Tasks', notify: true },
                     page: { type: String, value: 'grid' },
-                    task: { type: Object },
                     columns: { 
                         type: Array,
                         value: [
@@ -88,18 +87,26 @@
             }
             handleResizing(width, height) {
                 this.updateStyles({'--tasks-expense-page-height': height + 'px'});
-                this.$.action.handleResizing(width, height);
+
+                if (this.page == 'grid') {
+                    this.$.grid && this.$.grid.resize();
+                } else {
+                    this.$.view && this.$.view.handleResizing(width, height);
+                }
             }
-            handleRouteParams() {
-                
+            handleRouteParams(action, id) {
+                if (action) {
+                    this.set('page', 'view');
+                } else {
+                    this.set('page', 'grid');
+                    this.$.grid && this.$.grid.load();
+                    this.$.grid.deferAutoresize();
+                }
             }
             __onViewTap(e) {
+                this.set('route.path', '/tasks/tasks-expense/view/' + e.data.id_exp);
                 this.set('task', e.data);
                 this.set('page', 'action');
-            }
-            __onActionBackTap() {
-                this.set('page', 'grid');
-                this.$.grid.load();
             }
         }
         customElements.define(TasksExpensePage.is, TasksExpensePage);
