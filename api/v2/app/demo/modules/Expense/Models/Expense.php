@@ -512,7 +512,7 @@ class Expense extends \Micro\Model {
                     'currency_code' => $sum['currency_code'],
                     'currency_rate' => $sum['currency_rate'],
                     'expense_value' => 0,
-                    'expense_label' => 'Expense total in '.$code.' ('.$sum['currency_name'].')'
+                    'expense_label' => 'Summary total in '.$code.' ('.$sum['currency_name'].')'
                 );
 
                 if (isset($inverse[$code])) {
