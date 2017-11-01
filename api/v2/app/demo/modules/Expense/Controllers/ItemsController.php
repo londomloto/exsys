@@ -2,7 +2,9 @@
 namespace App\Expense\Controllers;
 
 use App\Expense\Models\Item,
-    App\Expense\Models\ItemDetail;
+    App\Expense\Models\Expense,
+    App\Expense\Models\ItemDetail,
+    App\Currencies\Models\Currency;
 
 class ItemsController extends \Micro\Controller {
 
@@ -70,7 +72,25 @@ class ItemsController extends \Micro\Controller {
             $post['item_id'] = NULL;
         }
 
+        if ( ! isset($post['currency_offset_id'])) {
+            $post['currency_offset_id'] = $post['currency_id'];
+        }
+
         $data = new Item();
+
+        $expense = Expense::get($post['id_exp'])->data;
+        
+        if ($expense && $expense->catagory == 'opex') {
+            $offset = Currency::offset();
+            $target = Currency::get($post['currency_id'])->data;
+
+            if ($offset && $target) {
+                $post['currency_offset_id'] = $offset->currency_id;
+                $post['currency_offset_rate'] = $target->currency_rate;
+                $post['currency_rate_exchanged'] = $target->currency_rate;
+            }
+        }
+
         if ($data->save($post)) {
 
             if ($data->expense) {
@@ -106,6 +126,20 @@ class ItemsController extends \Micro\Controller {
         $query = Item::get($id);
 
         if ($query->data) {
+
+            $expense = $query->data->expense;
+
+            if ($expense && $expense->catagory == 'opex') {
+                $offset = Currency::offset();
+                $target = Currency::get($post['currency_id'])->data;
+
+                if ($offset && $target) {
+                    $post['currency_offset_id'] = $offset->currency_id;
+                    $post['currency_offset_rate'] = $target->currency_rate;
+                    $post['currency_rate_exchanged'] = $target->currency_rate;
+                }
+            }
+
             if ($query->data->save($post)) {
 
                 if ($query->data->expense) {

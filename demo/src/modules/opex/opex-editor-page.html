@@ -109,12 +109,12 @@
                             <table class="table">
                                 <thead>
                                     <tr>
-                                        <th width="50">No.</th>
+                                        <th width="40" class="text-center">No.</th>
                                         <th>Description</th>
                                         <th width="100">Payment</th>
-                                        <th class="text-center" width="100">Currency</th>
-                                        <th width="150" class="text-right">Amounts</th>
-                                        <th width="150"></th>
+                                        <th width="100">Currency</th>
+                                        <th width="120" class="text-right">Amounts</th>
+                                        <th width="120"></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -124,12 +124,12 @@
                                         </tr>
                                         <template is="dom-repeat" items="[[ group.group_items ]]">
                                             <tr>
-                                                <td>[[ item.item_seq ]]</td>
+                                                <td  class="text-center">[[ item.item_seq ]]</td>
                                                 <td>[[ item.item_name ]]</td>
                                                 <td>[[ item.payment_type_name ]]</td>
-                                                <td class="text-center">[[ item.currency_name ]]</td>
+                                                <td>[[ item.currency_code ]]</td>
                                                 <td class="text-right">[[ item.amounts_formatted ]]</td>
-                                                <td class="text-right" style="padding-right: 0;">
+                                                <td class="text-right">
                                                     <paper-button on-tap="__onItemEditTap" class="btn-xs btn-amber">Edit</paper-button>
                                                     <paper-button on-tap="__onItemDeleteTap" class="btn-xs btn-danger">Delete</paper-button>
                                                 </td>
@@ -290,7 +290,7 @@
                 });
 
                 // load currencies
-                this.$.ajax.GET('/currencies').then(res => {
+                this.$.ajax.GET('/currencies', { params: { currency_acceptable: 1 } }).then(res => {
                     this.set('currencies', res.data);
                 });
 

@@ -38,14 +38,14 @@
 
         <kct-vbox>
             <page-header-block icon="history" description="Operational History">
-                <paper-button class="btn-indigo"><iron-icon icon="print"></iron-icon>&nbsp;Print Document</paper-button>
+                
             </page-header-block>
             <div class="flex scroll-y padding">
 
                 <paper-card class="block">
                     <div class="card-content">
                         <h3 class="block-title">[[ record.expense.exp_no ]]</h3>
-                        <kct-column columns="2" gutter="1.5rem">
+                        <kct-column columns="3" gutter="1.5rem">
                             <div>
                                 <div class="display-field">
                                     <label>Subject: </label>
@@ -74,6 +74,12 @@
                                     <div>[[ record.expense.date_end_short ]]</div>
                                 </div>
                             </div>
+                            <div>
+                                <div class="display-field">
+                                    <label>Status: </label>
+                                    <div>[[ record.expense.status_name ]]</div>
+                                </div>
+                            </div>
                         </kct-column>
                     </div>
                 </paper-card>
@@ -85,11 +91,11 @@
                         <div class="table-responsive">
                             <table class="table">
                                 <thead>
-                                    <th width="50">No.</th>
+                                    <th width="40" class="text-center">No.</th>
                                     <th>Description</th>
                                     <th width="100">Payment</th>
-                                    <th width="100" class="text-center">Currency</th>
-                                    <th width="150" class="text-right">Amounts</th>
+                                    <th width="100">Currency</th>
+                                    <th width="120" class="text-right">Amounts</th>
                                 </thead>
                                 <tbody>
                                     <template is="dom-repeat" items="[[ record.items ]]" as="group">
@@ -98,10 +104,10 @@
                                         </tr>
                                         <template is="dom-repeat" items="[[ group.group_items ]]">
                                             <tr>
-                                                <td>[[ item.item_seq ]]</td>
+                                                <td class="text-center">[[ item.item_seq ]]</td>
                                                 <td>[[ item.item_name ]]</td>
                                                 <td>[[ item.payment_type_name ]]</td>
-                                                <td class="text-center">[[ item.currency_name ]]</td>
+                                                <td>[[ item.currency_code ]]</td>
                                                 <td class="text-right">[[ item.amounts_formatted ]]</td>
                                             </tr>
                                             <tr class="form-row">
@@ -132,12 +138,42 @@
 
                 <paper-card class="block">
                     <div class="card-content">
+                        <h3 class="block-title">Operational Summary</h3>
+                        <div class="table-responsive">
+                            <table class="table bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Description</th>
+                                        <th class="text-right">Amounts</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template is="dom-repeat" items="[[ record.summary.expense ]]">
+                                        <tr>
+                                            <td>[[ item.expense_label ]]</td>
+                                            <td class="text-right">[[ item.expense_value_formatted ]]</td>
+                                        </tr>
+                                    </template>
+                                    <template is="dom-repeat" items="[[ record.summary.remains ]]">
+                                        <tr>
+                                            <td>[[ item.remains_label ]]</td>
+                                            <td class="text-right">[[ item.remains_value_formatted ]]</td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </paper-card>
+
+                <paper-card class="block">
+                    <div class="card-content">
                         <h3 class="block-title">Operational History</h3>
 
                         <div class="table-responsive">
                             <table class="table striped">
                                 <thead>
-                                    <th width="50">No.</th>
+                                    <th width="40" class="text-center">No.</th>
                                     <th width="120">Date</th>
                                     <th>Status</th>
                                     <th>User</th>
@@ -146,7 +182,7 @@
                                 <tbody>
                                     <template is="dom-repeat" items="[[ record.history ]]">
                                         <tr>
-                                            <td>[[ __computeNo(index) ]]</td>
+                                            <td class="text-center">[[ __computeNo(index) ]]</td>
                                             <td>[[ item.date_short ]]</td>
                                             <td>[[ item.status_name ]]</td>
                                             <td>[[ item.user_act_name ]]</td>

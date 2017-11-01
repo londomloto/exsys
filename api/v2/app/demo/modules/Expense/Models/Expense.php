@@ -107,8 +107,13 @@ class Expense extends \Micro\Model {
     }
 
     public function beforeSave() {
-        $this->type = $this->type == '' ? NULL : $this->type;
-        $this->purpose = $this->purpose == '' ? NULL : $this->purpose;
+        if (isset($this->type)) {
+            $this->type = $this->type == '' ? NULL : $this->type;    
+        }
+        
+        if (isset($this->purpose)) {
+            $this->purpose = $this->purpose == '' ? NULL : $this->purpose;
+        }
     }
 
     public function toArray($columns = NULL) {
@@ -359,8 +364,8 @@ class Expense extends \Micro\Model {
                 if ( ! isset($result[$code])) {
                     $curr = $row->from->toArray();
                     $curr['currency_rate_exchanged'] = 1;
-                    $curr['currency_rate_appraised'] = $row->from->currency_rate;
                     $curr['currency_offset_id'] = $row->from->currency_id;
+                    $curr['currency_offset_rate'] = $row->from->currency_rate;
                     $curr['currency_offset_code'] = $row->from->currency_code;
 
                     $result[$code] = $curr;
@@ -375,9 +380,9 @@ class Expense extends \Micro\Model {
 
                     $curr['currency_rate'] = 0;
                     $curr['currency_rate_exchanged'] = $row->rates;
-                    $curr['currency_rate_appraised'] = $row->rates;
                     $curr['currency_offset_id'] = NULL;
                     $curr['currency_offset_code'] = NULL;
+                    $curr['currency_offset_rate'] = $row->rates;
                     
                     if ( ! is_null($offset2)) {
                         $curr['currency_offset_id'] = $offset2->from->currency_id;
@@ -403,9 +408,9 @@ class Expense extends \Micro\Model {
             if ( ! isset($result[$code])) {
                 $curr = $row->toArray();
                 $curr['currency_rate_exchanged'] = $row->currency_rate;
-                $curr['currency_rate_appraised'] = $row->currency_rate;
                 $curr['currency_offset_id'] = $offset1->currency_id;
                 $curr['currency_offset_code'] = $offset1->currency_code;
+                $curr['currency_offset_rate'] = $row->currency_rate;
                 $result[$code] = $curr;
             }
         }

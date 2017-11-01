@@ -449,7 +449,7 @@
                             <div>
                                 <paper-input 
                                     label="Exchange Rates" 
-                                    value="{{ itemRecord.currency_rate_appraised }}" 
+                                    value="{{ itemRecord.currency_offset_rate }}" 
                                     class="text-right" 
                                     required auto-validate error-message="Exchange rates is required"></paper-input>
                             </div>
@@ -1057,16 +1057,16 @@
                 
                 this.set('itemRecord.currency_rate', 0);
                 this.set('itemRecord.currency_rate_exchanged', 1);
-                this.set('itemRecord.currency_rate_appraised', 1);
                 this.set('itemRecord.currency_offset_id', null);
+                this.set('itemRecord.currency_offset_rate', 1);
 
                 if (value) {
                     let currency = (this.expenseCurrencies || []).find(c => c.currency_id == value);
                     if (currency) {
                         this.set('itemRecord.currency_rate', currency.currency_rate);
                         this.set('itemRecord.currency_rate_exchanged', currency.currency_rate_exchanged);
-                        this.set('itemRecord.currency_rate_appraised', currency.currency_rate_appraised);
                         this.set('itemRecord.currency_offset_id', currency.currency_offset_id);
+                        this.set('itemRecord.currency_offset_rate', currency.currency_offset_rate);
                     }
                 }
             }

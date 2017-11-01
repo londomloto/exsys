@@ -57,13 +57,12 @@
                         type: Array,
                         value: [
                             { type: 'rownumber' },
-                            { text: 'Periode', dataIndex: 'exp_no', width: 120, align: 'center' },
+                            { text: 'Opex No.', dataIndex: 'exp_no', width: 120, align: 'center' },
                             { text: 'Subject', dataIndex: 'subject_exp' },
                             {
-                                text: 'Period',
+                                text: 'Periode',
                                 dataIndex: 'date_start',
                                 width: 150,
-                                align: 'center',
                                 renderer: (e) => {
                                     return e.data ? e.data.period : '';
                                 }
