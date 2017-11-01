@@ -114,6 +114,7 @@ class Advance extends \Micro\Model {
         $data['amounts_formatted'] = number_format($data['amounts'], 2, ',', '.');
 
         if ($this->lastStatus) {
+            $data['status_code'] = $this->lastStatus->status_code;
             $data['status_name'] = $this->lastStatus->status_name;
             $data['status_color'] = empty($this->lastStatus->status_color) ? 'var(--paper-grey-400)' : $this->lastStatus->status_color;
         }

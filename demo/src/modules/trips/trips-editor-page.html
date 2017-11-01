@@ -398,6 +398,10 @@
                             this.__loadAdvance();
 
                             this.$['trip-validator'].validate();
+
+                            if (res.data && res.data.status_code != 'draft') {
+                                this.set('route.path', '/trips/trips/view/' + res.data.id_trip);
+                            }
                         });
                     });
                 } else {

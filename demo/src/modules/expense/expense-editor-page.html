@@ -653,6 +653,10 @@
                             this.__loadItems();
                             this.__loadExchanges();
                             this.$['expense-validator'].validate();
+
+                            if (res.data && res.data.status_code != 'draft') {
+                                this.set('route.path', '/expense/expense/view/' + res.data.id_exp);
+                            }
                         });
                     });
                 } else {

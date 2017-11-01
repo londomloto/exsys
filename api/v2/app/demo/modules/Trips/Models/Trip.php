@@ -101,6 +101,7 @@ class Trip extends \Micro\Model {
         
 
         if ($this->lastStatus) {
+            $data['status_code'] = $this->lastStatus->status_code;
             $data['status_name'] = $this->lastStatus->status_name;
             $data['status_color'] = empty($this->lastStatus->status_color) ? 'var(--paper-grey-400)' : $this->lastStatus->status_color;
         }

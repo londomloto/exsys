@@ -225,13 +225,16 @@
                     this.__loadReferences().then(() => {
                         this.$.ajax.GET('/advance/' + id).then(res => {
                             this.unmask();
-
                             this.set('record', res.data);
                             
                             this.__handlePurpose();
                             this.__loadItems();
 
                             this.$.validator.validate();
+                            
+                            if (res.data && res.data.status_code != 'draft') {
+                                this.set('route.path', '/advance/advance/view/' + res.data.id_adv);
+                            }
                         });
                     });
                 } else {

@@ -305,6 +305,10 @@
 
                         this.set('record', res.data);
                         this.__loadItems();
+
+                        if (res.data && res.data.status_code != 'draft') {
+                            this.set('route.path', '/opex/opex/view/' + id);
+                        }
                     });
                 }
             }
