@@ -4,6 +4,7 @@
 <link rel="import" href="expense-list-page.html">
 <link rel="import" href="expense-editor-page.html">
 <link rel="import" href="expense-history-page.html">
+<link rel="import" href="expense-journal-page.html">
 
 <dom-module id="expense-page">
     <template>
@@ -22,6 +23,7 @@
             <expense-list-page name="list" route="{{ route }}" state="[[ state ]]"></expense-list-page>
             <expense-editor-page name="editor" route="{{ route }}" state="[[ state ]]"></expense-editor-page>
             <expense-history-page name="history" route="{{ route }}" state="[[ state ]]"></expense-history-page>
+            <expense-journal-page name="journal" route="{{ route }}" state="[[ state ]]"></expense-journal-page>
         </kct-pages>
     </template>
     <script>
@@ -65,6 +67,9 @@
                         break;
                     case 'view':
                         this.set('page', 'history');
+                        break;
+                    case 'journal':
+                        this.set('page', 'journal');
                         break;
                     default:
                         this.set('page', 'list');

@@ -1,13 +1,13 @@
 <?php
 namespace App\Expense\Controllers;
 
-use App\Expense\Models\Exchange;
+use App\Expense\Models\Crop;
 
-class ExchangesController extends \Micro\Controller {
+class CropsController extends \Micro\Controller {
 
     public function findAction() {
         $params = $this->request->getParams();
-        $query = Exchange::get();
+        $query = Crop::get();
 
         if (isset($params['expense'])) {
             $query->where('id_exp = :expense:', array('expense' => $params['expense']));
@@ -18,34 +18,28 @@ class ExchangesController extends \Micro\Controller {
 
     public function createAction() {
         $post = $this->request->getJson();
-        $data = new Exchange();
+        $data = new Crop();
 
         if ($data->save($post)) {
-            return Exchange::get($data->exp_exchange_id);
+            return Crop::get($data->exp_crop_id);
         }
 
-        return Exchange::none();
+        return Crop::none();
     }
 
     public function updateAction($id) {
-        $query = Exchange::get($id);
+        $query = Crop::get($id);
         $post = $this->request->getJson();
 
         if ($query->data) {
-            if ($query->data->save($post)) {
-                foreach($query->data->expenseItems as $item) {
-                    $item->currency_rate_exchanged = $query->data->rates;
-                    $item->currency_offset_rate = $query->data->rates;
-                    $item->save();
-                }
-            }
+            $query->data->save($post);
         }
 
         return $query;
     }
 
     public function deleteAction($id) {
-        $query = Exchange::get($id);
+        $query = Crop::get($id);
         if ($query->data) {
             $query->data->delete();
         }

@@ -14,11 +14,21 @@ class Type extends \Micro\Model {
     public function isTravelling() {
         return $this->type_code == 'travelling';
     }
+
+    public function isOthers() {
+        return $this->type_code == 'others';
+    }
+
+    public function isPromo() {
+        return $this->type_code != 'travelling' && $this->type_code != 'others';
+    }
     
     public function toArray($columns = NULL) {
         $data = parent::toArray($columns);
         $data['type_group'] = $this->isRoot() ? 'Type' : 'Purpose';
         $data['is_travelling'] = $this->isTravelling();
+        $data['is_others'] = $this->isOthers();
+        $data['is_promo'] = $this->isPromo();
         return $data;
     }
 

@@ -16,6 +16,7 @@
 <link rel="import" href="../../elements/kct-layouts/kct-vbox.html">
 <link rel="import" href="../../elements/kct-layouts/kct-column.html">
 <link rel="import" href="../../elements/kct-form/kct-form-validator.html">
+<link rel="import" href="../../elements/kct-combobox/kct-combobox.html">
 <link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
 
 <dom-module id="expense-editor-page">
@@ -140,7 +141,41 @@
                     
                 </paper-card>
 
-                <paper-card class="block" hidden$="[[ !__expenseHasExchange ]]">
+                <paper-card class="block" hidden$="[[ !__expenseIsPromo ]]">
+                    <div class="card-content">
+                        <h3 class="block-title">Crops Promotion</h3>
+                        <div class="m-b">
+                            <paper-button on-tap="__onAddCropTap" class="btn-sm btn-primary"><iron-icon icon="add"></iron-icon>&nbsp;Add Crop</paper-button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table striped">
+                                <thead>
+                                    <tr>
+                                        <th width="40">No.</th>
+                                        <th>Crop Item</th>
+                                        <th>Remarks</th>
+                                        <td width="120"></td>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template is="dom-repeat" items="[[ expenseCrops ]]">
+                                        <tr>
+                                            <td>[[ __computeNo(index) ]]</td>
+                                            <td>[[ item.seed_name ]]</td>
+                                            <td>[[ item.remarks ]]</td>
+                                            <td class="text-right">
+                                                <paper-button on-tap="__onEditCropTap" class="btn-xs btn-amber">Edit</paper-button>
+                                                <paper-button on-tap="__onDeleteCropTap" class="btn-xs btn-danger">Delete</paper-button>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </paper-card>
+
+                <paper-card class="block" hidden$="[[ __expenseIsPhantom ]]">
                     <div class="card-content">
                         <h3 class="block-title">Currencies Exchange</h3>
                         <div class="m-b">
@@ -451,6 +486,7 @@
                                     label="Exchange Rates" 
                                     value="{{ itemRecord.currency_offset_rate }}" 
                                     class="text-right" 
+                                    readonly 
                                     required auto-validate error-message="Exchange rates is required"></paper-input>
                             </div>
                         </kct-column>
@@ -497,7 +533,7 @@
                                 <vaadin-combo-box 
                                     label="From Currency" 
                                     value="{{ exchangeRecord.from_currency_id }}" 
-                                    items="[[ masterCurrencies ]]" 
+                                    items="[[ offsetCurrencies ]]" 
                                     item-value-path="currency_id" 
                                     item-label-path="currency_display" 
                                     required 
@@ -569,6 +605,46 @@
             </template>
         </kct-dialog>
 
+        <kct-dialog id="crop-editor" title="Crop Promotion" width="400" height="100%" scrollable>
+            <template preserve-content>
+                <style include="theme-helper"></style>
+                <div slot="dialog-body">
+                    <kct-form-validator id="crop-validator" invalid="{{ __cropInvalid }}" auto-validate>
+                        <kct-combobox 
+                            url="/seeds/types" 
+                            label="Crop Type" 
+                            value="{{ cropRecord.seed_parent_id }}" 
+                            page-size="10" 
+                            item-value-path="seed_id" 
+                            item-label-path="seed_name" 
+                            on-change="__onComboCropTypeChange" 
+                            required 
+                            auto-validate 
+                            error-message="Crop type is required" 
+                            autoload></kct-combobox> 
+
+                        <kct-combobox  
+                            id="combo-seed" 
+                            url="/seeds" 
+                            label="Crop Item" 
+                            value="{{ cropRecord.seed_id }}" 
+                            page-size="10" 
+                            item-value-path="seed_id" 
+                            item-label-path="seed_name" 
+                            required 
+                            auto-validate 
+                            error-message="Crop type is required"></kct-combobox>
+
+                        <paper-input label="Remarks" value="{{ cropRecord.remarks }}"></paper-input>
+                    </kct-form-validator>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onCropEditorSaveTap" disabled$="[[ __cropInvalid ]]">Save</paper-button>
+                    <paper-button on-tap="__onCropEditorCancelTap">Cancel</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
     </template>
     <script>
         class ExpenseEditorPage extends KctView {
@@ -581,10 +657,13 @@
                     expenseItems: { type: Array, value: () => ([]) },
                     expenseExchanges: { type: Array, value: () => ([]) },
                     expenseCurrencies: { type: Array, value: () => ([]) },
+                    expenseCrops: { type: Array, value: () => ([]) },
+                    offsetCurrencies: { type: Array, value: () => ([]) },
                     expenseSummary: { type: Array, value: () => ({}) },
                     itemRecord: { type: Object },
                     exchangeRecord: { type: Object },
                     dynamicRecord: { type: Object, value: () => ({}) },
+                    cropRecord: { type: Object },
 
                     masterItems: { type: Array, value: () => ([]) },
                     masterAdvance: { type: Array, value: () => ([]) },
@@ -595,7 +674,7 @@
                         type: Array,
                         value: [
                             { id: '1', text: 'Cash' },
-                            { id: '2', text: 'Credit Card' }
+                            { id: '2', text: 'Corporate Credit Card' }
                         ]
                     }
                 };
@@ -604,7 +683,9 @@
                 return [
                     '__typeChanged(expenseRecord.type)',
                     '__purposesChanged(__masterPurposes.*)',
+                    '__cropTypeChanged(cropRecord.seed_parent_id)',
                     '__computePhantom(expenseRecord.id_exp)',
+                    '__computePromo(expenseRecord.type)',
                     '__computeEmpty(expenseItems.*)',
                     '__computeExpenseHasAdvance(expenseRecord.adv_ref)',
                     '__computeExpenseHasExchange(expenseRecord.id_exp, expenseRecord.adv_ref)'
@@ -616,6 +697,7 @@
                 this.__expenseIsPhantom = true;
                 this.__expenseIsEmpty = true;
                 this.__expenseIsTravelling = true;
+                this.__expenseIsPromo = false;
                 this.__expenseHidden = true;
                 this.__expenseHasAdvance = false;
                 this.__expenseHasExchange = false;
@@ -639,6 +721,7 @@
 
                 this.set('expenseItems', []);
                 this.set('expenseExchanges', []);
+                this.set('expenseCrops', []);
                 this.set('expenseSummary', {});
 
                 if (action == 'edit') {
@@ -652,6 +735,8 @@
 
                             this.__loadItems();
                             this.__loadExchanges();
+                            this.__loadCrops();
+
                             this.$['expense-validator'].validate();
 
                             if (res.data && res.data.status_code != 'draft') {
@@ -663,6 +748,7 @@
                     this.__loadReferences().then(() => {
                         this.set('expenseRecord', {});
                         this.set('__expenseHidden', true);
+                        this.set('__expenseIsPromo', false);
                     });
                 }
             }
@@ -677,6 +763,15 @@
             }
             __computeEmpty(changed) {
                 this.set('__expenseIsEmpty', this.expenseItems.length == 0);
+            }
+            __computePromo(type) {
+                this.set('__expenseIsPromo', false);
+                if (type && this.expenseRecord && this.expenseRecord.id_exp) {
+                    let typeRecord = this.masterTypes.find(t => t.type_id == type);
+                    if (typeRecord && typeRecord.is_promo) {
+                        this.set('__expenseIsPromo', true);
+                    }
+                }
             }
             __computeNo(index) {
                 return (index + 1);
@@ -711,6 +806,17 @@
                 this.set('__comboPurposeRequired', required);
                 this.$['combo-purpose'].validate();
                 this.$['text-purpose'].validate();
+            }
+            __cropTypeChanged() {
+                if (this.cropRecord.seed_parent_id) {
+                    this.$['combo-seed'].load({
+                        params: {
+                            parent_id: this.cropRecord.seed_parent_id
+                        }
+                    });
+                } else {
+                    this.$['combo-seed'].items = [];
+                }
             }
             __loadReferences() {
                 return Promise.all([
@@ -752,7 +858,9 @@
 
                 function loadCurrencies() {
                     return this.$.ajax.GET('/expense/' + this.expenseRecord.id_exp + '/currencies').then(res => {
+                        let offsetCurrencies = res.data.filter(c => c.currency_acceptable == '1');
                         this.set('expenseCurrencies', res.data);
+                        this.set('offsetCurrencies', offsetCurrencies);
                     });
                 }
             }
@@ -781,7 +889,12 @@
                     this.set('expenseSummary', res.data);
                 });
             }
-            
+            __loadCrops() {
+                this.set('expenseCrops', []);
+                this.$.ajax.GET('/expense/crops', { expense: this.expenseRecord.id_exp }).then(res => {
+                    this.set('expenseCrops', res.data);
+                });
+            }
             __typeChanged(type) {
 
                 let found = (this.masterTypes || []).find(t => t.type_id == type);
@@ -1085,10 +1198,14 @@
                 this.$['exchange-validator'].validate();
             }
             __onDeleteExchangeTap(e) {
-                this.confirm('Confirm', 'Are you sure you want to delete this exchange?').then(y => {
+                this.confirm(
+                    'Confirm', 
+                    'Deleting the exchange rate will also delete the corresponding expense item. Are you sure ?').then(y => {
                     if (y) {
                         this.$.ajax.DELETE('/expense/exchanges/' + e.model.item.exp_exchange_id).then(() => {
                             this.__loadExchanges();
+                            this.__loadItems();
+                            this.__loadSummary();
                         });
                     }
                 });
@@ -1141,11 +1258,56 @@
                 function done(res) {
                     if (res.success) {
                         this.__loadExchanges();
+                        this.__loadItems();
+                        this.__loadSummary();
                     }
                 }
             }
             __onExchangeEditorCancelTap() {
                 this.$['exchange-editor'].close();
+            }
+            __onAddCropTap() {
+                this.set('cropRecord', {});
+                this.$['crop-editor'].open();
+                this.$['crop-validator'].validate();
+            }
+            __onCropEditorCancelTap() {
+                this.$['crop-editor'].close();
+            }
+            __onCropEditorSaveTap() {
+                this.$['crop-editor'].close();
+
+                let data = this.cropRecord;
+                data.id_exp = this.expenseRecord.id_exp;
+
+                if (data.exp_crop_id) {
+                    this.$.ajax.PUT('/expense/crops/' + data.exp_crop_id, data).then(done.bind(this));
+                } else {
+                    this.$.ajax.POST('/expense/crops', data).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.__loadCrops();
+                    }
+                }
+            }
+            __onComboCropTypeChange() {
+                this.set('cropRecord.seed_id', '');
+            }
+            __onEditCropTap(e) {
+                this.set('cropRecord', Object.assign({}, e.model.item));
+                this.$['crop-editor'].open();
+            }
+            __onDeleteCropTap(e) {
+                let item = e.model.item;
+                this.confirm('Confirm', `Are you sure you want to delete ${item.seed_name} ?`).then(b => {
+                    if (b) {
+                        this.$.ajax.DELETE('/expense/crops/' + item.exp_crop_id).then(() => {
+                            this.__loadCrops();
+                        });
+                    }
+                });
             }
             __onBackTap() {
                 this.set('route.path', '/expense');

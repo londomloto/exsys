@@ -618,13 +618,22 @@
             .page-actions {
                 position: fixed;
                 right: 20px;
-                bottom: 60px;
+                top: 100px;
                 z-index: 5;
             }
 
             .page-actions paper-fab {
                 display: inline-block;
                 line-height: 0;
+                width: 48px;
+                height: 48px;
+                --iron-icon-width: 20px;
+                --iron-icon-height: 20px;
+            }
+
+            .page-actions paper-fab iron-icon {
+                position: relative;
+                top: -2px;
             }
 
             paper-card.block {

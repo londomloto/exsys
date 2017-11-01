@@ -1,0 +1,72 @@
+<dom-module id="expense-journal-page">
+    <template>
+        
+        <style include="theme-helper">
+            
+        </style>
+
+        1. Cek ada advance?
+        2. Kalo tidak ada, kolom:
+
+            SUBJECT                     ACCOUNT                                 DEBIT                   KREDIT
+            - Nama header (Nomor)      - Lookup dari item:                                             AMOUNTS                 
+                                              lari ke exp->purpose->coa         
+                                            * kalo ada desk null
+                                              lari ke item->coa
+
+            - Accrual expense           ?                                       AMOUNT
+
+            ---------------------------------------------
+
+            Jika sudah terbayar (ax)
+
+            - Nama advance (Nomor)                                              AMOUNTS
+            - Account payable                                                                           AMOUNTS
+
+            ----------------------------------------------
+
+        3. Kalo ada advane:
+            SUBJECT                     ACCOUNT                                 DEBIT                   KREDIT
+
+            - Nama header (Nomor)      - Lookup dari item:                                             AMOUNTS                 
+                                              lari ke exp->purpose->coa         
+                                            * kalo ada desk null
+                                              lari ke item->coa
+
+            - Accrual expense           ?                                       AMOUNT
+
+            ---------------------------------------------
+            
+            Jika sudah terbayar (AX)
+
+            - Nama header (Nomor)                                              AMOUNTS
+            - Account payable                                                                           AMOUNTS
+            - Header advance (Nomor)                                                                    AMOUNTS ADVANCE 
+            ----------------------------------------------
+
+            ATAS SAMA 
+
+            Jika ada kelebihan/kelebihan
+            - Nama header (Nomor)                                              AMOUNTS
+            - Header advance (Nomor)                                                                    AMOUNTS ADVANCE 
+
+            - Kelebihan:
+                Bank                                                            AMOUNTS BALIK
+                Advance                                                                                 AMOUNTS
+            ----------------------------------------------
+
+            - Kekuranan:
+                Bank                                                                                    AMOUNTS BALIK
+                Advance                                                         AMOUNTS
+            ----------------------------------------------
+    </template>
+    <script>
+        class ExpenseJournalPage extends KctView {
+            static get is() {
+                return 'expense-journal-page';
+            }
+        }
+
+        customElements.define(ExpenseJournalPage.is, ExpenseJournalPage);
+    </script>
+</dom-module>

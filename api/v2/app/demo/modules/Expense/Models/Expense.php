@@ -360,17 +360,17 @@ class Expense extends \Micro\Model {
 
             foreach($exchanges as $row) {
                 // from
-                $code = $row->from->currency_code;
+                // $code = $row->from->currency_code;
 
-                if ( ! isset($result[$code])) {
-                    $curr = $row->from->toArray();
-                    $curr['currency_rate_exchanged'] = 1;
-                    $curr['currency_offset_id'] = $row->from->currency_id;
-                    $curr['currency_offset_rate'] = $row->from->currency_rate;
-                    $curr['currency_offset_code'] = $row->from->currency_code;
+                // if ( ! isset($result[$code])) {
+                //     $curr = $row->from->toArray();
+                //     $curr['currency_rate_exchanged'] = 1;
+                //     $curr['currency_offset_id'] = $row->from->currency_id;
+                //     $curr['currency_offset_rate'] = $row->from->currency_rate;
+                //     $curr['currency_offset_code'] = $row->from->currency_code;
 
-                    $result[$code] = $curr;
-                }
+                //     $result[$code] = $curr;
+                // }
 
                 // to
                 $code = $row->to->currency_code;

@@ -94,6 +94,10 @@
                                                     buttons += `<paper-button on-tap="__onSubmitTap" class="btn-info btn-icon" title="Submit"><iron-icon icon="done"></iron-icon></paper-button>`;
                                                 }
                                             }
+
+                                            if (e.data.status_code == 'fa-approved') {
+                                                buttons += `<paper-button on-tap="__onJournalTap" class="btn-muted btn-icon" title="Journal"><iron-icon icon="print"></iron-icon></paper-button>`;
+                                            }
                                             return buttons;
                                         }
                                         return '';
@@ -135,6 +139,9 @@
                 }
                 __onViewTap(e) {
                     this.set('route.path', '/expense/expense/view/' + e.data.id_exp);
+                }
+                __onJournalTap(e) {
+                    this.set('route.path', '/expense/expense/journal/' + e.data.id_exp);
                 }
                 __onSubmitTap(e) {
                     this.confirm('Confirm', `Are you sure you want to submit ${e.data.exp_no} ?`).then(b => {

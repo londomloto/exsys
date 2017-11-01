@@ -1,6 +1,8 @@
 <?php
 namespace App\Expense\Models;
 
+use Phalcon\Mvc\Model\Relation;
+
 class Exchange extends \Micro\Model {
 
     public function initialize() {
@@ -19,6 +21,18 @@ class Exchange extends \Micro\Model {
             'currency_id',
             array(
                 'alias' => 'To'
+            )
+        );
+
+        $this->hasMany(
+            'to_currency_id',
+            'App\Expense\Models\Item',
+            'currency_id',
+            array(
+                'alias' => 'ExpenseItems',
+                'foreignKey' => array(
+                    'action' => Relation::ACTION_CASCADE
+                )
             )
         );
     }
