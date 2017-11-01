@@ -524,6 +524,10 @@ class Expense extends \Micro\Model {
 
                 $expense[$code]['expense_value_formatted'] = number_format($expense[$code]['expense_value'], 2, ',', '.');
                 $remains[$code]['remains_value_formatted'] = number_format($remains[$code]['remains_value'], 2, ',', '.');
+
+                if ($remains[$code]['remains_value'] < 0) {
+                    $remains[$code]['remains_value_formatted'] = '('.$remains[$code]['remains_value_formatted'].')';
+                }
             }
         }
 
