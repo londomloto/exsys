@@ -62,7 +62,17 @@
                                     return e.data ? e.data.amounts_formatted : '-';
                                 }
                             },
-                            { text: 'Status', dataIndex: 'status_name', width: 150 },
+                            { 
+                                text: 'Status', 
+                                dataIndex: 'status_name', 
+                                width: 150,
+                                renderer: (e) => {
+                                    if (e.data) {
+                                        return `<iron-icon icon="image:lens" style="color: ${e.data.status_color}"></iron-icon>&nbsp;<span>${e.data.status_name}</span>`;
+                                    }
+                                    return '';
+                                }
+                            },
                             { 
                                 text: 'Action',
                                 type: 'action',
