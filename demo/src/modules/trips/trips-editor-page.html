@@ -60,7 +60,7 @@
 
         <kct-vbox>
             <page-header-block title="EDITOR" description="Expense Request" icon="description">
-                <paper-button hidden="[[ !record.id_trip ]]"  disabled="[[ __tripInvalid ]]" class="btn-primary" on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Save Changes</paper-button>
+                <paper-button hidden$="[[ __tripIsPhantom ]]"  disabled="[[ __tripInvalid ]]" class="btn-primary" on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Save Changes</paper-button>
             </page-header-block>
             <div class="flex scroll-y padding">
 
@@ -72,13 +72,9 @@
                             
                             <paper-input label="Subject" value="{{ record.subject_trip }}" required auto-validate error-message="Subject is required"></paper-input>
                                 
-                            <kct-column columns="2" gutter="1.5rem">
-                                <div>
-                                    <vaadin-date-picker label="Start Date" value="{{ record.date_start }}" required auto-validate error-message="Start date is required"></vaadin-date-picker>
-                                </div>
-                                <div>
-                                    <vaadin-date-picker label="End Date" value="{{ record.date_end }}" required auto-validate error-message="End date is required"></vaadin-date-picker>
-                                </div>
+                            <kct-column columns="2" gutter="1.5rem" spacer="0px">
+                                <vaadin-date-picker label="Start Date" value="{{ record.date_start }}" required auto-validate error-message="Start date is required"></vaadin-date-picker>
+                                <vaadin-date-picker label="End Date" value="{{ record.date_end }}" required auto-validate error-message="End date is required"></vaadin-date-picker>
                             </kct-column>
                                 
                             <vaadin-combo-box 
@@ -127,8 +123,6 @@
                             <paper-input label="Identity No. (Passport)" value="{{ record.identitiy_no }}"></paper-input>
 
                             <kct-file-input label="Attachment" value="{{ record.attachment }}" file="{{ attachment }}"></kct-file-input>
-
-                            <paper-input label="Need advance?" value="{{ record.adv_desc }}" on-tap="__onInputAdvanceTap" readonly></paper-input>
                             
                         </kct-form-validator>
                         
@@ -136,7 +130,7 @@
                     
                 </paper-card>
 
-                <paper-card class="block" hidden="[[ record.id_trip ]]">
+                <paper-card class="block" hidden$="[[ !__tripIsPhantom ]]">
                     <div class="card-content">
                         <kct-hbox>
                             <div class="flex">
@@ -149,7 +143,7 @@
                     </div>
                 </paper-card>
 
-                <paper-card class="block" hidden="[[ ! record.id_trip ]]">
+                <paper-card class="block" hidden$="[[ __tripIsPhantom ]]">
                     <div class="card-content">
                         <h3 class="block-title">Trip Items</h3>
                         
@@ -192,6 +186,56 @@
                         
                     </div>
                     
+                </paper-card>
+
+                <paper-card class="block" hidden$="[[ __tripIsPhantom ]]">
+                    <div class="card-content">
+                        <h3 class="block-title">Trip Advance</h3>
+                        <div class="m-b" hidden$="[[ !record.has_advance ]]">
+                            <paper-button on-tap="__onEditAdvanceTap" class="btn-sm btn-amber"><iron-icon icon="image:edit"></iron-icon>&nbsp;Change</paper-button>
+                            <paper-button on-tap="__onDeleteAdvanceTap" class="btn-sm btn-danger"><iron-icon icon="close"></iron-icon>&nbsp;Delete</paper-button>
+                        </div>
+                        <div hidden$="[[ record.has_advance ]]">
+                            <div>Does this trip need an advance?</div>
+                            <div class="m-t">
+                                <paper-button on-tap="__onCreateAdvanceTap" class="btn-sm btn-cyan"><iron-icon icon="add"></iron-icon>&nbsp;Create Advance</paper-button>
+                            </div>
+                        </div>
+                        <kct-column columns="3" gutter="1.5rem" hidden$="[[ !record.has_advance ]]">
+                            <div>
+                                <div class="display-field">
+                                    <label>Advance: </label>
+                                    <div>[[ advanceRecord.adv_no ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Subject: </label>
+                                    <div>[[ advanceRecord.subject_adv ]]</div>
+                                </div>
+                                
+                            </div>
+                            <div>
+                                <div class="display-field">
+                                    <label>Type: </label>
+                                    <div>[[ advanceRecord.type_name ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Purpose: </label>
+                                    <div>[[ advanceRecord.purpose_name ]]</div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="display-field">
+                                    <label>Periode: </label>
+                                    <div>[[ advanceRecord.date_start_short ]] - [[ advanceRecord.date_end_short ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Current Status: </label>
+                                    <div>[[ advanceRecord.status_name ]]</div>
+                                </div>
+                            </div>
+                        </kct-column>
+                        
+                    </div>
                 </paper-card>
                 
             </div>
@@ -238,9 +282,9 @@
             </template>
         </kct-dialog>
 
-        <kct-dialog id="advance-editor" title="Advance Editor" width="100%" height="100%">
+        <kct-dialog id="advance-editor" title="Advance Editor" width="80%" height="100%" scrollable>
             <template preserve-content>
-                <style>
+                <style include="theme-helper">
                     .dialog-content {
                         background-color: var(--paper-grey-100);
                     }
@@ -281,6 +325,7 @@
             static get properties() {
                 return {
                     record: { type: Object, value: () => ({}) },
+                    advanceRecord: { type: Object },
                     types: { type: Array },
                     purposes: { type: Array },
                     items: { type: Array, value: () => ([]) },
@@ -312,17 +357,21 @@
             }
             static get observers() {
                 return [
-                    '__purposesChanged(__purposes.*)'
+                    '__purposesChanged(__purposes.*)',
+                    '__computePhantom(record.id_trip)'
                 ];
             }
+            
             constructor() {
                 super();
 
+                this.__tripIsPhantom = true;
                 this.__purposes = [];
                 this.__comboPurposeRequired = false;
                 this.__stamping = false;
                 this.__disabledAdvanceEditor = false;
             }
+
             handleRouteParams(action, id) {
                 if (['add', 'edit'].indexOf(action) == -1) return;
 
@@ -339,23 +388,32 @@
                 this.set('items', []);
 
                 if (action == 'edit') {
-                    this.mask('Loading...')
+                    this.mask('Loading...');
 
                     this.__loadReferences().then(() => {
                         this.$.ajax.GET('/trips/' + id).then(res => {
                             this.unmask();
                             this.set('record', res.data);
-                            
                             this.__loadItems();
+                            this.__loadAdvance();
+
                             this.$['trip-validator'].validate();
                         });
                     });
                 } else {
                     this.__loadReferences().then(() => {
                         this.set('record', { type: '1' });
+                        this.set('advanceRecord', {});
                         this.$['trip-validator'].validate();
                     });
                 }
+            }
+            __computePhantom(id) {
+                let phantom = true;
+                if (id) {
+                    phantom = false;
+                }
+                this.set('__tripIsPhantom', phantom);
             }
             __computeNo(index) {
                 return (index + 1);
@@ -407,6 +465,15 @@
                 }).then(res => {
                     this.set('items', res.data);
                 });
+            }
+            __loadAdvance() {
+                if (this.record.adv_ref) {
+                    this.$.ajax.GET('/advance/' + this.record.adv_ref).then(res => {
+                        this.set('advanceRecord', res.data);
+                    });    
+                } else {
+                    this.set('advanceRecord', {});
+                }
             }
             __saveChanges() {
                 let data = this.record;
@@ -511,16 +578,33 @@
                     }
                 }
             }
-            __onInputAdvanceTap() {
-                let record = this.record;
+            __onCreateAdvanceTap() {
+                let payload = {};
 
-                if (record.adv_ref) {
-                    this.$['advance-editor'].open();
-                    this.$['advance-editor-page'].loadDocument(record.adv_ref);
-                } else {
-                    this.$['advance-editor'].open();
-                    this.$['advance-editor-page'].initDocument();
-                }
+                payload.subject_adv = 'Advance for ' + this.record.subject_trip;
+                payload.date_start = this.record.date_start;
+                payload.date_end = this.record.date_end;
+                payload.type = this.record.type;
+                payload.purpose = this.record.purpose;
+                
+                this.$['advance-editor'].open();
+                this.$['advance-editor-page'].initDocument(payload);
+            }
+            __onEditAdvanceTap() {
+                this.$['advance-editor'].open();
+                this.$['advance-editor-page'].loadDocument(this.record.adv_ref);
+            }
+            __onDeleteAdvanceTap() {
+                this.confirm('Confirm', 'Are you sure want to delete this advance?').then(y => {
+                    if (y) {
+                        this.$.ajax.DELETE('/advance/' + this.record.adv_ref).then(() => {
+                            this.set('record.has_advance', false);
+                            this.set('record.adv_ref', '');
+                            this.set('record.amounts', 0);
+                            this.set('advanceRecord', {});
+                        });
+                    }
+                });
             }
             __onAdvanceItemEditorOpened() {
                 this.set('__disabledAdvanceEditor', true);
@@ -539,11 +623,16 @@
                 let advance = e.detail.record;
 
                 if (advance) {
-                    this.set('record.amounts', advance.amounts);
-                    this.set('record.adv_ref', advance.id_adv);
-                    this.set('record.adv_no', advance.adv_no);
-                    this.set('record.adv_subject', advance.subject_adv);
-                    this.set('record.adv_desc', advance.adv_no + ' (' + advance.subject_adv + ')');
+                    this.__saveChanges().then(() => {
+                        this.set('record.has_advance', true);
+                        this.set('advanceRecord', advance);
+
+                        this.set('record.amounts', advance.amounts);
+                        this.set('record.adv_ref', advance.id_adv);
+                        this.set('record.adv_no', advance.adv_no);
+                        this.set('record.adv_subject', advance.subject_adv);
+                        this.set('record.adv_desc', advance.adv_no + ' (' + advance.subject_adv + ')');
+                    });
                 }
             }
             __onBackTap() {

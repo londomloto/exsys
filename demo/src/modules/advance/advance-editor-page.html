@@ -36,8 +36,8 @@
         <kct-vbox>
             
             <page-header-block title="EDITOR" description="Advance Request" icon="description" hidden$="[[ dialogMode ]]">
-                <paper-button hidden="[[ ! record.id_adv ]]"  disabled$="[[ __formInvalid ]]" class="btn-primary" on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Update</paper-button>
-                <paper-button hidden="[[ ! record.id_adv ]]"  disabled$="[[ __formInvalid ]]" class="btn-cyan" on-tap="__onSubmitTap"><iron-icon icon="done-all"></iron-icon>&nbsp;Submit</paper-button>
+                <paper-button hidden$="[[ ! record.id_adv ]]"  disabled$="[[ __formInvalid ]]" class="btn-primary" on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Update</paper-button>
+                <paper-button hidden$="[[ __advanceIsEmpty ]]"  disabled$="[[ __formInvalid ]]" class="btn-cyan" on-tap="__onSubmitTap"><iron-icon icon="done-all"></iron-icon>&nbsp;Submit</paper-button>
             </page-header-block>
 
             <div class="flex scroll-y padding">
@@ -49,7 +49,7 @@
                             
                             <paper-input label="Subject" value="{{ record.subject_adv }}" required auto-validate error-message="Subject is required"></paper-input>    
 
-                            <kct-column columns="2">
+                            <kct-column columns="2" gutter="1.5rem" spacer="0px">
                                 <vaadin-date-picker label="Start Date" value="{{ record.date_start }}" required auto-validate error-message="Start date is required"></vaadin-date-picker>
                                 <vaadin-date-picker label="End Date" value="{{ record.date_end }}" required auto-validate error-message="End date is required"></vaadin-date-picker>
                             </kct-column>
@@ -157,7 +157,8 @@
             height="100%" 
             accent="[[ itemEditorAccent ]]" 
             on-opened="__onItemEditorOpened" 
-            on-closed="__onItemEditorClosed">
+            on-closed="__onItemEditorClosed" 
+            scrollable>
             <template preserve-content>
                 <div slot="dialog-body">
 
@@ -206,11 +207,13 @@
             }
             static get observers() {
                 return [
-                    '__purposesChanged(__purposes.*)'
+                    '__purposesChanged(__purposes.*)',
+                    '__computeEmpty(items.*)'
                 ];
             }
             constructor() {
                 super();
+                this.__advanceIsEmpty = true;
                 this.__purposes = [];
                 this.__comboPurposeRequired = false;
             }
@@ -240,13 +243,14 @@
                     });
                 }
             }
-            initDocument() {
-                this.set('items', []);
-                this.set('record', {});
-
+            initDocument(data = {}) {
                 this.mask('Opening...');
                 this.__loadReferences().then(() => {
                     this.unmask();
+                    
+                    this.set('items', []);
+                    this.set('record', data);
+                    
                     this.$.validator.validate();
                 });
             }
@@ -264,6 +268,9 @@
             }
             saveDocument() {
                 return this.__saveChanges();
+            }
+            __computeEmpty() {
+                this.set('__advanceIsEmpty', this.items.length == 0);
             }
             __handlePurpose() {
                 let purposes = [];
@@ -285,22 +292,10 @@
             }
             __loadReferences() {
 
-                let typeParams = { type_id: ['<>', '1'] },
-                    purposeParams = {};
-
-
-                if (this.travelingMode) {
-                    typeParams = {
-                        type_id: '1'
-                    };
-
-                    purposeParams = {
-                        parent_id: '1'
-                    };
-                }
+                let display = this.travelingMode ? 'travelling' : 'non-travelling';
 
                 return this.$.ajax.GET('/types', {
-                    params: typeParams
+                    display: display
                 }).then(res => {
                     this.set('types', res.data);
 
@@ -313,7 +308,7 @@
                     });
 
                     return this.$.ajax.GET('/types/purposes', {
-                        params: purposeParams
+                        display: display
                     }).then(res => {
                         this.set('purposes', res.data);
                         this.set('__purposes', res.data);
@@ -352,23 +347,13 @@
                                     { name: this.attachment.name, file: this.attachment }
                                 ]
                             }).then(() => {
-                                let event = new CustomEvent('saved', {
-                                    detail: {
-                                        record: Object.assign({}, this.record)
-                                    }
-                                });
-                                
+                                let event = new CustomEvent('saved', { detail: { record: res.data } });
                                 this.dispatchEvent(event);
 
                                 def.resolve();
                             });
                         } else {
-                            let event = new CustomEvent('saved', {
-                                detail: {
-                                    record: Object.assign({}, this.record)
-                                }
-                            });
-                            
+                            let event = new CustomEvent('saved', { detail: { record: res.data } });
                             this.dispatchEvent(event);
 
                             def.resolve();

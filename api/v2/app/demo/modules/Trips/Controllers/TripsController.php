@@ -5,7 +5,8 @@ use App\Trips\Models\Trip,
     App\Trips\Models\History,
     App\Trips\Models\Task,
     App\System\Models\Autonumber,
-    App\Users\Models\User;
+    App\Users\Models\User,
+    App\Statuses\Models\Status;
 
 class TripsController extends \Micro\Controller {
 
@@ -173,10 +174,12 @@ class TripsController extends \Micro\Controller {
                 )
             ))->delete();
 
+            $status = Status::val('reject');
+
             // tambah history
             $history = new History();
             $history->id_trip = $trip->id_trip;
-            $history->status_id = 7;
+            $history->status_id = $status;
             $history->user_act = $user['su_id'];
             $history->date = date('Y-m-d H:i:s');
             $history->notes = $post['notes'];
@@ -184,8 +187,13 @@ class TripsController extends \Micro\Controller {
             $history->save();
 
             // update status
-            $trip->status = 7;
+            $trip->status = $status;
             $trip->save();
+
+            // sync advance
+            if ($trip->advance) {
+                $trip->advance->reject($post);
+            }
         }
 
         return array(
@@ -229,16 +237,12 @@ class TripsController extends \Micro\Controller {
             $status = NULL;
 
             if ($user['su_grade_type'] == 'verificator') {
-                $status = 9;
+                $status = Status::val('verified');
             } else {
                 if ($user['su_grade_limit'] >= 15000000) {
-                    $status = 4;
-                    // create ticketing task 
-                    
-                    $trip->requestTicket();
-
+                    $status = Status::val('final-approved');
                 } else {
-                    $status = 3;
+                    $status = Status::val('approved');
                 }
             }
 
@@ -252,6 +256,16 @@ class TripsController extends \Micro\Controller {
             // update status
             $trip->status = $status;
             $trip->save();
+
+            // sync advance
+            if ($trip->advance) {
+                $trip->advance->approve($post);
+            }
+
+            if ($trip->status == Status::val('final-approved')) {
+                $trip->requestTicket();
+            }
+
         }
 
         return array(
@@ -273,10 +287,12 @@ class TripsController extends \Micro\Controller {
                 )
             ))->delete();
 
+            $status = Status::val('change-request');
+
             // tambah history
             $history = new History();
             $history->id_trip = $trip->id_trip;
-            $history->status_id = 10;
+            $history->status_id = $status;
             $history->user_act = $user['su_id'];
             $history->date = date('Y-m-d H:i:s');
             $history->notes = $post['notes'];
@@ -284,8 +300,12 @@ class TripsController extends \Micro\Controller {
             $history->save();
 
             // update status
-            $trip->status = 10;
+            $trip->status = $status;
             $trip->save();
+
+            if ($trip->advance) {
+                $trip->advance->returned($post);
+            }
         }
 
         return array(

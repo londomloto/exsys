@@ -5,7 +5,8 @@ use App\Expense\Models\Task,
     App\Expense\Models\History,
     App\Users\Models\User,
     App\Statuses\Models\Status,
-    App\Currencies\Models\Currency;
+    App\Currencies\Models\Currency,
+    Phalcon\Mvc\Model\Relation;
 
 class Expense extends \Micro\Model {
     
@@ -60,7 +61,10 @@ class Expense extends \Micro\Model {
             'App\Expense\Models\Item',
             'id_exp',
             array(
-                'alias' => 'Items'
+                'alias' => 'Items',
+                'foreignKey' => array(
+                    'action' => Relation::ACTION_CASCADE
+                )
             )
         );
 
@@ -69,7 +73,10 @@ class Expense extends \Micro\Model {
             'App\Expense\Models\History',
             'id_exp',
             array(
-                'alias' => 'History'
+                'alias' => 'History',
+                'foreignKey' => array(
+                    'action' => Relation::ACTION_CASCADE
+                )
             )
         );
 
@@ -87,7 +94,10 @@ class Expense extends \Micro\Model {
             'App\Expense\Models\Exchange',
             'id_exp',
             array(
-                'alias' => 'Exchanges'
+                'alias' => 'Exchanges',
+                'foreignKey' => array(
+                    'action' => Relation::ACTION_CASCADE
+                )
             )
         );
     }

@@ -55,7 +55,7 @@
             }
 
             .dialog-footer {
-                background-color: var(--app-primary);
+                background-color: var(--kct-dialog-accent-color, var(--app-primary));
                 padding: 8px;
                 text-align: center;
                 margin-bottom: 0;
@@ -86,6 +86,7 @@
                         title: { type: String, value: 'Dialog' },
                         width: { type: String },
                         height: { type: String },
+                        accent: { type: String },
                         scrollable: { type: Boolean, value: false },
                         fitContent: { type: Boolean, value: false, reflectToAttribute: true }
                     }
@@ -93,7 +94,8 @@
                 static get observers() {
                     return [
                         '__sizeChanged(width, height)',
-                        '__titleChanged(title)'
+                        '__titleChanged(title)',
+                        '__accentChanged(accent)'
                     ];
                 }
 
@@ -272,6 +274,12 @@
                         this.__owner = null;
                         this.__relocating = false;
                     }
+                }
+
+                __accentChanged(accent) {
+                    this.updateStyles({
+                        '--kct-dialog-accent-color': accent
+                    });
                 }
 
                 __titleChanged(title) {

@@ -31,6 +31,14 @@ class ItemsController extends \Micro\Controller {
 
     public function updateAction($id) {
         $post = $this->request->getJson();
+
+        // fixup time
+        if (isset($post['transport_departure_time'])) {
+            $time = $post['transport_departure_time'];
+            $time = str_replace('.', ':', $time);
+            $post['transport_departure_time'] = $time;
+        }
+
         $query = Item::get($id);
 
         if ($query->data) {

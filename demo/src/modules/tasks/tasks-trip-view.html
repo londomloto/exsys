@@ -6,24 +6,18 @@
 <link rel="import" href="../../elements/kct-message/kct-prompt.html">
 <link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
 
-<dom-module id="tasks-trip-action">
+<dom-module id="tasks-trip-view">
     <template>
         <style include="theme-helper">
             :host {
-                height: var(--tasks-trip-action-height, 500px);
+                height: var(--tasks-trip-view-height, 500px);
                 background-color: var(--paper-grey-100);
             }
             .action-buttons paper-button {
                 min-width: 90px;
             }
-            .display-field {
-                font-size: 14px;
-                padding: 5px 0;
-            }
-            .display-field > label:first-child {
-                font-weight: 500;
-                display: inline-block;
-                width: 100px;
+            [hidden] {
+                display: none;
             }
         </style>
 
@@ -35,9 +29,9 @@
                 <paper-card class="block">
                     <div class="card-content">
                         <div class="action-buttons text-right">
-                            <paper-button on-tap="__onConfirmTap" class="btn-md btn-green">Approve</paper-button>
-                            <paper-button on-tap="__onRejectTap" class="btn-md btn-red">Reject</paper-button>
-                            <paper-button on-tap="__onRequestTap" class="btn-md btn-amber">Request Change</paper-button>    
+                            <paper-button on-tap="__onConfirmTap" class="btn-green">Approve</paper-button>
+                            <paper-button on-tap="__onRejectTap" class="btn-red">Reject</paper-button>
+                            <paper-button on-tap="__onRequestTap" class="btn-amber">Request Change</paper-button>    
                         </div>
                     </div>
                 </paper-card>
@@ -74,9 +68,13 @@
                                 </div>
                             </div>
                             <div>
-                                <div class="display-field">
+                                <div class="display-field" hidden$="[[ !record.trip.has_advance ]]">
                                     <label>Advance: </label>
-                                    <div>[[ record.trip.adv_no ]]</div>
+                                    <div><a href="#" on-click="__onAdvanceTap">[[ record.trip.adv_no ]]</a></div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Status: </label>
+                                    <div>[[ record.trip.status_name ]]</div>
                                 </div>
                             </div>
                         </kct-column>
@@ -151,41 +149,33 @@
             <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to list" on-tap="__onBackTap"></paper-fab>
         </div>
 
-        <kct-prompt id="task-prompt" title="[[ actionTitle ]]" message="Type your reason"></kct-prompt>
+        <kct-prompt id="task-prompt" title="[[ actionTitle ]]" message="Additional notes (remarks)"></kct-prompt>
 
     </template>
     <script>
-        class TasksTripAction extends KctView {
+        class TasksTripView extends KctView {
             static get is() {
-                return 'tasks-trip-action';
+                return 'tasks-trip-view';
             }
             static get properties() {
                 return {
                     record: { type: Object },
-                    task: { type: Object },
                     actionTitle: { type: String, value: 'Approval' }
                 }
             }
-            static get observers() {
-                return [
-                    '__taskChanged(task.*)'
-                ];
+            handleRouteParams(action, id) {
+                this.$.ajax.GET('/trips/' + id + '/view').then(res => {
+                    this.set('record', res.data);
+                });  
             }
             handleResizing(width, height) {
-                this.updateStyles({'--tasks-trip-action-height': height + 'px'});
+                this.updateStyles({'--tasks-trip-view-height': height + 'px'});
             }
             __computeNo(index) {
                 return index + 1;
             }
             __computeVisa(visa) {
                 return visa == '1' ? 'Yes' : '-';
-            }
-            __taskChanged() {
-                if (this.task) {
-                    this.$.ajax.GET('/trips/' + this.task.id_trip + '/view').then(res => {
-                        this.set('record', res.data);
-                    });  
-                }
             }
             __onRejectTap() {
                 if ( ! this.record && ! this.record.trip) {
@@ -235,10 +225,14 @@
                     }
                 });
             }
+            __onAdvanceTap(e) {
+                e.preventDefault();
+                this.set('route.path', '/advance/advance/view/' + this.record.trip.adv_ref);
+            }
             __onBackTap() {
-                this.dispatchEvent(new CustomEvent('back-tap'));
+                this.set('route.path', '/tasks/tasks-trip');
             }
         }
-        customElements.define(TasksTripAction.is, TasksTripAction);
+        customElements.define(TasksTripView.is, TasksTripView);
     </script>
 </dom-module>

@@ -97,6 +97,7 @@ class Trip extends \Micro\Model {
         $data['date_start_short'] = date('d/m/Y', strtotime($this->date_start));
         $data['date_end_short'] = date('d/m/Y', strtotime($this->date_end));
         $data['has_items'] = $this->items->count() > 0 ? 1 : 0;
+        $data['has_advance'] = FALSE;
         
 
         if ($this->lastStatus) {
@@ -118,6 +119,8 @@ class Trip extends \Micro\Model {
         }
 
         if ($this->advance) {
+            $data['has_advance'] = TRUE;
+
             $data['amounts'] = $this->advance->amounts;
             $data['adv_no'] = $this->advance->adv_no;
             $data['adv_subject'] = $this->advance->subject_adv;

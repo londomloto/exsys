@@ -1,5 +1,4 @@
 <link rel="import" href="../../../bower_components/paper-card/paper-card.html">
-<link rel="import" href="../../../bower_components/paper-time-picker/paper-time-picker.html">
 <link rel="import" href="../../../bower_components/vaadin-material-theme/vaadin-date-picker.html">
 <link rel="import" href="../../../bower_components/vaadin-date-picker/vaadin-date-picker.html">
 <link rel="import" href="../../../bower_components/vaadin-combo-box/vaadin-combo-box.html">
@@ -12,24 +11,18 @@
 <link rel="import" href="../../elements/kct-checkbox/kct-checkbox.html">
 <link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
 
-<dom-module id="tasks-ticket-action">
+<dom-module id="tasks-ticket-view">
     <template>
         <style include="theme-helper">
             :host {
-                height: var(--tasks-ticket-action-height, 500px);
+                height: 100%;
                 background-color: var(--paper-grey-100);
             }
             .action-buttons paper-button {
                 min-width: 90px;
             }
-            .display-field {
-                font-size: 14px;
-                padding: 5px 0;
-            }
-            .display-field > label:first-child {
-                font-weight: 500;
-                display: inline-block;
-                width: 100px;
+            [hidden] {
+                display: none;
             }
         </style>
 
@@ -72,9 +65,13 @@
                                 </div>
                             </div>
                             <div>
-                                <div class="display-field">
+                                <div class="display-field" hidden$="[[ !record.trip.adv_ref ]]">
                                     <label>Advance: </label>
-                                    <div>[[ record.trip.adv_no ]]</div>
+                                    <div><a href="#" on-tap="__onAdvanceTap">[[ record.trip.adv_no ]]</a></div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Status: </label>
+                                    <div>[[ record.trip.status_name ]]</div>
                                 </div>
                             </div>
                         </kct-column>
@@ -87,7 +84,7 @@
                         <div class="table-responsive">
                             <table class="table striped">
                                 <thead>
-                                    <th width="40">No.</th>
+                                    <th width="40" class="text-center">No.</th>
                                     <th width="150">Departure</th>
                                     <th>Origin</th>
                                     <th>Destination</th>
@@ -98,7 +95,7 @@
                                 <tbody>
                                     <template is="dom-repeat" items="[[ record.items ]]">
                                         <tr>
-                                            <td>[[ __computeNo(index) ]]</td>
+                                            <td class="text-center">[[ __computeNo(index) ]]</td>
                                             <td>[[ item.departure_date_short ]]</td>
                                             <td>[[ item.origin ]]</td>
                                             <td>[[ item.destination ]]</td>
@@ -131,7 +128,7 @@
                         <div class="table-responsive">
                             <table  class="table striped">
                                 <thead>
-                                    <th width="40">No.</th>
+                                    <th width="40" class="text-center">No.</th>
                                     <th width="120">Date</th>
                                     <th>Status</th>
                                     <th>User</th>
@@ -140,7 +137,7 @@
                                 <tbody>
                                     <template is="dom-repeat" items="[[ record.history ]]">
                                         <tr>
-                                            <td>[[ __computeNo(index) ]]</td>
+                                            <td  class="text-center">[[ __computeNo(index) ]]</td>
                                             <td>[[ item.date_short ]]</td>
                                             <td>[[ item.status_name ]]</td>
                                             <td>[[ item.user_act_name ]]</td>
@@ -208,14 +205,13 @@
 
     </template>
     <script>
-        class TasksTicketAction extends KctView {
+        class TasksTicketView extends KctView {
             static get is() {
-                return 'tasks-ticket-action';
+                return 'tasks-ticket-view';
             }
             static get properties() {
                 return {
                     record: { type: Object },
-                    task: { type: Object },
                     item: { type: Object },
                     actionTitle: { type: String, value: 'Approval' },
                     tripTypes: {
@@ -241,13 +237,12 @@
                     }
                 }
             }
-            static get observers() {
-                return [
-                    '__taskChanged(task.*)'
-                ];
+            handleRouteParams(action, id) {
+                if ( ! action) return;
+                this.__loadDocument(id);
             }
             handleResizing(width, height) {
-                this.updateStyles({'--tasks-ticket-action-height': height + 'px'});
+                
             }
             __computeNo(index) {
                 return index + 1;
@@ -255,14 +250,10 @@
             __computeVisa(visa) {
                 return visa == '1' ? 'Yes' : '-';
             }
-            __taskChanged() {
-                if (this.task) {
-                    this.__loadDocument();
-                }
-            }
-            __loadDocument() {
+            __loadDocument(id) {
                 this.set('record', {});
-                this.$.ajax.GET('/trips/' + this.task.id_trip + '/view').then(res => {
+
+                this.$.ajax.GET('/trips/' + id + '/view').then(res => {
                     this.set('record', res.data);
                 });
             }
@@ -312,17 +303,21 @@
 
                 function done(res) {
                     if (res.success) {
-                        this.__loadDocument();
+                        this.__loadDocument(res.data.id_trip);
                     }
                 }
             }
             __onItemEditorCancelTap() {
                 this.$['item-editor'].close();
             }
+            __onAdvanceTap(e) {
+                e.preventDefault();
+                this.set('route.path', '/advance/advance/view/' + this.record.trip.adv_ref);
+            }
             __onBackTap() {
-                this.dispatchEvent(new CustomEvent('back-tap'));
+                this.set('route.path', '/tasks/tasks-ticket');
             }
         }
-        customElements.define(TasksTicketAction.is, TasksTicketAction);
+        customElements.define(TasksTicketView.is, TasksTicketView);
     </script>
 </dom-module>

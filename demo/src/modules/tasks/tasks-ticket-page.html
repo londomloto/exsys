@@ -2,7 +2,7 @@
 <link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../../elements/kct-grid/kct-grid.html">
 <link rel="import" href="../../elements/kct-pages/kct-pages.html">
-<link rel="import" href="tasks-ticket-action.html">
+<link rel="import" href="tasks-ticket-view.html">
 
 <dom-module id="tasks-ticket-page">
     <template>
@@ -35,7 +35,7 @@
                     </template>
 
             </kct-grid>
-            <tasks-ticket-action id="action" task="[[ task ]]" on-back-tap="__onActionBackTap"></tasks-ticket-action>
+            <tasks-ticket-view id="view" route="{{ route }}" state="[[ state ]]"></tasks-ticket-view>
         </kct-pages>
 
     </template>
@@ -88,18 +88,25 @@
             }
             handleResizing(width, height) {
                 this.updateStyles({'--tasks-ticket-page-height': height + 'px'});
-                this.$.action.handleResizing(width, height);
+                if (this.page == 'grid') {
+                    this.$.grid && this.$.grid.resize();
+                } else {
+                    this.$.view && this.$.view.handleResizing(width, height);
+                }
             }
-            handleRouteParams() {
-                
+            handleRouteParams(action) {
+                if (action) {
+                    this.set('page', 'view');
+                } else {
+                    this.set('page', 'grid');
+                    this.$.grid.load();
+                    this.$.grid.deferAutoresize();
+                }
             }
             __onViewTap(e) {
+                this.set('route.path', '/tasks/tasks-ticket/view/' + e.data.id_trip);
                 this.set('task', e.data);
                 this.set('page', 'action');
-            }
-            __onActionBackTap() {
-                this.set('page', 'grid');
-                this.$.grid.load();
             }
         }
         customElements.define(TasksTicketPage.is, TasksTicketPage);

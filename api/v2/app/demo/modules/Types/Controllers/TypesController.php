@@ -12,10 +12,23 @@ class TypesController extends \Micro\Controller {
         switch($display) {
             case 'grid':
                 return Type::grid($params);
-                break;
 
             case 'tree':
                 break;
+
+            case 'travelling':
+                return Type::get()
+                    ->filterable()
+                    ->andWhere('parent_id IS NULL')
+                    ->andWhere('type_code = :code:', array('code' => 'travelling'))
+                    ->paginate();
+
+            case 'non-travelling':
+                return Type::get()
+                    ->filterable()
+                    ->andWhere('parent_id IS NULL')
+                    ->andWhere('type_code <> :code:', array('code' => 'travelling'))
+                    ->paginate();
 
             default:
                 return Type::get()

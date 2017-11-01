@@ -111,7 +111,7 @@
 
                 <paper-card class="block">
                     <div class="card-content">
-                        <h3 class="block-title">Advance History</h3>
+                        <h3 class="block-title">Trip History</h3>
 
                         <div class="table-responsive">
                             <table class="table striped">
@@ -149,7 +149,7 @@
         <kct-dialog id="ticket-editor" title="Ticket Detail" width="400" height="100%">
             <template preserve-content>
                 <div slot="dialog-body">
-                    <paper-input label="Transport Name" value="[[ itemRecord.transport_name ]]"></paper-input>
+                    <paper-input label="Transport Name" value="[[ itemRecord.transport_operator ]]"></paper-input>
                     <paper-input label="Transport Departure Time" value="[[ itemRecord.transport_departure_time ]]"></paper-input>
                     <paper-input label="Transport Price (IDR)" value="[[ itemRecord.transport_prices_formatted ]]"></paper-input>
                 </div>
