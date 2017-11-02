@@ -333,7 +333,29 @@
                                     start: 0,  
                                     fields: [ this.itemValuePath ],
                                     query: value
-                                }, true);
+                                });
+
+                                this.load().then(() => {
+                                    let valueIndex = this._indexOfValue(value, this.filteredItems);
+                                    if (valueIndex >= 0) {
+                                        this.selectedItem = this.filteredItems[valueIndex];    
+                                    } else {
+                                        this.selectedItem = null;
+
+                                        if (this.allowCustomValue) {
+                                            this._inputElementValue = value;
+                                        }
+
+                                        this._setHasValue(this.value !== '');
+                                        this._lastCommittedValue = undefined;
+
+                                        this.__setPayload({ 
+                                            start: 0,  
+                                            fields: [ this.itemLabelPath ],
+                                            query: ''
+                                        }, true);
+                                    }
+                                });
 
                             }
 

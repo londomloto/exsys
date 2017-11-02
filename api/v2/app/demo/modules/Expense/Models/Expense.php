@@ -6,6 +6,7 @@ use App\Expense\Models\Task,
     App\Users\Models\User,
     App\Statuses\Models\Status,
     App\Currencies\Models\Currency,
+    App\Finance\Models\Account,
     Phalcon\Mvc\Model\Relation;
 
 class Expense extends \Micro\Model {
@@ -538,6 +539,50 @@ class Expense extends \Micro\Model {
         $summary['remains'] = array_values($remains);
 
         return $summary;
+    }
+
+    public function getJournals() {
+        $journals = array();
+
+        // line #1
+        $line = array(
+            'description' => 'Accrual Expense',
+            'account' => 'N/A',
+            'debits' => 0,
+            'debits_formatted' => number_format($this->amounts, 2, ',', '.'),
+            'credits' => 0,
+            'credits_formatted' => '',
+            'padding' => '0px'
+        );
+
+        // line #2
+        $journals[] = $line;
+        // $account = Account::forExpense($this);
+
+        $account = 'N/A';
+
+        if ($this->expenseType) {
+            if ($this->expenseType->type_code == 'others') {
+                $account = 'N/A - Temporary Expense';
+            } else if ($this->expensePurpose) {
+                $account = 'N/A - Expense';
+            }
+        }
+
+        $line = array(
+            'description' => $this->subject_exp.' ('.$this->exp_no.')',
+            'account' => $account,
+            'debits' => 0,
+            'debits_formatted' => '',
+            'credits' => $this->amounts,
+            'credits_formatted' => number_format($this->amounts, 2, ',', '.'),
+            'padding' => '24px'
+        );
+
+        $journals[] = $line;
+        
+
+        return $journals;
     }
 
     private static function __defineExchangeOffset($exchanges, $to) {

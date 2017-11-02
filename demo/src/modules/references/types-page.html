@@ -4,6 +4,7 @@
 <link rel="import" href="../../elements/kct-grid/kct-grid.html">
 <link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../../elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../elements/kct-combobox/kct-combobox.html">
 
 <dom-module id="types-page">
     <template>
@@ -33,7 +34,7 @@
 
         </kct-grid>
 
-        <kct-dialog id="editor" title="Type Editor" width="400" height="100%">
+        <kct-dialog id="editor" title="Type Editor" width="500" height="100%" scrollable>
             <template preserve-content>
                 <div slot="dialog-body">
                     <vaadin-combo-box 
@@ -45,6 +46,18 @@
                         
                     </vaadin-combo-box>
                     <paper-input label="Description" value="{{ selectedRecord.type_name }}"></paper-input>
+                    <kct-combobox 
+                        id="combo-account" 
+                        url="/finance/accounts" 
+                        label="Account" 
+                        value="{{ selectedRecord.coa }}" 
+                        page-size="10" 
+                        item-value-path="acc_code" 
+                        item-label-path="acc_label" 
+                        allow-custom-value 
+                        autoload>
+                        
+                    </kct-combobox>
                 </div>
                 <div slot="dialog-footer">
                     <paper-button on-tap="__onEditorSaveTap">Save</paper-button>
@@ -103,8 +116,6 @@
             ready() {
                 super.ready();
                 this.$.grid.context = this;
-
-                this.__loadParents();
             }
             handleRouteParams(setting) {
                 if (setting != 'types') return;
@@ -129,27 +140,32 @@
                     return parents;
                 });
             }
+            __loadReferences() {
+                return Promise.all([
+                    this.__loadParents()
+                ]);
+            }
             __onAddTap() {
-                this.set('selectedRecord', {});
-
                 this.mask('Opening editor...');
-                
-                this.__loadParents().then(() => {
+                this.__loadReferences().then(() => {
                     this.unmask();
+                    this.set('selectedRecord', {});
                     this.$.editor.open();
                 });
             }
             __onEditTap(e) {
                 let record = e.data;
-                this.set('selectedRecord', record);
-
                 this.mask('Opening editor...');
 
-                this.__loadParents().then(parents => {
-                    parents = parents.slice().filter(elem => elem.type_id != record.type_id);
-                    this.set('__parents', parents);
-
+                this.__loadReferences().then(values => {
                     this.unmask();
+                    let [ parents ] = values;
+
+                    parents = parents.slice().filter(elem => elem.type_id != record.type_id);
+
+                    this.set('__parents', parents);
+                    this.set('selectedRecord', record);
+                    
                     this.$.editor.open();
                 });
                 

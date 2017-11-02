@@ -1,6 +1,8 @@
 <?php
 namespace Micro\Routing;
 
+use Phalcon\Mvc\Micro\Collection as RouteCollection;
+
 class Group {
 
     protected $_prefix;

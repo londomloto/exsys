@@ -3,6 +3,17 @@ namespace App\Types\Models;
 
 class Type extends \Micro\Model {
 
+    public function initialize() {
+        $this->belongsTo(
+            'coa',
+            'App\Finance\Models\Account',
+            'acc_code',
+            array(
+                'alias' => 'Account'
+            )
+        );
+    }
+
     public function getSource() {
         return 'master_type';
     }
@@ -29,6 +40,11 @@ class Type extends \Micro\Model {
         $data['is_travelling'] = $this->isTravelling();
         $data['is_others'] = $this->isOthers();
         $data['is_promo'] = $this->isPromo();
+
+        if ($this->account) {
+            $data['coa_name'] = $this->account->acc_name;
+        }
+
         return $data;
     }
 

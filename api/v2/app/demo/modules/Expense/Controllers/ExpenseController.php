@@ -51,6 +51,39 @@ class ExpenseController extends \Micro\Controller {
         );
     }
 
+    public function summaryByIdAction($id) {
+        $expense = Expense::get($id)->data;
+
+        $summary = array(
+            'expense' => array(),
+            'remains' => array()
+        );
+
+        if ($expense) {
+            $summary = $expense->getSummary();
+        }
+
+        return array(
+            'success' => TRUE,
+            'data' => $summary
+        );
+    }
+
+    public function journalsByIdAction($id) {
+        $expense = Expense::get($id)->data;
+        
+        $result = array(
+            'success' => TRUE,
+            'data' => array()
+        );
+
+        if ($expense) {
+            $result['data'] = $expense->getJournals();
+        }
+        
+        return $result;
+    }
+
     public function createAction() {
         $post = $this->request->getJson();
         $user = $this->auth->user();
@@ -409,21 +442,5 @@ class ExpenseController extends \Micro\Controller {
         );
     }
 
-    public function summaryByIdAction($id) {
-        $expense = Expense::get($id)->data;
-
-        $summary = array(
-            'expense' => array(),
-            'remains' => array()
-        );
-
-        if ($expense) {
-            $summary = $expense->getSummary();
-        }
-
-        return array(
-            'success' => TRUE,
-            'data' => $summary
-        );
-    }
+    
 }

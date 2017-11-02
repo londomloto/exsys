@@ -103,7 +103,6 @@ class ModelQuery {
             if ( ! empty($where)) {
                 $this->__builder->where('(' . implode(' OR ', $where) . ')', array('q' => '%'.$query.'%'));    
             }
-            
         }
 
         // params

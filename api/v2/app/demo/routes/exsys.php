@@ -16,7 +16,6 @@ Router::group(array(
 ->post('/{id}/fa-reject', 'faRejectById')
 ->post('/{id}/fa-request', 'faRequestById');
 
-
 Router::group(array(
     'prefix' => '/expense',
     'handler' => 'App\Expense\Controllers\ExpenseController',
@@ -26,6 +25,7 @@ Router::group(array(
 ->get('/{id}/view', 'viewById')
 ->get('/{id}/currencies', 'currenciesById')
 ->get('/{id}/summary', 'summaryById')
+->get('/{id}/journals', 'journalsById')
 ->post('/{id}/submit', 'submitById')
 ->post('/{id}/upload', 'uploadById')
 ->post('/{id}/reject', 'rejectById')

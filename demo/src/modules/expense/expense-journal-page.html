@@ -1,10 +1,60 @@
+<link rel="import" href="../../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+
 <dom-module id="expense-journal-page">
     <template>
         
         <style include="theme-helper">
-            
+            :host {
+                height: var(--expense-journal-page-height, 500px);
+                background-color: var(--page-background-color);
+            }
         </style>
 
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <div class="padding">
+            <paper-card class="block">
+                <div class="card-content">
+                    
+                    <h3 class="block-title">Expense Journal</h3>
+                    <div class="table-reponsive m-t">
+                        <table class="table striped">
+                            <thead>
+                                <tr>
+                                    <th width="40" class="text-center">No.</th>
+                                    <th>Description</th>
+                                    <th width="300">Account</th>
+                                    <th width="120" class="text-right">Debits (IDR)</th>
+                                    <th width="120" class="text-right">Credits (IDR)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template is="dom-repeat" items="[[ expenseJournals ]]" as="line">
+                                    <tr>
+                                        <td class="text-center">[[ __computeNo(index) ]]</td>
+                                        <td style$="padding-left: [[ line.padding ]]">[[ line.description ]]</td>
+                                        <td>[[ line.account ]]</td>
+                                        <td class="text-right">[[ line.debits_formatted ]]</td>
+                                        <td class="text-right">[[ line.credits_formatted ]]</td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+                
+            </paper-card>
+        </div>
+
+        <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to list" on-tap="__onBackTap"></paper-fab>
+        </div>
+
+        <p style="display: none;">
         1. Cek ada advance?
         2. Kalo tidak ada, kolom:
 
@@ -59,11 +109,49 @@
                 Bank                                                                                    AMOUNTS BALIK
                 Advance                                                         AMOUNTS
             ----------------------------------------------
+        </p>
     </template>
     <script>
         class ExpenseJournalPage extends KctView {
             static get is() {
                 return 'expense-journal-page';
+            }
+
+            static get properties() {
+                return {
+                    expenseRecord: { type: Object },
+                    expenseJournals: { type: Array }
+                };
+            }
+
+            handleRouteParams(action, id) {
+                if (action != 'journal') return;
+
+                this.$.ajax.GET('/expense/' + id).then(res => {
+                    this.set('expenseRecord', res.data);
+                    this.__loadJournals();
+                });
+            }
+
+            handleResizing(width, height) {
+                this.updateStyles({
+                    '--expense-journal-page-height': height + 'px'
+                });
+            }
+
+            __computeNo(index) {
+                return index + 1;
+            }
+
+            __loadJournals() {
+                this.set('expenseJournals', []);
+
+                this.$.ajax.GET('/expense/' + this.expenseRecord.id_exp + '/journals').then(res => {
+                    this.set('expenseJournals', res.data);
+                });
+            }
+            __onBackTap() {
+                this.set('route.path', '/expense');
             }
         }
 
