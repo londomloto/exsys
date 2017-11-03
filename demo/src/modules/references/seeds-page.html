@@ -1,0 +1,176 @@
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../elements/kct-combobox/kct-combobox.html">
+
+<dom-module id="seeds-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-grid 
+            id="grid" 
+            url="/seeds?display=grid" 
+            columns="[[ columns ]]" 
+            selection-model="cell" 
+            pagination>
+            <template preserve-content>
+                <style include="theme-helper"></style>
+            </template>
+            <paper-button on-tap="__onAddTap" slot="primary-toolbar"><iron-icon icon="add"></iron-icon>&nbsp;Add Seed</paper-button>
+        </kct-grid>
+
+        <kct-dialog id="editor" title="Seed Editor" width="400" height="100%">
+            <template preserve-content>
+                <style include="theme-helper"></style>
+                <div slot="dialog-body">
+                    <kct-combobox  
+                        id="combo-parent" 
+                        url="/seeds?display=parent" 
+                        label="Parent" 
+                        value="{{ seedRecord.parent_id }}"
+                        page-size="10" 
+                        item-value-path="seed_id" 
+                        item-label-path="seed_name" 
+                        on-load="__onComboParentLoad"></kct-combobox>
+
+                    <paper-input label="Seed No." value="{{ seedRecord.seed_no }}"></paper-input>
+                    <paper-input label="Seed Name" value="{{ seedRecord.seed_name }}"></paper-input>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSaveTap">Save</paper-button>
+                    <paper-button on-tap="__onEditorCloseTap">Close</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class SeedsPage extends KctView {
+
+            static get is() {
+                return 'seeds-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Seeds', notify: true },
+                    columns: {
+                        type: Array,
+                        value: () => ([
+                            { type: 'rownumber' },
+                            { 
+                                text: 'Description', 
+                                dataIndex: 'seed_name',
+                                width: 300,
+                                renderer: (e) => {
+                                    return e.data ? `<span class="elbow" style="width: ${e.data.seed_pad}"></span><span>${e.data.seed_label}<span>` : '';
+                                }
+                            },
+                            {
+                                type: 'action',
+                                renderer: (e) => {
+                                    if (e.data) {
+                                        return `
+                                            <paper-button on-tap="__onEditTap" class="btn-amber"><iron-icon icon="image:edit"></iron-icon>&nbsp;Update</paper-button>
+                                            <paper-button on-tap="__onDeleteTap" class="btn-danger"><iron-icon icon="close"></iron-icon>&nbsp;Delete</paper-button>
+                                        `;
+                                    }
+                                    return '';
+                                }
+                            }
+                        ])
+                    },
+                    seedRecord: { type: Object }
+                };
+            }
+
+            handleResizing(width, height) {
+                this.$.grid && this.$.grid.resize();
+            }
+
+            handleRouteParams(setting) {
+                if (setting != 'seeds') return;
+                this.$.grid.deferAutoload();
+            }
+
+            __loadReferences() {
+                return Promise.all([
+                    this.$['combo-parent'].load()
+                ]);
+            }
+
+            __onComboParentLoad() {
+                if (this.$['combo-parent'].paging.page == 1) {
+                    // add none
+                    let items = this.$['combo-parent'].items.slice();
+                    items.unshift({
+                        seed_id: '0',
+                        seed_name: 'NONE'
+                    });
+                    this.$['combo-parent'].items = items;
+                }
+            }
+
+            __onAddTap() {
+                this.mask('Opening...');
+                this.__loadReferences().then(() => {
+                    this.unmask();
+                    this.set('seedRecord', {});
+                    this.$.editor.open();
+                });
+            }
+
+            __onEditTap(e) {
+                this.mask('Opening...');
+                this.__loadReferences().then(() => {
+                    this.unmask();
+                    this.set('seedRecord', Object.assign({}, e.data));
+                    this.$.editor.open();
+                });
+            }
+
+            __onDeleteTap(e) {
+                this.confirm('Confirm', `Are you sure you want to delete ${e.data.seed_name} ?`).then(y => {
+                    if (y) {
+                        this.$.ajax.DELETE('/seeds/' + e.data.seed_id).then(() => {
+                            this.$.grid.load();
+                        });
+                    }
+                });
+            }
+
+            __onEditorSaveTap() {
+                this.$.editor.close();
+                
+                let data = this.seedRecord;
+
+                if (data.seed_id) {
+                    this.$.ajax.PUT('/seeds/' + data.seed_id, data).then(done.bind(this));
+                } else {
+                    this.$.ajax.POST('/seeds', data).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.$.grid.load();
+                    }
+                }
+            }
+
+            __onEditorCloseTap() {
+                this.$.editor.close();
+            }
+        }
+
+        customElements.define(SeedsPage.is, SeedsPage);
+    </script>
+</dom-module>

@@ -151,7 +151,7 @@
                             <table class="table striped">
                                 <thead>
                                     <tr>
-                                        <th width="40">No.</th>
+                                        <th width="40" class="text-center">No.</th>
                                         <th>Crop Item</th>
                                         <th>Remarks</th>
                                         <td width="120"></td>
@@ -160,8 +160,8 @@
                                 <tbody>
                                     <template is="dom-repeat" items="[[ expenseCrops ]]">
                                         <tr>
-                                            <td>[[ __computeNo(index) ]]</td>
-                                            <td>[[ item.seed_name ]]</td>
+                                            <td class="text-center">[[ __computeNo(index) ]]</td>
+                                            <td>[[ item.seed_label ]]</td>
                                             <td>[[ item.remarks ]]</td>
                                             <td class="text-right">
                                                 <paper-button on-tap="__onEditCropTap" class="btn-xs btn-amber">Edit</paper-button>
@@ -617,7 +617,7 @@
                             value="{{ cropRecord.seed_id }}" 
                             page-size="10" 
                             item-value-path="seed_id" 
-                            item-label-path="seed_name" 
+                            item-label-path="seed_label" 
                             on-change="__onComboCropChange" 
                             required 
                             auto-validate 

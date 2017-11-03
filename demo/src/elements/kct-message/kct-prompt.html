@@ -10,7 +10,8 @@
         <style include="theme-helper"></style>
         <style>
             paper-dialog {
-                min-width: 280px;
+                min-width: 400px;
+                max-width: 600px;
             }
             h2, ::slotted(h2) {
                 font-weight: 300;
@@ -50,7 +51,7 @@
                     <p>[[ message ]]</p>
                 </slot>
                 <div>
-                    <paper-input type="[[ type ]]" value="{{ value }}" autofocus></paper-input>
+                    <paper-input type="[[ type ]]" value="{{ value }}" on-keypress="__onInputKeypress" autofocus></paper-input>
                 </div>
             </div>
             <div class="footer">
@@ -90,6 +91,12 @@
                 this.set('value', null);
                 this.set('action', 'cancel');
                 this.$.dialog.close();
+            }
+
+            __onInputKeypress(e) {
+                if (e.key == 'Enter') {
+                    this.__onSubmitTap();
+                }
             }
 
             __onClose() {

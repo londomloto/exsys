@@ -24,7 +24,10 @@ class Crop extends \Micro\Model {
         $data = parent::toArray($columns);
 
         if ($this->seed) {
-            $data['seed_name'] = $this->seed->seed_name;
+            $seed = $this->seed->toArray();
+            
+            $data['seed_name'] = $seed['seed_name'];
+            $data['seed_label'] = $seed['seed_label'];
         }
         
         return $data;

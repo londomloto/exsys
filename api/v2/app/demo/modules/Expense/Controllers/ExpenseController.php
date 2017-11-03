@@ -40,6 +40,7 @@ class ExpenseController extends \Micro\Controller {
         $data['expense'] = $expense->toArray();
         $data['items'] = $expense->getGroupedItems();
         $data['summary'] = $expense->getSummary();
+        $data['crops'] = $expense->crops->filter(function($elem){ return $elem->toArray(); });
         $data['exchanges'] = $expense->exchanges->filter(function($elem){ return $elem->toArray(); });
         $data['history'] = $expense->getHistory(array('order' => 'exp_history_id ASC'))->filter(function($elem){
             return $elem->toArray();

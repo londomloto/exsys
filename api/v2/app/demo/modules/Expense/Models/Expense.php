@@ -101,6 +101,18 @@ class Expense extends \Micro\Model {
                 )
             )
         );
+
+        $this->hasMany(
+            'id_exp',
+            'App\Expense\Models\Crop',
+            'id_exp',
+            array(
+                'alias' => 'Crops',
+                'foreignKey' => array(
+                    'action' => Relation::ACTION_CASCADE
+                )
+            )
+        );
     }
 
     public function getSource() {
@@ -139,6 +151,7 @@ class Expense extends \Micro\Model {
         $data['has_items'] = $this->items->count() > 0 ? TRUE : FALSE;
         $data['amounts_formatted'] = number_format($data['amounts'], 2, ',', '.');
         $data['is_travelling'] = TRUE;
+        $data['is_promo'] = FALSE;
         
         if ($this->lastStatus) {
             $data['status_code'] = $this->lastStatus->status_code;
@@ -149,6 +162,7 @@ class Expense extends \Micro\Model {
         if ($this->expenseType) {
             $data['type_name'] = $this->expenseType->type_name;
             $data['is_travelling'] = $this->expenseType->isTravelling();
+            $data['is_promo'] = $this->expenseType->isPromo();
         }
 
         if ($this->expensePurpose) {

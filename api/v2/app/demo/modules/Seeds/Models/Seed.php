@@ -11,6 +11,12 @@ class Seed extends \Micro\Model {
         return empty($this->parent_id);
     }
 
+    public function toArray($columns = NULL) {
+        $data = parent::toArray($columns);
+        $data['seed_label'] = ! empty($this->seed_no) ? $this->seed_no.' - '.$this->seed_name : $this->seed_name;
+        return $data;
+    }
+
     public static function combo() {
         $query = self::get()->filterable()->sortable()->paginate();
         $seeds = $query->data->filter(function($e){ return $e; });

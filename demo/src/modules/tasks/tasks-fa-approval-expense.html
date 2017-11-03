@@ -107,6 +107,32 @@
                     </div>
                 </paper-card>
 
+                <paper-card class="block" hidden$="[[ !record.expense.is_promo ]]">
+                    <div class="card-content">
+                        <h3 class="block-title">Crops Promotion</h3>
+                        <div class="table-responsive">
+                            <table class="table striped">
+                                <thead>
+                                    <tr>
+                                        <th width="40" class="text-center">No.</th>
+                                        <th>Crop Item</th>
+                                        <th>Remarks</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template is="dom-repeat" items="[[ record.crops ]]">
+                                        <tr>
+                                            <td class="text-center">[[ __computeNo(index) ]]</td>
+                                            <td>[[ item.seed_label ]]</td>
+                                            <td>[[ item.remarks ]]</td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </paper-card>
+
                 <paper-card class="block">
                     <div class="card-content">
                         <h3 class="block-title">Currencies Exchange</h3>
