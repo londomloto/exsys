@@ -17,7 +17,7 @@ class ConfigController extends \Micro\Controller {
         }
 
         // update version
-        $data['app_version'] = '1.0.10';
+        $data['app_version'] = '1.0.11';
 
         return array(
             'success' => TRUE,
