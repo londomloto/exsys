@@ -929,6 +929,24 @@
                     this.load();
                 }
 
+                __lookupContext() {
+                    let parentNode = this.parentNode;
+
+                    while(parentNode) {
+                        let host = parentNode.host;
+                        if (host) {
+                            this.context = host;
+                            break;
+                        }
+
+                        if (parentNode.localName == 'body') {
+                            break;
+                        }
+
+                        parentNode = parentNode.parentNode;
+                    }
+                }
+
                 __updatePageNavigation() {
                     let maxpage = this.api.paginationGetTotalPages() - 1,
                         curpage = this.api.paginationGetCurrentPage(),
@@ -1004,13 +1022,25 @@
 
                 __onGridCellClicked(args) {
                     let columnType = args.colDef.columnType;
+
                     if (columnType == 'action') {
                         if (args.event.path) {
+
                             let target = args.event.path[0],
                                 action = target.getAttribute('on-tap');
 
-                            if (action && this.context) {
-                                this.context[action] && this.context[action](args);
+                            if (action) {
+                                if ( ! this.context) {
+                                    this.__lookupContext();
+                                }
+
+                                if (this.context) {
+                                    if (this.context[action]) {
+                                        this.context[action](args);
+                                    } else {
+                                        console.warn(`Undefined method \`${action}()\` on <${this.context.localName}/>`);
+                                    }
+                                }
                             }
                             
                         }

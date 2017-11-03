@@ -1,0 +1,194 @@
+<link rel="import" href="../../../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../elements/kct-combobox/kct-combobox.html">
+
+<dom-module id="accounts-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: var(--page-background-color);
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-grid 
+            id="grid" 
+            url="/finance/accounts" 
+            columns="[[ columns ]]" 
+            title="Finance" 
+            description="Chart of Accounts" 
+            selection-model="cell" 
+            pagination>
+            
+            <template preserve-content>
+                <style include="theme-helper"></style>
+            </template>
+
+            <paper-button slot="primary-toolbar" on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Add Account</paper-button>
+
+        </kct-grid>
+            
+
+        <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to list" on-tap="__onBackTap"></paper-fab>
+        </div>
+
+        <kct-dialog id="editor" width="500" height="100%" scrollable>
+            <template preserve-content>
+                <div slot="dialog-body">
+                    <kct-combobox 
+                        id="combo-parent" 
+                        url="/finance/accounts?display=parent"
+                        label="Parent"
+                        value="{{ record.acc_parent_id }}" 
+                        page-size="10" 
+                        item-value-path="acc_id" 
+                        item-label-path="acc_label" 
+                        on-load="__onComboParentLoad">
+                        
+                    </kct-combobox>
+                    <paper-input label="Account Code" value="{{ record.acc_code }}"></paper-input>
+                    <paper-input label="Account Name" value="{{ record.acc_name }}"></paper-input>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSaveTap">Save</paper-button>
+                    <paper-button on-tap="__onEditorCloseTap">Close</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class AccountsPage extends KctView {
+
+            static get is() {
+                return 'accounts-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Accounts', notify: true },
+                    columns: {
+                        type: Array,
+                        value: () => ([
+                            { type: 'rownumber' },
+                            { 
+                                text: 'Account', 
+                                dataIndex: 'acc_name', 
+                                width: 600,
+                                renderer: (e) => {
+                                    return e.data ? `${e.data.acc_code} - ${e.data.acc_name}` : '';
+                                }
+                            },
+                            {
+                                type: 'action',
+                                renderer: (e) => {
+                                    if (e.data) {
+                                        return `
+                                            <paper-button on-tap="__onEditTap" class="btn-amber btn-icon"><iron-icon icon="image:edit"></iron-icon></paper-button> 
+                                            <paper-button on-tap="__onDeleteTap" class="btn-danger btn-icon"><iron-icon icon="close"></iron-icon></paper-button>
+                                        `;
+                                    }
+                                    return '';
+                                }
+                            }
+                        ])
+                    }
+                }
+            }
+
+            handleRouteParams(setting) {
+                if (setting != 'accounts') return;
+                this.$.grid.deferAutoload();
+            }
+
+            handleResizing(width, height) {
+                this.$.grid && this.$.grid.resize();
+            }
+
+            __loadReferences() {
+                return Promise.all([
+                    this.$['combo-parent'].load()
+                ]);
+            }
+
+            __onComboParentLoad() {
+                let combo = this.$['combo-parent'];
+                if (combo.paging.page == 1) {
+                    // add `NONE` item
+                    let items = combo.items.slice();
+                    items.unshift({
+                        acc_id: '0',
+                        acc_code: '',
+                        acc_name: '',
+                        acc_label: 'NONE',
+                        acc_parent_id: ''
+                    });
+                    combo.items = items;
+                }
+            }
+
+            __onAddTap() {
+                this.mask('Opening...');
+                this.__loadReferences().then(() => {
+                    this.unmask();
+                    this.set('record', {});
+                    this.$.editor.open();
+                });
+            }
+
+            __onEditTap(e) {
+                this.mask('Opening...');
+
+                this.__loadReferences().then(() => {
+                    this.unmask();
+                    this.set('record', Object.assign({}, e.data));
+                    this.$.editor.open();
+                });
+            }
+
+            __onDeleteTap(e) {
+                this.confirm('Confirm', `Are you sure you want to delete \`${e.data.acc_code}\` ?`).then(y => {
+                    if (y) {
+                        this.$.ajax.DELETE('/finance/accounts/' + e.data.acc_id).then(() => {
+                            this.$.grid.load();
+                        });
+                    }
+                });
+            }
+
+            __onEditorSaveTap() {
+                this.$.editor.close();
+                let data = this.record;
+
+                if (data.acc_id) {
+                    this.$.ajax.PUT('/finance/accounts/' + data.acc_id, data).then(done.bind(this));
+                } else {
+                    this.$.ajax.POST('/finance/accounts', data).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.$.grid.load();
+                    }
+                }
+            }
+
+            __onEditorCloseTap() {
+                this.$.editor.close();
+            }
+
+            __onBackTap() {
+                this.set('route.path', '/settings');
+            }
+        }
+        customElements.define(AccountsPage.is, AccountsPage);
+    </script>
+</dom-module>

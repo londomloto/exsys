@@ -1,7 +1,7 @@
 <?php
 namespace Micro;
 
-use Phalcon\Paginator\Adapter\QueryBuilder as QueryBuilderPaginator;
+use Micro\Paginator\Adapter\QueryBuilder as QueryBuilderPaginator;
 
 class ModelPageset implements \JsonSerializable {
 
@@ -11,7 +11,7 @@ class ModelPageset implements \JsonSerializable {
     public function __construct(ModelQuery $query) {
         $limit = (int) $query->getLimit();
         $builder = $query->getBuilder();
-
+        
         if (empty($limit)) {
             $this->data = $query->getQuery()->execute();
             $this->count = $this->total = count($this->data);

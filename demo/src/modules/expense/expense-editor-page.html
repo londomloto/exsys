@@ -611,29 +611,39 @@
                 <div slot="dialog-body">
                     <kct-form-validator id="crop-validator" invalid="{{ __cropInvalid }}" auto-validate>
                         <kct-combobox 
-                            url="/seeds/types" 
-                            label="Crop Type" 
-                            value="{{ cropRecord.seed_parent_id }}" 
-                            page-size="10" 
-                            item-value-path="seed_id" 
-                            item-label-path="seed_name" 
-                            on-change="__onComboCropTypeChange" 
-                            required 
-                            auto-validate 
-                            error-message="Crop type is required" 
-                            autoload></kct-combobox> 
-
-                        <kct-combobox  
-                            id="combo-seed" 
-                            url="/seeds" 
+                            id="combo-crop" 
+                            url="/seeds?display=combo" 
                             label="Crop Item" 
                             value="{{ cropRecord.seed_id }}" 
                             page-size="10" 
                             item-value-path="seed_id" 
                             item-label-path="seed_name" 
+                            on-change="__onComboCropChange" 
                             required 
                             auto-validate 
-                            error-message="Crop type is required"></kct-combobox>
+                            error-message="Crop item is required" 
+                            autoload>
+                            <template>
+                                <style>
+                                    .item {
+                                        font-size: 14px;
+                                    }
+                                    .elbow {
+                                        display: inline-block;
+                                        border-top: 1px solid #ccc;
+                                        height: 1px;
+                                        position: relative;
+                                        top: -4px;
+                                    }
+                                    .item.level-1 .elbow {
+                                        margin-right: 10px;
+                                    }
+                                </style>
+                                <div class$="item level-[[ item.seed_level ]]">
+                                    <span class="elbow" style="width: [[ item.seed_pad ]]"></span>[[ item.seed_name ]]
+                                </div>
+                            </template>        
+                        </kct-combobox> 
 
                         <paper-input label="Remarks" value="{{ cropRecord.remarks }}"></paper-input>
                     </kct-form-validator>
@@ -683,7 +693,6 @@
                 return [
                     '__typeChanged(expenseRecord.type)',
                     '__purposesChanged(__masterPurposes.*)',
-                    '__cropTypeChanged(cropRecord.seed_parent_id)',
                     '__computePhantom(expenseRecord.id_exp)',
                     '__computePromo(expenseRecord.type)',
                     '__computeEmpty(expenseItems.*)',
@@ -806,17 +815,6 @@
                 this.set('__comboPurposeRequired', required);
                 this.$['combo-purpose'].validate();
                 this.$['text-purpose'].validate();
-            }
-            __cropTypeChanged() {
-                if (this.cropRecord.seed_parent_id) {
-                    this.$['combo-seed'].load({
-                        params: {
-                            parent_id: this.cropRecord.seed_parent_id
-                        }
-                    });
-                } else {
-                    this.$['combo-seed'].items = [];
-                }
             }
             __loadReferences() {
                 return Promise.all([
@@ -1292,8 +1290,15 @@
                     }
                 }
             }
-            __onComboCropTypeChange() {
-                this.set('cropRecord.seed_id', '');
+            __onComboCropChange(e) {
+                let value = e.target.value;
+                if (value) {
+                    let crop = e.target.getModelForValue(value);
+                    if (crop && ( ! crop.parent_id)) {
+                        this.alert('Warning', `You select parent item`);
+                        e.target.value = '';
+                    }
+                }
             }
             __onEditCropTap(e) {
                 this.set('cropRecord', Object.assign({}, e.model.item));

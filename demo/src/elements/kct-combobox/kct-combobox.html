@@ -278,7 +278,16 @@
                         this.set('items', items);
 
                         this.__setPaging({ total: res.total });
+                        this.dispatchEvent(new CustomEvent('load'));
                     });
+                }
+
+                getModelForValue(value) {
+                    let model;
+                    if (this.items) {
+                        model = this.filteredItems.find(item => item[this.itemValuePath] == value);
+                    }
+                    return model;
                 }
 
                 _filterChanged (filter, itemValuePath, itemLabelPath) {
