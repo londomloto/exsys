@@ -16,6 +16,8 @@ class ModelQuery {
         $this->__builder = new QueryBuilder(array(
             'models' => array(get_class($template))
         ));
+
+        $this->__builder->setDI($di);
         
         $this->__template = $template;
         $this->__di = $di;
