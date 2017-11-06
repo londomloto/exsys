@@ -48,12 +48,14 @@ class Exchange extends \Micro\Model {
         $data['to_display'] = '';
 
         if ($this->from) {
-            $data['from_display'] = '('.$this->from->currency_code.') '.number_format($this->from_amounts, 2, '.', ',');
+            $data['from_display'] = '('.$this->from->currency_code.') '.number_format($this->from_amounts, 2, ',', '.');
         }
 
         if ($this->to) {
-            $data['to_display'] = '('.$this->to->currency_code.') '.number_format($this->to_amounts, 2, '.', ',');
+            $data['to_display'] = '('.$this->to->currency_code.') '.number_format($this->to_amounts, 2, ',', '.');
         }
+
+        $data['rates_formatted'] = number_format($this->rates, 6, ',', '.');
 
         return $data;
     }

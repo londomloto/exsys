@@ -17,6 +17,7 @@
 <link rel="import" href="../../elements/kct-layouts/kct-column.html">
 <link rel="import" href="../../elements/kct-form/kct-form-validator.html">
 <link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
+<link rel="import" href="../../helpers/node-helper.html">
 
 <dom-module id="opex-editor-page">
     <template>
@@ -57,8 +58,9 @@
         <kct-ajax id="ajax"></kct-ajax>
 
         <kct-vbox>
-            <page-header-block title="EDITOR" description="Expense Document" icon="description">
-                <paper-button hidden="[[ !record.id_exp ]]" class="btn-primary" on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Save Changes</paper-button>
+            <page-header-block title="EDITOR" description="Operational Expense Document" icon="description">
+                <paper-button hidden$="[[ !record.id_exp ]]" class="btn-primary" on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Update</paper-button>
+                <paper-button hidden$="[[ __opexIsEmpty ]]" class="btn-cyan" on-tap="__onSendTap"><iron-icon icon="send"></iron-icon>&nbsp;Submit</paper-button>
             </page-header-block>
             <div class="flex scroll-y padding">
 
@@ -275,9 +277,17 @@
                     }
                 };
             }
+            static get observers() {
+                return [
+                    '__computeEmpty(items.*)'
+                ];
+            }
             constructor() {
                 super();
 
+                this.__opexIsEmpty = true;
+
+                this.__dirty = false;
                 this.__purposes = [];
                 this.__stamping = false;
             }
@@ -296,6 +306,7 @@
 
                 this.set('items', []);
                 this.set('record', {});
+                this.__dirty = false;
 
                 if (action == 'edit') {
                     this.mask('Loading...')
@@ -311,6 +322,9 @@
                         }
                     });
                 }
+            }
+            __computeEmpty() {
+                this.set('__opexIsEmpty', this.items.length === 0);
             }
             __computeNo(index) {
                 return (index + 1);
@@ -331,7 +345,7 @@
                 let data = this.record;
                 let def = this._defer();
 
-                data.catagory = 'opex';
+                data.category = 'opex';
 
                 if (data.id_exp) {
                     this.$.ajax.PUT('/expense/' + data.id_exp, data).then(done.bind(this));
@@ -344,6 +358,7 @@
                         let id = res.data.id_exp;
 
                         this.set('record.id_exp', id);
+                        this.__dirty = true;
 
                         if (this.attachment) {
                             this.$.ajax.UPLOAD('/expense/' + id + '/upload', {
@@ -366,10 +381,21 @@
                     this.toast('Success', 'Data has been saved');
                 });
             }
+            __onSendTap() {
+                let record = this.record;
+                this.confirm('Confirm', `Are you sure you want to submit ${record.exp_no} ?`).then(b => {
+                    if (b) {
+                        this.$.ajax.POST('/expense/' + record.id_exp + '/submit').then(() => {
+                            this.set('route.path', '/opex?reload=yes');
+                        });
+                    }
+                });   
+            }
             __buildForm(forms) {
                 let html = '';
                 let data = {};
                 let combo = {};
+                let hasDatePicker = false;
 
                 forms.forEach(f => {
                     let name = `field_${f.item_form_id}`,
@@ -385,6 +411,7 @@
 
                     switch(f.item_form_editor) {
                         case 'datepicker':
+                            hasDatePicker = true;
                             html += `
                                 <vaadin-date-picker label="${label}" value="{{ ${value} }}" ${validation}></vaadin-date-picker>
                             `;
@@ -427,6 +454,12 @@
 
                 let instance = this._stampTemplate(template);
                 this.$.dynamic.appendChild(instance);
+
+                if (hasDatePicker) {
+                    this.$.dynamic.querySelectorAll('vaadin-date-picker').forEach(picker => {
+                        NodeHelper.formatDatePicker(picker);
+                    });
+                }
 
                 // fixup combo items
                 for(let id in combo) {
@@ -479,6 +512,7 @@
 
                 function done(res) {
                     if (res.success) {
+                        this.__dirty = true;
                         this.__loadItems();
                     }
                 }
@@ -515,8 +549,10 @@
                     }
                 }
             }
+
             __onBackTap() {
-                this.set('route.path', '/opex');
+                let path = this.__dirty ? '/opex?reload=yes' : '/opex';
+                this.set('route.path', path);
             }
         }
         customElements.define(OpexEditorPage.is, OpexEditorPage);

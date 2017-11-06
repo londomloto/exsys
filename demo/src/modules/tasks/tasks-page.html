@@ -1,0 +1,61 @@
+<link rel="import" href="../../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+
+<link rel="import" href="../../elements/kct-pages/kct-pages.html">
+<link rel="import" href="tasks-list-page.html">
+<link rel="import" href="tasks-view-page.html">
+
+<dom-module id="tasks-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: var(--tasks-page-height, 100%);
+            }
+            #pages {
+                display: block;
+                height: 100%;
+            }
+        </style>
+
+        <kct-pages id="pages" selected="{{ page }}" attr-for-selected="name">
+            <tasks-list-page name="list" route="{{ route }}" state="[[ state ]]"></tasks-list-page>
+            <tasks-view-page name="view" route="{{ route }}" state="[[ state ]]"></tasks-list-page>
+        </kct-pages>
+
+    </template>
+    <script>
+        class TasksPage extends KctView {
+
+            static get is() {
+                return 'tasks-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Todo List', notify: true },
+                    page: { type: String }
+                };
+            }
+
+            handleRouteParams(view) {
+                if (view) {
+                    this.set('page', 'view');
+                } else {
+                    this.set('page', 'list');
+                }
+            }
+
+            handleResizing(width, height) {
+                this.updateStyles({ '--tasks-page-height': height + 'px' });
+                let page = this.$.pages.selectedItem;
+
+                if (page) {
+                    page.handleResizing(width, height);
+                }
+            }
+
+        }
+
+        customElements.define(TasksPage.is, TasksPage);
+    </script>
+</dom-module>

@@ -1,0 +1,50 @@
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-pages/kct-pages.html">
+
+<dom-module id="tasks-view-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: var(--page-background-color);
+            }
+            #pages {
+                display: block;
+                height: 100%
+            }
+        </style>
+
+        <kct-pages id="pages" selected="{{ page }}" attr-for-selected="name" lazy-load>
+            <advance-task-view name="advance" route="{{ route }}" state="[[ state ]]" import="advance-task-view.html"></advance-task-view>
+            <trip-task-view name="trip" route="{{ route }}" state="[[ state ]]" import="trip-task-view.html"></trip-task-view>
+            <expense-task-view name="expense" route="{{ route }}" state="[[ state ]]" import="expense-task-view.html"></expense-task-view>
+            <opex-task-view name="opex" route="{{ route }}" state="[[ state ]]" import="opex-task-view.html"></opex-task-view>
+            <advance-receive-view name="advance-receive" route="{{ route }}" state="[[ state ]]" import="advance-receive-view.html"></advance-receive-view>
+            <advance-finance-view name="advance-finance" route="{{ route }}" state="[[ state ]]" import="advance-finance-view.html"></advance-finance-view>
+            <expense-receive-view name="expense-receive" route="{{ route }}" state="[[ state ]]" import="expense-receive-view.html"></expense-receive-view>
+            <expense-finance-view name="expense-finance" route="{{ route }}" state="[[ state ]]" import="expense-finance-view.html"></expense-finance-view>
+            <trip-ticket-view name="trip-ticket" route="{{ route }}" state="[[ state ]]" import="trip-ticket-view.html"></trip-ticket-view>
+        </kct-pages>
+    </template>
+    <script>
+        class TasksViewPage extends KctView {
+            static get is() {
+                return 'tasks-view-page';
+            }
+
+            static get properties() {
+                return {
+                    page: { type: String }
+                }
+            }
+
+            handleRouteParams(view) {
+                if (view) {
+                    this.set('page', view);
+                }
+            }
+        }
+
+        customElements.define(TasksViewPage.is, TasksViewPage);
+    </script>
+</dom-module>

@@ -6,28 +6,24 @@ use App\Tasks\Models\Task;
 class TasksController extends \Micro\Controller {
 
     public function findAction() {
-        return Task::get()->paginate();
+        $user = $this->auth->user();
+        
+        return Task::get()
+            ->filterable()
+            ->andWhere('t_user = :user:', array('user' => $user['su_id'])) 
+            ->sortable()
+            ->paginate();
     }
 
-    public function startAction($data) {
-        // logic here...
-        $this->next();
-    }
+    public function updateAction($id) {
+        $query = Task::get($id);
+        $post = $this->request->getJson();
 
-    public function todoAction($data) {
-        // logic here...
-        $this->next();
-    }
+        if ($query->data) {
+            $query->data->save($post);
+        }
 
-    public function doingAction($data) {
-        // logic here...
-        $this->next();
-    }
-
-    public function doneAction() {
-        // logic here...
-        $this->next();
+        return $query;
     }
 
 }
-

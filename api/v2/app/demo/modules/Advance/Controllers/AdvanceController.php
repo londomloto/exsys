@@ -3,7 +3,6 @@ namespace App\Advance\Controllers;
 
 use App\Advance\Models\Advance,
     App\Advance\Models\History,
-    App\Advance\Models\Task,
     App\System\Models\Autonumber,
     App\Users\Models\User,
     App\Statuses\Models\Status;
@@ -37,13 +36,15 @@ class AdvanceController extends \Micro\Controller {
         $data = array();
         $advance = Advance::get($id)->data;
 
-        $data['advance'] = $advance->toArray();
-        $data['items'] = $advance->items->filter(function($elem){ return $elem->toArray(); });
-        $data['history'] = $advance->getHistory(array('order' => 'adv_history_id ASC'))->filter(function($elem){
-            return $elem->toArray();
-        }); 
+        if ($advance) {
+            $data['advance'] = $advance->toArray();
+            $data['items'] = $advance->items->filter(function($elem){ return $elem->toArray(); });
+            $data['history'] = $advance->getHistory(array('order' => 'adv_history_id ASC'))->filter(function($elem){
+                return $elem->toArray();
+            }); 
 
-        $data['summary'] = $advance->getSummary();
+            $data['summary'] = $advance->getSummary();    
+        }
 
         return array(
             'success' => TRUE,
@@ -119,13 +120,12 @@ class AdvanceController extends \Micro\Controller {
 
     public function submitByIdAction($id) {
         $advance = Advance::get($id)->data;
-        $success = FALSE;
-
+        
         if ($advance) {
-            $success = $advance->submit();
+            $advance->submit();
         }
 
-        return array('success' => $success);
+        return array('success' => TRUE);
     }
 
     public function rejectByIdAction($id) {
@@ -154,7 +154,7 @@ class AdvanceController extends \Micro\Controller {
         );
     }
 
-    public function requestByIdAction($id) {
+    public function returnedByIdAction($id) {
         $advance = Advance::get($id)->data;
         $post = $this->request->getJson();
 
@@ -170,20 +170,33 @@ class AdvanceController extends \Micro\Controller {
     public function faReceiveByIdAction($id) {
         $advance = Advance::get($id)->data;
         $user = $this->auth->user();
+        $post = $this->request->getJson();
 
         if ($advance) {
+            $status = Status::val('fa-received');
+            // create history
+            $history = new History();
+
+            $history->id_adv = $advance->id_adv;
+            $history->status_id = $status;
+            $history->user_act = $user['su_id'];
+            $history->date = date('Y-m-d H:i:s');
+            $history->notes = $post['notes'];
+
+            $history->save();
+            
             // delete tasks
-            \App\Finance\Models\Task::find(array(
-                'id_ref = :advance: AND module = :module: AND action = :action:',
+            \App\Tasks\Models\Task::find(array(
+                't_type = :type: AND t_link = :link:',
                 'bind' => array(
-                    'module' => 'advance',
-                    'action' => 'receive-request',
-                    'advance' => $advance->id_adv
+                    'type' => 'advance-receive',
+                    'link' => $advance->id_adv
                 )
             ))->delete();
             
             $advance->received_by = $user['su_id'];
             $advance->received_date = date('Y-m-d H:i:s');
+            $advance->status = $status;
             
             if ($advance->save()) {
                 $advance->faSubmit('approval-request');
@@ -201,13 +214,13 @@ class AdvanceController extends \Micro\Controller {
         $post = $this->request->getJson();
 
         if ($advance) {
+            
             // delete tasks
-            \App\Finance\Models\Task::find(array(
-                'id_ref = :advance: AND module = :module: AND action = :action:',
+            \App\Tasks\Models\Task::find(array(
+                't_type = :type: AND t_link = :link:',
                 'bind' => array(
-                    'module' => 'advance',
-                    'action' => 'approval-request',
-                    'advance' => $advance->id_adv
+                    'type' => 'advance-finance',
+                    'link' => $advance->id_adv
                 )
             ))->delete();
 
@@ -227,8 +240,16 @@ class AdvanceController extends \Micro\Controller {
             // update status
             $advance->status = $status;
             $advance->save();
-
+            
         }
+
+        return array(
+            'success' => TRUE
+        );
+    }
+
+    public function faReturnedByIdAction($id) {
+        $advance = Advance::get($id)->data;
 
         return array(
             'success' => TRUE

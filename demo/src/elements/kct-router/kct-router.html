@@ -110,6 +110,7 @@
 
             __resolveCancel() {
                 let d = this._defer();
+
                 this.__canceling = Polymer.Debouncer.debounce(
                     this.__canceling,
                     Polymer.Async.timeOut.after(1),
@@ -209,11 +210,11 @@
                                     switch(name) {
                                         case 'module':
                                         case 'page':
-                                            return '([^/]+)';
+                                            return '([^/?]+)';
                                         case 'params':
                                             return '(.+)';
                                         default:
-                                            return '([^/]+)';
+                                            return '([^/?]+)';
                                     }
                                 }
                             );
@@ -266,7 +267,7 @@
                             let state;
 
                             path = base + path.replace(base, '');
-
+                            
                             if (this.address.path != path) {
                                 this.set('route.addr', path);    
                             }
@@ -322,10 +323,7 @@
                                 }
                             }
 
-
-
                             if (state) {
-
                                 if (state.authentication) {
                                     this.$.auth.validate().then((auth) => {
                                         if ( ! auth.success) {
@@ -387,9 +385,10 @@
 
             __addressChanged(changed) {
                 let path = this.address.path;
-                if (path != 'undefined') {
+                
+                if (path !== undefined) {
                     let query = Object.assign({}, this.address.__queryParams);
-                    
+
                     this.set('route.path', path);
                     this.set('route.query', query);
 
@@ -406,11 +405,39 @@
                         addr = base + addr.replace(base, '');
                         
                         if (addr != this.address.path) {
-                            this.set('address.path', addr);    
+                            
+                            this.set('address.__queryParams', '');
+
+                            // has query?
+                            let i = addr.indexOf('?');
+
+                            if (i !== -1) {
+                                let q = addr.substr((i + 1)),
+                                    d = (s) => s.replace(/\+/g, ' '),
+                                    r = /([^&=]+)=?([^&]*)/g,
+                                    p = {},
+                                    m;
+
+                                while(m = r.exec(q)) {
+                                    p[d(m[1])] = d(m[2]);
+                                }
+
+                                r = null;
+
+                                this.set('address.__queryParams', p);
+                                addr = addr.substr(0, i);
+                            }
+
+                            this.set('address.path', addr);
                         }
                         
                         this.set('route.addr', null);
-                        this.__silent = false;
+
+                        let timer = setTimeout(() => {
+                            this.__silent = false;    
+                            clearTimeout(timer);
+                            timer = null;
+                        }, 0);
                     });
                 }
             }
@@ -418,6 +445,13 @@
             __routePathChanged(path) {
                 if (path && ! this.__silent) {
                     this.set('route.event', 'start');
+
+                    let i = path.indexOf('?');
+
+                    if (i !== -1) {
+                        let q = path.substr(i);
+                    }
+
                     this.__handle(path);
                 }
             }

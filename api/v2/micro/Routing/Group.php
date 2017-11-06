@@ -1,8 +1,6 @@
 <?php
 namespace Micro\Routing;
 
-use Phalcon\Mvc\Micro\Collection as RouteCollection;
-
 class Group {
 
     protected $_prefix;
@@ -16,7 +14,7 @@ class Group {
         $this->_middleware = isset($options['middleware']) ? $options['middleware'] : FALSE;
         $this->_routes = array();
     }
-
+    
     public function getPrefix() {
         return $this->_prefix;
     }

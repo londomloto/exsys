@@ -18,6 +18,8 @@
 <link rel="import" href="../../elements/kct-form/kct-form-validator.html">
 <link rel="import" href="../../elements/kct-combobox/kct-combobox.html">
 <link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
+<link rel="import" href="../../helpers/node-helper.html">
+<link rel="import" href="../../helpers/date-helper.html">
 
 <dom-module id="expense-editor-page">
     <template>
@@ -74,7 +76,7 @@
         <kct-vbox>
             <page-header-block title="EDITOR" description="Expense Document" icon="description">
                 <paper-button hidden$="[[ __expenseIsPhantom ]]"  disabled$="[[ __expenseInvalid ]]" class="btn-primary" on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Update</paper-button>
-                <paper-button hidden$="[[ __expenseIsEmpty ]]"  disabled$="[[ __expenseInvalid ]]" class="btn-cyan" on-tap="__onSubmitTap"><iron-icon icon="done-all"></iron-icon>&nbsp;Submit</paper-button>
+                <paper-button hidden$="[[ __expenseIsEmpty ]]"  disabled$="[[ __expenseInvalid ]]" class="btn-cyan" on-tap="__onSendTap"><iron-icon icon="done-all"></iron-icon>&nbsp;Submit</paper-button>
             </page-header-block>
 
             <div class="flex scroll-y padding">
@@ -89,8 +91,8 @@
                                 <paper-input label="Subject" value="{{ expenseRecord.subject_exp }}" required auto-validate error-message="Subject is required"></paper-input>
                                 
                                 <kct-column columns="2" gutter="1.5rem" spacer="0px">
-                                    <vaadin-date-picker label="Start Date" value="{{ expenseRecord.date_start }}" required auto-validate error-message="Start date is required"></vaadin-date-picker>
-                                    <vaadin-date-picker label="End Date" value="{{ expenseRecord.date_end }}" required auto-validate error-message="End date is required"></vaadin-date-picker>
+                                    <vaadin-date-picker id="date-start" label="Start Date" value="{{ expenseRecord.date_start }}" required auto-validate error-message="Start date is required"></vaadin-date-picker>
+                                    <vaadin-date-picker id="date-end" label="End Date" value="{{ expenseRecord.date_end }}" required auto-validate error-message="End date is required"></vaadin-date-picker>
                                 </kct-column>
                                     
                                 <vaadin-combo-box 
@@ -119,7 +121,6 @@
                                             <paper-input 
                                                 label="Number of Participants" 
                                                 value="{{ expenseRecord.participant }}" 
-                                                class="text-right" 
                                                 allowed-pattern="[0-9]" 
                                                 required$="[[ !__expenseIsTravelling ]]" 
                                                 auto-validate error-message="Participants is required"></paper-input>
@@ -202,7 +203,7 @@
                                             <td>[[ item.remarks ]]</td>
                                             <td class="text-right">[[ item.from_display ]]</td>
                                             <td class="text-right">[[ item.to_display ]]</td>
-                                            <td class="text-right">[[ item.rates ]]</td>
+                                            <td class="text-right">[[ item.rates_formatted ]]</td>
                                             <td class="text-right">
                                                 <paper-button on-tap="__onEditExchangeTap" class="btn-xs btn-amber">Edit</paper-button>
                                                 <paper-button on-tap="__onDeleteExchangeTap" class="btn-xs btn-danger">Delete</paper-button>
@@ -455,7 +456,7 @@
             </template>
         </kct-dialog>
 
-        <kct-dialog id="fixed-item-editor" title="Item Editor" width="500" height="100%" scrollable>
+        <kct-dialog id="fixed-item-editor" title="Item Editor" width="500" height="100%" on-ready="__onDialogReady" scrollable>
             <template preserve-content>
                 <style include="theme-helper">
                     #master-item {
@@ -485,7 +486,6 @@
                                 <paper-input 
                                     label="Exchange Rates" 
                                     value="{{ itemRecord.currency_offset_rate }}" 
-                                    class="text-right" 
                                     readonly 
                                     required auto-validate error-message="Exchange rates is required"></paper-input>
                             </div>
@@ -494,7 +494,6 @@
                         <paper-input 
                             label="Amounts" 
                             value="{{ itemRecord.amounts }}" 
-                            class="text-right" 
                             allowed-pattern="[0-9.]" 
                             required auto-validate error-message="Amounts is required"></paper-input>
 
@@ -516,7 +515,7 @@
             </template>
         </kct-dialog>
 
-        <kct-dialog id="exchange-editor" title="Exchange Editor" width="500" height="100%" scrollable>
+        <kct-dialog id="exchange-editor" title="Exchange Editor" width="500" height="100%" on-ready="__onDialogReady" scrollable>
             <template preserve-content>
                 <style include="theme-helper"></style>
                 <div slot="dialog-body">
@@ -546,7 +545,6 @@
                                     label="Amounts" 
                                     value="{{ exchangeRecord.from_amounts }}" 
                                     allowed-pattern="[0-9.]" 
-                                    class="text-right" 
                                     required 
                                     auto-validate 
                                     error-message="Amounts is required" 
@@ -572,7 +570,6 @@
                                     label="Amounts" 
                                     value="{{ exchangeRecord.to_amounts }}" 
                                     allowed-pattern="[0-9.]" 
-                                    class="text-right" 
                                     required 
                                     auto-validate 
                                     error-message="Amounts is required" 
@@ -587,7 +584,6 @@
                                     label="Exchange Rates" 
                                     value="{{ exchangeRecord.rates }}" 
                                     allowed-pattern="[0-9.]" 
-                                    class="text-right" 
                                     required 
                                     auto-validate 
                                     error-message="Rates is required"></paper-input>
@@ -714,6 +710,14 @@
                 this.__masterPurposes = [];
                 this.__comboPurposeRequired = false;
                 this.__stampingForm = false;
+                this.__dirty = false;
+            }
+            ready() {
+                super.ready();
+
+                this.shadowRoot.querySelectorAll('vaadin-date-picker').forEach(picker => {
+                    NodeHelper.formatDatePicker(picker);
+                });
             }
             handleRouteParams(action, id) {
                 if (['add', 'edit'].indexOf(action) == -1) return;
@@ -732,6 +736,8 @@
                 this.set('expenseExchanges', []);
                 this.set('expenseCrops', []);
                 this.set('expenseSummary', {});
+
+                this.__dirty = false;
 
                 if (action == 'edit') {
                     this.mask('Loading...');
@@ -849,7 +855,7 @@
                 }
 
             }
-            __loadItemReferences() {
+            __loadEditorReferences() {
                 return Promise.all([
                     loadCurrencies.bind(this)()
                 ]);
@@ -906,7 +912,7 @@
                 let data = this.expenseRecord;
                 let def = this._defer();
 
-                data.catagory = 'expense';
+                data.category = 'expense';
 
                 if (data.id_exp) {
                     this.$.ajax.PUT('/expense/' + data.id_exp, data).then(done.bind(this));
@@ -916,6 +922,8 @@
 
                 function done(res) {
                     if (res.success) {
+                        this.__dirty = true;
+
                         let id = res.data.id_exp;
 
                         this.set('expenseRecord.id_exp', id);
@@ -940,6 +948,7 @@
                 let html = '';
                 let data = {};
                 let combo = {};
+                let hasDatePicker = false;
 
                 forms.forEach(f => {
                     let name = `field_${f.item_form_id}`,
@@ -955,6 +964,7 @@
 
                     switch(f.item_form_editor) {
                         case 'datepicker':
+                            hasDatePicker = true;
                             html += `
                                 <vaadin-date-picker label="${label}" value="{{ ${value} }}" ${validation}></vaadin-date-picker>
                             `;
@@ -998,6 +1008,12 @@
                 let instance = this._stampTemplate(template);
                 this.$['dynamic-wrapper'].appendChild(instance);
 
+                if (hasDatePicker) {
+                    this.$['dynamic-wrapper'].querySelectorAll('vaadin-date-picker').forEach(picker => {
+                        NodeHelper.formatDatePicker(picker);
+                    });
+                }
+
                 // fixup combo items
                 for(let id in combo) {
                     instance.$[id].items = combo[id];
@@ -1025,12 +1041,22 @@
                 };
 
                 Object.keys(maps).forEach(k => {
-                    this.set('expenseRecord.' + k, '');
+                    if (k == 'date_start') {
+                        this.set('expenseRecord.' + k, DateHelper.today());
+                    } else if (k == 'date_end') {
+                        this.set('expenseRecord.' + k, DateHelper.nextday());
+                    } else {
+                        this.set('expenseRecord.' + k, '');
+                    }
                 });
 
                 if (adv && ref != '0') {
                     Object.keys(maps).forEach(k => {
-                        this.set('expenseRecord.' + k, adv[maps[k]]);
+                        if (k == 'subject_exp') {
+                            this.set('expenseRecord.' + k, 'Settlement for ' + adv[maps[k]]);
+                        } else {
+                            this.set('expenseRecord.' + k, adv[maps[k]]);    
+                        }
                     });
                 }
 
@@ -1041,7 +1067,7 @@
                     this.toast('Success', 'Data has been saved');
                 });
             }
-            __onSubmitTap() {
+            __onSendTap() {
                 let record = this.expenseRecord;
                 this.confirm('Confirm', `Are you sure you want to submit ${record.exp_no} ?`).then(b => {
                     if (b) {
@@ -1087,7 +1113,7 @@
             __onAddItemTap() {
                 this.mask('Opening...');
 
-                this.__loadItemReferences().then(() => {
+                this.__loadEditorReferences().then(() => {
                     this.unmask();
 
                     this.set('itemRecord', {});
@@ -1103,9 +1129,14 @@
                 });
                 
             }
+            __onDialogReady(e) {
+                e.target.shadowRoot.querySelectorAll('vaadin-date-picker').forEach(picker => {
+                    NodeHelper.formatDatePicker(picker);
+                });
+            }
             __onItemEditTap(e) {
                 this.mask('Opening...');
-                this.__loadItemReferences().then(() => {
+                this.__loadEditorReferences().then(() => {
                     this.unmask();
 
                     let item = Object.assign({}, e.model.item);
@@ -1144,6 +1175,7 @@
 
                 function done(res) {
                     if (res.success) {
+                        this.__dirty = true;
                         this.__loadItems();
                     }
                 }
@@ -1162,6 +1194,7 @@
                 this.confirm('Confirm', `Are you sure you want to delete ${item.item_name} ?`).then(b => {
                     if (b) {
                         this.$.ajax.DELETE('/expense/items/' + item.exp_item_id).then(() => {
+                            this.__dirty = true;
                             this.__loadItems();
                         });
                     }
@@ -1186,14 +1219,22 @@
                 }
             }
             __onAddExchangeTap() {
-                this.set('exchangeRecord', {});
-                this.$['exchange-editor'].open();
-                this.$['exchange-validator'].validate();
+                this.mask('Opening...');
+                this.__loadEditorReferences().then(() => {
+                    this.unmask();
+                    this.set('exchangeRecord', {});
+                    this.$['exchange-editor'].open();
+                    this.$['exchange-validator'].validate();
+                });
             }
             __onEditExchangeTap(e) {
-                this.set('exchangeRecord', Object.assign({}, e.model.item));
-                this.$['exchange-editor'].open();
-                this.$['exchange-validator'].validate();
+                this.mask('Opening...');
+                this.__loadEditorReferences().then(() => {
+                    this.unmask();
+                    this.set('exchangeRecord', Object.assign({}, e.model.item));
+                    this.$['exchange-editor'].open();
+                    this.$['exchange-validator'].validate();
+                });
             }
             __onDeleteExchangeTap(e) {
                 this.confirm(
@@ -1237,7 +1278,7 @@
                 to = isNaN(+to) ? 0 : to;
 
                 let rates = from > 0 ? (to / from) : 0;
-                rates = rates.toFixed(2);
+                rates = rates.toFixed(6);
                 this.set('exchangeRecord.rates', rates);
             }
 
@@ -1315,7 +1356,8 @@
                 });
             }
             __onBackTap() {
-                this.set('route.path', '/expense');
+                let path = this.__dirty ? '/expense?reload=yes' : '/expense';
+                this.set('route.path', path);
             }
         }
         customElements.define(ExpenseEditorPage.is, ExpenseEditorPage);

@@ -2,7 +2,6 @@
 namespace App\Advance\Models;
 
 use App\Advance\Models\History,
-    App\Advance\Models\Task,
     App\Users\Models\User,
     App\Statuses\Models\Status,
     Phalcon\Mvc\Model\Relation;
@@ -66,19 +65,7 @@ class Advance extends \Micro\Model {
                 )
             )
         );
-
-        $this->hasMany(
-            'id_adv',
-            'App\Advance\Models\Task',
-            'id_adv',
-            array(
-                'alias' => 'Tasks',
-                'foreignKey' => array(
-                    'action' => Relation::ACTION_CASCADE
-                )
-            )
-        );
-
+        
         $this->hasMany(
             'id_adv',
             'App\Advance\Models\History',
@@ -157,47 +144,47 @@ class Advance extends \Micro\Model {
     public function submit() {
         $user = \Micro\App::getDefault()->auth->user();
 
+        $status = Status::val('submitted');
+
         // create history
         $history = new History();
         $history->id_adv = $this->id_adv;
-        $history->status_id = 2;
+        $history->status_id = $status;
         $history->user_act = $user['su_id'];
         $history->date = date('Y-m-d H:i:s');
+        $history->save();
 
-        if ($history->save()) {
-            $this->status = $history->status_id;
-            $this->save();
+        $this->status = $status;
+        $this->save();
 
-            $user = User::get($user['su_id'])->data;
+        $user = User::get($user['su_id'])->data;
 
-            // entry task
-            $superiors = $user->getSuperiors($this->amounts);
+        // entry task
+        $superiors = $user->getSuperiors($this->amounts);
 
-            foreach($superiors as $super) {
-                $task = new Task();
+        foreach($superiors as $super) {
+            $task = new \App\Tasks\Models\Task();
+            
+            $task->t_type = 'advance';
+            $task->t_link = $this->id_adv;
+            $task->t_code = $this->adv_no;
+            $task->t_user = $super['user_id'];
+            $task->t_date = date('Y-m-d H:i:s');
+            $task->t_read = 0;
 
-                $task->id_adv = $this->id_adv;
-                $task->su_id = $super['user_id'];
-                $task->grade_id = $super['grade_id'];
-                $task->is_allowed = 1;
-                
-                $task->save();
-            }
-
-            return TRUE;
+            $task->save();
         }
-
-        return FALSE;
     }
 
     public function reject($post = array()) {
         $user = \Micro\App::getDefault()->auth->user();
 
         // delete tasks
-        Task::find(array(
-            'id_adv = :advance:',
+        \App\Tasks\Models\Task::find(array(
+            't_type = :type: AND t_link = :link:',
             'bind' => array(
-                'advance' => $this->id_adv
+                'type' => 'advance',
+                'link' => $this->id_adv
             )
         ))->delete();
 
@@ -223,20 +210,23 @@ class Advance extends \Micro\Model {
 
         // delete lower tasks 
         if ($user['su_grade_type'] == 'verificator') {
-            Task::find(array(
-                'id_adv = :advance: AND su_id = :user:',
+            \App\Tasks\Models\Task::find(array(
+                't_type = :type: AND t_link = :link: AND t_user = :user:',
                 'bind' => array(
-                    'advance' => $this->id_adv,
+                    'type' => 'advance',
+                    'link' => $this->id_adv,
                     'user' => $user['su_id']
                 )
-            ))->delete();    
+            ))->delete();
         } else if ($user['su_grade_type'] == 'approver') {
-            $tasks = Task::get()
-                ->where('id_adv = :advance: AND a.grade_limit <= :limit:', array(
-                    'advance' => $this->id_adv,
-                    'limit' => (int) $user['su_grade_limit']
+            $tasks = \App\Tasks\Models\Task::get()
+                ->where('t_type = :type: AND t_link = :link: AND grade.grade_limit <= :amounts:', array(
+                    'type' => 'advance',
+                    'link' => $this->id_adv,
+                    'amounts' => (int) $user['su_grade_limit']
                 ))
-                ->join('App\Grades\Models\Grade', 'a.grade_id = App\Advance\Models\Task.grade_id', 'a')
+                ->join('App\Users\Models\User', 'user.su_id = App\Tasks\Models\Task.t_user', 'user')
+                ->join('App\Grades\Models\Grade', 'grade.grade_id = user.su_grade_id', 'grade')
                 ->execute();
 
             foreach($tasks as $task) {
@@ -280,10 +270,11 @@ class Advance extends \Micro\Model {
         $user = \Micro\App::getDefault()->auth->user();
 
         // delete tasks
-        Task::find(array(
-            'id_adv = :advance:',
+        \App\Tasks\Models\Task::find(array(
+            't_type = :type: AND t_link = :link:',
             'bind' => array(
-                'advance' => $this->id_adv
+                'type' => 'advance',
+                'link' => $this->id_adv
             )
         ))->delete();
 
@@ -306,25 +297,41 @@ class Advance extends \Micro\Model {
 
     public function faSubmit($action) {
         $user = \Micro\App::getDefault()->auth->user();
+        $type = NULL;
 
         // broadcast tasks to fa subscriber
         switch($action) {
             case 'receive-request';
+                // create history
+                $history = new History();
+                
+                $history->id_adv = $this->id_adv;
+                $history->date = date('Y-m-d H:i:s');
+                $history->user_act = 0;
+                $history->notes = 'Send to finance by system';
+                $history->status_id = Status::val('fa-pending');
+                
+                $history->save();
+
+                $type = 'advance-receive';
                 $subscribers = User::findInRoles(array('fa-receiver'));
                 break;
             case 'approval-request':
+                $type = 'advance-finance';
                 $subscribers = User::findInRoles(array('fa-approver'));
                 break;
         }
-        
+
         foreach($subscribers as $sub) {
-            $task = new \App\Finance\Models\Task();
-            $task->module = 'advance';
-            $task->id_ref = $this->id_adv;
-            $task->su_id = $sub->su_id;
-            $task->is_allowed = 1;
-            $task->action = $action;
-            
+            $task = new \App\Tasks\Models\Task();
+                
+            $task->t_type = $type;
+            $task->t_link = $this->id_adv;
+            $task->t_code = $this->adv_no;
+            $task->t_user = $sub->su_id;
+            $task->t_date = date('Y-m-d H:i:s');
+            $task->t_read = 0;
+
             $task->save();
         }
     }

@@ -1,7 +1,10 @@
 <?php
 namespace App\Trips\Models;
 
-use App\Users\Models\User;
+use App\Users\Models\User,
+    App\Trips\Models\History,
+    App\Trips\Models\Task,
+    App\Statuses\Models\Status;
 
 class Trip extends \Micro\Model {
 
@@ -121,16 +124,18 @@ class Trip extends \Micro\Model {
         }
 
         if ($this->advance) {
+            $advance = $this->advance->toArray();
             $data['has_advance'] = TRUE;
 
-            $data['amounts'] = $this->advance->amounts;
-            $data['adv_no'] = $this->advance->adv_no;
-            $data['adv_subject'] = $this->advance->subject_adv;
-            $data['adv_desc'] = $this->advance->adv_no.' ('. $this->advance->subject_adv .')';
+            $data['amounts'] = $advance['amounts'];
+            $data['adv_no'] = $advance['adv_no'];
+            $data['adv_subject'] = $advance['subject_adv'];
+            $data['adv_desc'] = $advance['adv_no'].' ('. $advance['subject_adv'] .')';
+            $data['adv_status_name'] = $advance['status_name'];
         }
         
         $data['amounts_formatted'] = number_format($data['amounts'], 2, ',', '.');
-
+        
         $data['ticket_approvable'] = FALSE;
         $data['ticket_approved'] = $this->ticket_status == 1 ? TRUE : FALSE;
 
@@ -144,19 +149,199 @@ class Trip extends \Micro\Model {
         return $data;
     }
 
+    public function submit() {
+        $user = \Micro\App::getDefault()->auth->user();
+
+        // create history
+        $history = new History();
+        $history->id_trip = $this->id_trip;
+        $history->status_id = Status::val('submitted');
+        $history->user_act = $user['su_id'];
+        $history->date = date('Y-m-d H:i:s');
+
+        if ($history->save()) {
+            $this->status = $history->status_id;
+            $this->save();
+
+            $user = User::get($user['su_id'])->data;
+
+            // entry task
+            $superiors = $user->getSuperiors($this->getAmounts());
+
+            foreach($superiors as $super) {
+                $task = new \App\Tasks\Models\Task();
+                
+                $task->t_type = 'trip';
+                $task->t_link = $this->id_trip;
+                $task->t_code = $this->trip_no;
+                $task->t_user = $super['user_id'];
+                $task->t_date = date('Y-m-d H:i:s');
+                $task->t_read = 0;
+
+                $task->save();
+            }
+
+            // submit advance if any
+            if ($this->advance) {
+                $this->advance->submit();
+            }
+        }
+    }
+
+    public function reject($post = array()) {
+        $user = \Micro\App::getDefault()->auth->user();
+        $prevStatus = $this->status;
+
+        \App\Tasks\Models\Task::find(array(
+            't_type = :type: AND t_link = :link:',
+            'bind' => array(
+                'type' => 'trip',
+                'link' => $this->id_trip
+            )
+        ))->delete();
+
+        $status = Status::val('reject');
+
+        // tambah history
+        $history = new History();
+        $history->id_trip = $this->id_trip;
+        $history->status_id = $status;
+        $history->user_act = $user['su_id'];
+        $history->date = date('Y-m-d H:i:s');
+        $history->notes = $post['notes'];
+
+        $history->save();
+
+        // update status
+        $this->status = $status;
+        $this->save();
+
+        // sync advance
+        if ($this->advance && $this->advance->status == $prevStatus) {
+            $this->advance->reject($post);
+        }
+    }
+
+    public function returned($post = array()) {
+        $user = \Micro\App::getDefault()->auth->user();
+        $prevStatus = $this->status;
+
+        // delete tasks
+        \App\Tasks\Models\Task::find(array(
+            't_type = :type: AND t_link = :link:',
+            'bind' => array(
+                'type' => 'trip',
+                'link' => $this->id_trip
+            )
+        ))->delete();
+
+        $status = Status::val('change-request');
+
+        // tambah history
+        $history = new History();
+        $history->id_trip = $this->id_trip;
+        $history->status_id = $status;
+        $history->user_act = $user['su_id'];
+        $history->date = date('Y-m-d H:i:s');
+        $history->notes = $post['notes'];
+
+        $history->save();
+
+        // update status
+        $this->status = $status;
+        $this->save();
+
+        if ($this->advance && $this->advance->status == $prevStatus) {
+            $this->advance->returned($post);
+        }
+    }
+
+    public function approve($post = array()) {
+        $user = \Micro\App::getDefault()->auth->user();
+        $prevStatus = $this->status;
+
+        // delete lower tasks 
+        if ($user['su_grade_type'] == 'verificator') {
+            
+            \App\Tasks\Models\Task::find(array(
+                't_type = :type: AND t_link = :link: AND t_user = :user:',
+                'bind' => array(
+                    'type' => 'trip',
+                    'link' => $this->id_trip,
+                    'user' => $user['su_id']
+                )
+            ))->delete();
+
+        } else if ($user['su_grade_type'] == 'approver') {
+            $tasks = \App\Tasks\Models\Task::get()
+                ->where('t_type = :type: AND t_link = :link: AND grade.grade_limit <= :amounts:', array(
+                    'type' => 'trip',
+                    'link' => $this->id_trip,
+                    'amounts' => (int) $user['su_grade_limit']
+                ))
+                ->join('App\Users\Models\User', 'user.su_id = App\Tasks\Models\Task.t_user', 'user')
+                ->join('App\Grades\Models\Grade', 'grade.grade_id = user.su_grade_id', 'grade')
+                ->execute();
+
+            foreach($tasks as $task) {
+                $task->delete();
+            }
+        }
+
+        // tambah history
+        $history = new History();
+        $history->id_trip = $this->id_trip;
+
+        $status = NULL;
+
+        if ($user['su_grade_type'] == 'verificator') {
+            $status = Status::val('verified');
+        } else {
+            if ($user['su_grade_limit'] >= 15000000) {
+                $status = Status::val('final-approved');
+            } else {
+                $status = Status::val('approved');
+            }
+        }
+
+        $history->status_id = $status;
+        $history->user_act = $user['su_id'];
+        $history->date = date('Y-m-d H:i:s');
+        $history->notes = $post['notes'];
+
+        $history->save();
+
+        // update status
+        $this->status = $status;
+        $this->save();
+
+        // sync advance
+        if ($this->advance && $this->advance->status == $prevStatus) {
+            $this->advance->approve($post);
+        }
+
+        if ($this->status == Status::val('final-approved')) {
+            $this->requestTicket();
+        }
+    }
+
     public function requestTicket() {
 
         $user = \Micro\App::getDefault()->auth->user();
         $subscribers = User::findInRoles(array('ticketing'));
 
         foreach($subscribers as $sub) {
-            $task = new \App\Tickets\Models\Task();
+            $task = new \App\Tasks\Models\Task();
+                
+            $task->t_type = 'trip-ticket';
+            $task->t_link = $this->id_trip;
+            $task->t_code = $this->trip_no;
+            $task->t_user = $sub->su_id;
+            $task->t_date = date('Y-m-d H:i:s');
+            $task->t_read = 0;
 
-            $task->id_trip = $this->id_trip;
-            $task->su_id = $sub->su_id;
-            $task->is_allowed = 1;
-            
             $task->save();
+
         }
 
     }

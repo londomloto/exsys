@@ -17,7 +17,7 @@
 
         <kct-grid 
             id="grid" 
-            url="/expense?catagory=opex" 
+            url="/expense?category=opex" 
             page-size="25" 
             columns="[[ columns ]]" 
             title="DATASHEET" 
@@ -118,7 +118,13 @@
             }
             handleRouteParams(action, id) {
                 if (action) return;
-                this.$.grid && this.$.grid.deferAutoload();
+                if (this.$.grid) {
+                    if (this.route.query.reload == 'yes') {
+                        this.$.grid.load();
+                    } else {
+                        this.$.grid.deferAutoload();
+                    }
+                }
             }
             handleResizing(width, height) {
                 this.$.grid && this.$.grid.resize();

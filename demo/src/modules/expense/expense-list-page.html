@@ -16,7 +16,7 @@
 
         <kct-grid 
             id="grid" 
-            url="/expense?catagory=expense" 
+            url="/expense?category=expense" 
             page-size="25" 
             columns="[[ columns ]]" 
             title="DATASHEET" 
@@ -47,7 +47,7 @@
                             value: [
                                 { type: 'rownumber' },
                                 { text: 'Expense No.', dataIndex: 'exp_no', width: 120, align: 'center' },
-                                { text: 'Subject', dataIndex: 'subject_exp' },
+                                { text: 'Subject', dataIndex: 'subject_exp', width: 300 },
                                 { 
                                     text: 'Date Created', 
                                     dataIndex: 'date', 
@@ -113,7 +113,16 @@
                 }
                 handleRouteParams(action, id) {
                     if (action) return;
-                    this.$.grid && this.$.grid.deferAutoload();
+                    if (this.$.grid) {
+
+                        this.$.grid.deferAutoresize();
+
+                        if (this.route.query.reload == 'yes') {
+                            this.$.grid.load();
+                        } else {
+                            this.$.grid.deferAutoload();
+                        }
+                    }
                 }
                 handleResizing(width, height) {
                     this.$.grid && this.$.grid.resize();

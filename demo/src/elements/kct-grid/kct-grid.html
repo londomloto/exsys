@@ -9,14 +9,14 @@
 <link rel="import" href="../../../bower_components/paper-menu-button/paper-menu-button.html">
 <link rel="import" href="../../../bower_components/paper-listbox/paper-listbox.html">
 <link rel="import" href="../../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../../vendors/ag-grid/ag-grid-style.html">
+<link rel="import" href="../../../vendors/ag-grid/ag-grid-style-material.html">
+<link rel="import" href="../../../vendors/ag-grid/ag-grid.html">
 <link rel="import" href="../../mixins/resolver.html">
 <link rel="import" href="../kct-search/kct-search.html">
 <link rel="import" href="../kct-media/kct-media.html">
 <link rel="import" href="../kct-ajax/kct-ajax.html">
 <link rel="import" href="../kct-layouts/kct-hbox.html">
-<link rel="import" href="lib/ag-grid-style.html">
-<link rel="import" href="lib/ag-grid-style-material.html">
-<link rel="import" href="lib/ag-grid.html">
 
 <dom-module id="kct-grid">
     <template>
@@ -160,7 +160,7 @@
             .grid-statusbar paper-button,
             .grid-statusbar ::slotted(paper-button) {
                 font-weight: 400;
-                padding: 0.25em 0.75em !important;
+                padding: 0.3em 0.8em !important;
                 font-size: 13px !important;
 
                 --iron-icon-width: 18px;
@@ -582,6 +582,7 @@
 
                     this.__buttons = [];
                     this.__hideResponsive = true;
+                    this.__hasAutosizeColumn = false;
                 }
 
                 ready() {
@@ -656,6 +657,9 @@
                         () => {
                             let height = this.shadowRoot.querySelector('.grid-panel-body').clientHeight;
                             this.updateStyles({ '--grid-node-height': height + 'px' });
+                            if (this.__hasAutosizeColumn) {
+                                this.api.sizeColumnsToFit();
+                            }
                         },
                         1
                     );
@@ -678,6 +682,23 @@
                         this.__deferAutoload = true;
                         this.load(options);
                     }
+                }
+
+                refresh(node) {
+                    if ( ! this.api) return;
+                    this.api.refreshCells({
+                        rowNodes: [node]
+                    });
+                }
+
+                update(node, data) {
+                    if ( ! this.api) return;
+
+                    node.setData(data);
+
+                    this.api.refreshCells({
+                        rowNodes: [node]
+                    });
                 }
 
                 __setupGrid() {
@@ -705,6 +726,7 @@
                         onGridReady: this.__onGridReady.bind(this),
                         onRowSelected: this.__onGridRowSelected.bind(this),
                         onCellClicked: this.__onGridCellClicked.bind(this),
+                        onRowClicked: this.__onGridRowClicked.bind(this),
                         onPaginationChanged: this.__onGridPaginationChanged.bind(this),
                         onGridColumnsChanged: this.__onGridColumnsChanged.bind(this),
                         onViewportChanged: this.__onGridViewportChanged.bind(this),
@@ -722,6 +744,7 @@
 
                     this.__buildColumns();
                     this.$.grid.gridOptions = this.__grid;
+
                 }
 
                 __computeExtraClass(extraSize) {
@@ -791,8 +814,12 @@
                         }
 
                         if (col.width !== undefined) {
-                            item.width = col.width;
-                            item.suppressSizeToFit = true;
+                            if (col.width == 'auto') {
+                                this.__hasAutosizeColumn = true;
+                            } else {
+                                item.width = col.width;
+                                item.suppressSizeToFit = true;
+                            }
                         }
 
                         if (col.align) {
@@ -806,6 +833,10 @@
 
                         if (col.type == 'rownumber' || col.type == 'action' || col.sorting == false) {
                             item.suppressSorting = true;
+                        }
+
+                        if (col.sort !== undefined) {
+                            item.sort = col.sort;
                         }
 
                         columns.push(item);
@@ -1018,34 +1049,52 @@
 
                     this.set('selection', this.api.getSelectedRows());
                     this.__updateBulkSelection();
-
                 }
 
                 __onGridCellClicked(args) {
                     let columnType = args.colDef.columnType;
 
-                    if (columnType == 'action') {
-                        if (args.event.path) {
+                    if (columnType != 'action') {
+                        return;
+                    }
 
-                            let target = args.event.path[0],
-                                action = target.getAttribute('on-tap');
+                    let e = args.event, path = e.path;
 
-                            if (action) {
-                                if ( ! this.context) {
-                                    this.__lookupContext();
-                                }
+                    if (path && path.length) {
+                        // we only aware on <a/>, <paper-icon-button/> and <paper-button/>
+                        let button = path[0],
+                            action = button.getAttribute('on-tap');
 
-                                if (this.context) {
-                                    if (this.context[action]) {
-                                        this.context[action](args);
-                                    } else {
-                                        console.warn(`Undefined method \`${action}()\` on <${this.context.localName}/>`);
-                                    }
+                        if ( ! action && path[2]) {
+                            button = path[2];
+                            action = button.getAttribute('on-tap');
+                        }
+
+                        if (action) {
+                            if ( ! this.context) {
+                                this.__lookupContext();
+                            }
+
+                            if (this.context) {
+                                if (this.context[action]) {
+                                    this.context[action](args);
+                                } else {
+                                    console.warn(`Undefined method \`${action}()\` on <${this.context.localName}/>`);
                                 }
                             }
-                            
                         }
+                        
                     }
+                }
+
+                __onGridRowClicked(e) {
+                    let customEvent = new CustomEvent('rowclick', { 
+                        detail: { 
+                            data: e.data,
+                            node: e.node
+                        } 
+                    });
+                    this.dispatchEvent(customEvent);
                 }
 
                 __onGridColumnsChanged() {

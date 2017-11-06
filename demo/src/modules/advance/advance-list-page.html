@@ -108,7 +108,12 @@
             }
             handleRouteParams(action, id) {
                 if (action) return;
-                this.$.grid && this.$.grid.deferAutoload();
+                
+                if (this.route.query.reload == 'yes') {
+                    this.$.grid && this.$.grid.load();
+                } else {
+                    this.$.grid && this.$.grid.deferAutoload();
+                }
             }
             handleResizing(width, height) {
                 this.$.grid && this.$.grid.resize();

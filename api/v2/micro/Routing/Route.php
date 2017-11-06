@@ -6,11 +6,16 @@ class Route extends \Micro\Component {
     protected $_prefix;
     protected $_controller;
     protected $_middleware;
+    protected $_router;
 
     public function __construct($options = array()) {
         $this->_prefix = '';
         $this->_controller = FALSE;
         $this->_middleware = FALSE;
+    }
+
+    public function getDI() {
+        return \Phalcon\DI::getDefault();
     }
     
     public function setGroup($group) {
@@ -75,8 +80,17 @@ class Route extends \Micro\Component {
 
     private function _compileHandler($handler) {
         if ($this->_controller && is_string($handler)) {
-            $controller = new $this->_controller();
+            $ctl = $this->_controller;
+            
+            if ( ! $this->getDI()->offsetExists($ctl)) {
+                $this->getDI()->setShared($ctl, function() use ($ctl){
+                    return new $ctl();
+                });
+            }
+            
+            $controller = $this->getDI()->getShared($ctl);
             $action = $handler.'Action';
+
             return array($controller, $action);
         }
 

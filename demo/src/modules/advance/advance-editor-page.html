@@ -15,6 +15,8 @@
 <link rel="import" href="../../elements/kct-layouts/kct-column.html">
 <link rel="import" href="../../elements/kct-form/kct-form-validator.html">
 <link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
+<link rel="import" href="../../helpers/date-helper.html">
+<link rel="import" href="../../helpers/node-helper.html">
 
 <dom-module id="advance-editor-page">
     <template>
@@ -37,7 +39,7 @@
             
             <page-header-block title="EDITOR" description="Advance Request" icon="description" hidden$="[[ dialogMode ]]">
                 <paper-button hidden$="[[ ! record.id_adv ]]"  disabled$="[[ __formInvalid ]]" class="btn-primary" on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Update</paper-button>
-                <paper-button hidden$="[[ __advanceIsEmpty ]]"  disabled$="[[ __formInvalid ]]" class="btn-cyan" on-tap="__onSubmitTap"><iron-icon icon="done-all"></iron-icon>&nbsp;Submit</paper-button>
+                <paper-button hidden$="[[ __advanceIsEmpty ]]"  disabled$="[[ __formInvalid ]]" class="btn-cyan" on-tap="__onSubmitTap"><iron-icon icon="send"></iron-icon>&nbsp;Submit</paper-button>
             </page-header-block>
 
             <div class="flex scroll-y padding">
@@ -50,8 +52,8 @@
                             <paper-input label="Subject" value="{{ record.subject_adv }}" required auto-validate error-message="Subject is required"></paper-input>    
 
                             <kct-column columns="2" gutter="1.5rem" spacer="0px">
-                                <vaadin-date-picker label="Start Date" value="{{ record.date_start }}" required auto-validate error-message="Start date is required"></vaadin-date-picker>
-                                <vaadin-date-picker label="End Date" value="{{ record.date_end }}" required auto-validate error-message="End date is required"></vaadin-date-picker>
+                                <vaadin-date-picker id="date-start" label="Start Date" value="{{ record.date_start }}" required auto-validate error-message="Start date is required"></vaadin-date-picker>
+                                <vaadin-date-picker id="date-end" label="End Date" value="{{ record.date_end }}" required auto-validate error-message="End date is required"></vaadin-date-picker>
                             </kct-column>
 
                             <vaadin-combo-box 
@@ -176,7 +178,7 @@
                             required 
                             auto-validate 
                             error-message="Currency is required"></vaadin-combo-box>
-                        <paper-input class="text-right" allowed-pattern="[0-9.]" label="Amounts" value="{{ item.amounts }}" required auto-validate error-message="Amounts is required"></paper-input>    
+                        <paper-input allowed-pattern="[0-9.]" label="Amounts" value="{{ item.amounts }}" required auto-validate error-message="Amounts is required"></paper-input>    
                     </kct-form-validator>
                     
                 </div>
@@ -213,13 +215,23 @@
             }
             constructor() {
                 super();
+
                 this.__advanceIsEmpty = true;
                 this.__purposes = [];
                 this.__comboPurposeRequired = false;
+                this.__dirty = false;
+            }
+            ready() {
+                super.ready();
+
+                NodeHelper.formatDatePicker(this.$['date-start']);
+                NodeHelper.formatDatePicker(this.$['date-end']);
             }
             handleRouteParams(action, id) {
                 if (['add', 'edit'].indexOf(action) == -1) return;
                 
+                this.__dirty = false;
+
                 if (action == 'edit') {
                     this.mask('Loading...');
                     this.__loadReferences().then(() => {
@@ -240,7 +252,10 @@
                 } else {
                     this.__loadReferences().then(() => {
                         this.set('items', []);
-                        this.set('record', {});
+                        this.set('record', {
+                            date_start: DateHelper.today(),
+                            date_end: DateHelper.nextday()
+                        });
                         this.__handlePurpose();
                         this.$.validator.validate();
                     });
@@ -339,6 +354,9 @@
 
                 function done(res) {
                     if (res.success) {
+
+                        this.__dirty = true;
+
                         let id = res.data.id_adv;
 
                         this.set('record.id_adv', id);
@@ -371,10 +389,10 @@
                 });
             }
             __onSubmitTap(e) {
-                this.confirm('Confirm', `Are you sure you want to submit ${this.record.adv_no}?`).then(b => {
+                this.confirm('Confirm', `Are you sure you want to submit <strong>${this.record.adv_no}</strong> ?`).then(b => {
                     if (b) {
                         this.$.ajax.POST('/advance/' + this.record.id_adv + '/submit').then(() => {
-                            this.__onBackTap();
+                            this.set('route.path', '/advance?reload=yes');
                         });
                     }
                 });   
@@ -409,6 +427,7 @@
 
                 function done(res) {
                     if (res.success) {
+                        this.__dirty = true;
                         this.__loadItems();
                     }
                 }
@@ -427,6 +446,7 @@
                 this.confirm('Confirm', `Are you sure you want to delete ${item.description} ?`).then(b => {
                     if (b) {
                         this.$.ajax.DELETE('/advance/items/' + item.advance_item_id).then(() => {
+                            this.__dirty = true;
                             this.__loadItems();
                         });
                     }
@@ -449,7 +469,8 @@
                 this.dispatchEvent(new CustomEvent('item-editor-closed'));
             }
             __onBackTap() {
-                this.set('route.path', '/advance');
+                let path = this.__dirty ? '/advance?reload=yes' : '/advance';
+                this.set('route.path', path);
             }
         }
         customElements.define(AdvanceEditorPage.is, AdvanceEditorPage);

@@ -1,0 +1,183 @@
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+
+<dom-module id="tasks-list-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-grid 
+            id="grid" 
+            url="/tasks" 
+            columns="[[ columns ]]" 
+            selection-model="row" 
+            row-height="72" 
+            icon="done" 
+            title="Todo List" 
+            accent="--paper-purple--500" 
+            description="User Todo List" 
+            pagination>
+            <template preserve-content>
+                <style>
+                    .cell-badge paper-icon-button {
+                        --paper-icon-button: {
+                            border-radius: 50%;
+                            color: #fff;
+                            position: absolute;
+                            top: 50%;
+                            margin-top: -20px;
+                            left: 50%;
+                            margin-left: -20px;
+                        };
+                    }
+                    .cell-verb > .code {
+                        font-weight: 600;
+                        font-size: 15px;
+                        color: var(--paper-blue-grey-500);
+                    }
+                    .cell-verb > .text {
+                        
+                    }
+                    .cell-verb > .verb {
+                        color: #999;
+                    }
+                    .cell-verb b {
+                        font-weight: 400;
+                    }
+                    .cell-status .badge {
+                        display: inline-block;
+                        width: 50px;
+                        text-align: center;
+                        padding: 4px 6px;
+                        color: #fff;
+                        border-radius: 4px;
+                        font-size: 12px;
+                    }
+                </style>
+            </template>
+        </kct-grid>
+
+    </template>
+    <script>
+        class TasksListPage extends KctView {
+            static get is() {
+                return 'tasks-list-page';
+            }
+
+            static get properties() {
+                return {
+                    columns: {
+                        type: Array,
+                        value: () => ([
+                            {
+                                type: 'action',
+                                width: 60,
+                                align: 'center',
+                                cls: 'cell-badge',
+                                dataIndex: 't_read',
+                                renderer: (e) => {
+                                    if (e.data) {
+                                        return `<paper-icon-button on-tap="__onViewTap" title="Click to open task" icon="${e.data.t_icon}" style="background-color: ${e.data.t_accent}"></paper-icon-button>`;
+                                    }
+                                    return '';
+                                } 
+                            },
+                            { 
+                                text: 'Description',
+                                width: 380, 
+                                dataIndex: 't_code',
+                                renderer: (e) => {
+                                    if (e.data) {
+                                        return `
+                                            <div class="cell-verb">
+                                                <div class="verb">${e.data.t_verb}</div>
+                                                <div class="code">${e.data.t_code}</div>
+                                                <div class="text">${e.data.t_text}</div>
+                                            </div>
+                                        `;
+                                    }
+                                    return '';
+                                }
+                            },
+                            {
+                                text: 'Proposed By',
+                                dataIndex: 't_sender',
+                                width: 200,
+                                renderer: (e) => {
+                                    return e.data ? e.data.t_sender : '';
+                                }
+                            },
+                            {
+                                text: 'Request Date',
+                                dataIndex: 't_date',
+                                sort: 'desc',
+                                width: 120,
+                                align: 'center',
+                                renderer: (e) => {
+                                    return e.data ? e.data.t_date_formatted : '';
+                                }
+                            },
+                            {
+                                text: 'Amounts (IDR)',
+                                width: 150,
+                                align: 'right',
+                                dataIndex: 't_amounts',
+                                renderer: (e) => {
+                                    return e.data ? e.data.t_amounts_formatted : '';
+                                }
+                            }
+                        ])
+                    }
+                };
+            }
+
+            handleRouteParams(view) {
+                if (view) return;
+                
+                this.$.grid.deferAutoresize();
+
+                if (this.route.query.reload == 'yes') {
+                    this.$.grid.load();
+                } else {
+                    this.$.grid.deferAutoload();    
+                }
+            }
+
+            handleResizing(width, height) {
+                this.$.grid && this.$.grid.resize();
+            }
+
+            __open(task, node) {
+                if ( ! task) return;
+                
+                task.t_read = 1;
+                task.t_icon = 'drafts';
+                task.t_accent = 'var(--paper-grey-400)';
+
+                this.mask('Opening...');
+
+                this.$.ajax.PUT('/tasks/' + task.t_id, task).then(() => {
+                    this.$.grid.refresh(node);
+                    this.unmask();
+                    this.set('route.path', `/tasks/${task.t_type}/${task.t_link}`);    
+                });
+            }
+
+            __onViewTap(e) {
+                this.__open(e.data, e.node);
+            }
+
+            __onGridRowClick(e) {
+                this.__open(e.detail.data, e.detail.node);
+            }
+        }
+
+        customElements.define(TasksListPage.is, TasksListPage);
+    </script>
+</dom-module>

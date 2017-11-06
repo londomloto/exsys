@@ -1,0 +1,335 @@
+<link rel="import" href="../../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../bower_components/vaadin-material-theme/vaadin-date-picker.html">
+<link rel="import" href="../../../bower_components/vaadin-date-picker/vaadin-date-picker.html">
+<link rel="import" href="../../../bower_components/vaadin-combo-box/vaadin-combo-box.html">
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../elements/kct-message/kct-prompt.html">
+<link rel="import" href="../../elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../elements/kct-checkbox/kct-checkbox.html">
+<link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
+<link rel="import" href="../../helpers/node-helper.html">
+<link rel="import" href="../../helpers/date-helper.html">
+
+<dom-module id="trip-ticket-view">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+            .action-buttons paper-button {
+                min-width: 90px;
+            }
+            [hidden] {
+                display: none;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        
+        <kct-vbox>
+            <page-header-block icon="done" title="Todo List" description="Ticket Purchasing Request"></page-header-block>
+            <div class="flex scroll-y padding">
+                
+                <paper-card class="block">
+                    <div class="card-content">
+                        <h3 class="block-title">[[ record.trip.trip_no ]]</h3>
+                        <kct-column columns="3" gutter="1.5rem">
+                            <div>
+                                <div class="display-field">
+                                    <label>Subject: </label>
+                                    <div>[[ record.trip.subject_trip ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Type: </label>
+                                    <div>[[ record.trip.type_name ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Purpose: </label>
+                                    <div>[[ record.trip.purpose_name ]]</div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="display-field">
+                                    <label>Proposed By: </label>
+                                    <div>[[ record.trip.user_fullname ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Start Date: </label>
+                                    <div>[[ record.trip.date_start_short ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>End Date: </label>
+                                    <div>[[ record.trip.date_end_short ]]</div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="display-field" hidden$="[[ !record.trip.adv_ref ]]">
+                                    <label>Advance: </label>
+                                    <div><a href="#" on-tap="__onAdvanceTap">[[ record.trip.adv_no ]]</a></div>
+                                </div>
+                                <div class="display-field" hidden$="[[ !record.trip.adv_ref ]]">
+                                    <label>Advance Status: </label>
+                                    <div>[[ record.trip.adv_status_name ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Trip Status: </label>
+                                    <div>[[ record.trip.status_name ]]</div>
+                                </div>
+                            </div>
+                        </kct-column>
+                    </div>
+                </paper-card>
+                <paper-card class="block">
+                    <div class="card-content">
+                        <h3 class="block-title">Trip Items</h3>
+
+                        <div class="table-responsive">
+                            <table class="table striped">
+                                <thead>
+                                    <th width="40" class="text-center">No.</th>
+                                    <th width="150">Departure</th>
+                                    <th>Origin</th>
+                                    <th>Destination</th>
+                                    <th width="150" class="text-center">Transport</th>
+                                    <th width="80" class="text-center">Visa</th>
+                                    <th></th>
+                                </thead>
+                                <tbody>
+                                    <template is="dom-repeat" items="[[ record.items ]]">
+                                        <tr>
+                                            <td class="text-center">[[ __computeNo(index) ]]</td>
+                                            <td>[[ item.departure_date_short ]]</td>
+                                            <td>[[ item.origin ]]</td>
+                                            <td>[[ item.destination ]]</td>
+                                            <td class="text-center">[[ item.transport_name ]]</td>
+                                            <td class="text-center">[[ __computeVisa(item.visa) ]]</td>
+                                            <td class="text-right">
+                                                <paper-button on-tap="__onTicketTap" class="btn-xs btn-primary">Ticket</paper-button>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                    </div>
+                </paper-card>
+                <paper-card class="block">
+                    <div class="card-content">
+                        <div class="action-buttons text-right">
+                            <paper-button on-tap="__onConfirmTap" class="btn-green" hidden$="[[ !record.trip.ticket_approvable ]]">Done</paper-button>
+                            <paper-button on-tap="__onRejectTap" class="btn-red">Reject</paper-button>
+                        </div>
+                    </div>
+                </paper-card>
+                <paper-card class="block">
+                    <div class="card-content">
+
+                        <h3 class="block-title">Trip History</h3>
+
+                        <div class="table-responsive">
+                            <table  class="table striped">
+                                <thead>
+                                    <th width="40" class="text-center">No.</th>
+                                    <th width="120">Date</th>
+                                    <th>Status</th>
+                                    <th>User</th>
+                                    <th>Notes</th>
+                                </thead>
+                                <tbody>
+                                    <template is="dom-repeat" items="[[ record.history ]]">
+                                        <tr>
+                                            <td  class="text-center">[[ __computeNo(index) ]]</td>
+                                            <td>[[ item.date_short ]]</td>
+                                            <td>[[ item.status_name ]]</td>
+                                            <td>[[ item.user_act_name ]]</td>
+                                            <td>[[ item.notes ]]</td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+
+                    </div>
+                </paper-card>
+            </div>
+        </kct-vbox>
+
+        <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to list" on-tap="__onBackTap"></paper-fab>
+        </div>
+
+        <kct-prompt id="task-prompt" title="[[ actionTitle ]]" message="Type your reason"></kct-prompt>
+
+        <kct-dialog id="item-editor" title="Item Editor" width="500" height="100%" on-ready="__onEditorReady" scrollable>
+            <template preserve-content>
+                <style include="theme-helper">
+                    #master-item {
+                        --vaadin-combo-box-item: {
+                            padding: 7px 16px;
+                        };
+                    }
+                </style>
+
+                <div slot="dialog-body">
+                    <kct-form-validator id="item-validator" invalid="{{ __itemInvalid }}" auto-validate>
+                        <vaadin-date-picker label="Departure Date" value="{{ item.departure_date }}" required auto-validate error-message="Departure date is required"></vaadin-date-picker>
+                        <paper-input label="Origin" value="{{ item.origin }}" required auto-validate error-message="Origin is required"></paper-input>
+                        <paper-input label="Destination" value="{{ item.destination }}" required auto-validate error-message="Destination is required"></paper-input>
+                        <vaadin-combo-box 
+                            label="Transport" 
+                            value="{{ item.transport }}"
+                            items="[[ tripTransports ]]" 
+                            item-value-path="value" 
+                            item-label-path="label" 
+                            required 
+                            auto-validate 
+                            error-message="Transport is required"></vaadin-combo-box>
+                        <div>
+                            <paper-input label="Transport Name" value="{{ item.transport_operator }}" required auto-validate error-message="Transport name is required"></paper-input>
+                            <paper-input label="Transport Departure Time" value="{{ item.transport_departure_time }}" required auto-validate error-message="Transport departure time is required"></paper-input>
+                            <paper-input label="Transport Price" value="{{ item.transport_prices }}" allowed-pattern="[0-9]" required auto-validate error-message="Transport price is required"></paper-input>
+                        </div>
+                        <paper-input label="Special Request" value="{{ item.special_request }}"></paper-input>
+                        <kct-checkbox value="{{ item.visa }}">Need visa?</kct-checkbox>
+                        
+                    </kct-form-validator>
+                    
+                </div>
+
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onItemEditorSaveTap" disabled$="[[ __itemInvalid ]]">Save</paper-button>
+                    <paper-button on-tap="__onItemEditorCancelTap">Cancel</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class TripTicketView extends KctView {
+            static get is() {
+                return 'trip-ticket-view';
+            }
+            static get properties() {
+                return {
+                    record: { type: Object },
+                    item: { type: Object },
+                    actionTitle: { type: String, value: 'Approval' },
+                    tripTypes: {
+                        type: Array,
+                        value: [
+                            { label: 'International', value: '1' },
+                            { label: 'Domestic', value: '2' }
+                        ]
+                    },
+                    tripTransports: {
+                        type: Array,
+                        value: [
+                            { label: 'Air Plane', value: '1' },
+                            { label: 'Train', value: '2' }
+                        ]
+                    },
+                    payments: {
+                        type: Array,
+                        value: [
+                            { value: '1', label: 'Cash' },
+                            { value: '2', label: 'Corporate Credit Card' }
+                        ]
+                    }
+                }
+            }
+            handleRouteParams(view, id) {
+                if (view != 'trip-ticket') return;
+                this.__loadDocument(id);
+            }
+            handleResizing(width, height) {
+                
+            }
+            __computeNo(index) {
+                return index + 1;
+            }
+            __computeVisa(visa) {
+                return visa == '1' ? 'Yes' : '-';
+            }
+            __loadDocument(id) {
+                this.set('record', {});
+
+                this.$.ajax.GET('/trips/' + id + '/view').then(res => {
+                    this.set('record', res.data);
+                });
+            }
+            __goBack(reload = false) {
+                this.set('route.path', '/tasks' + (reload ? '?reload=yes' : ''));
+            }
+            __onRejectTap() {
+                if ( ! this.record && ! this.record.trip) {
+                    return;
+                }
+
+                this.confirm('Confirm', 'Are you sure to reject request?' ).then(y => {
+                    if (y) {
+                        this.$.ajax.POST('/trips/' + this.record.trip.id_trip + '/reject-ticket').then(() => {
+                            this.__goBack(true);
+                        });
+                    }
+                });
+            }
+            __onConfirmTap() {
+                if ( ! this.record && ! this.record.trip) {
+                    return;
+                }
+
+                this.confirm('Confirm', 'Are you sure to finish request?' ).then(y => {
+                    if (y) {
+                        this.$.ajax.POST('/trips/' + this.record.trip.id_trip + '/finish-ticket').then(() => {
+                            this.__goBack(true);
+                        });
+                    }
+                });
+            }
+            __onEditorReady(e) {
+                e.target.shadowRoot.querySelectorAll('vaadin-date-picker').forEach(picker => {
+                    NodeHelper.formatDatePicker(picker);
+                });
+            }
+            __onTicketTap(e) {
+                let item = Object.assign({}, e.model.item);
+                this.set('item', item);
+                this.$['item-editor'].open();
+            }
+            __onItemEditorSaveTap() {
+                this.$['item-editor'].close();   
+
+                let data = this.item;
+                data.id_trip = this.record.trip.id_trip;
+
+                if (data.trip_item_id) {
+                    this.$.ajax.PUT('/trips/items/' + data.trip_item_id, data).then(done.bind(this));
+                } else {
+                    this.$.ajax.POST('/trips/items', data).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.__loadDocument(res.data.id_trip);
+                    }
+                }
+            }
+            __onItemEditorCancelTap() {
+                this.$['item-editor'].close();
+            }
+            __onAdvanceTap(e) {
+                e.preventDefault();
+                this.set('route.path', '/advance/advance/view/' + this.record.trip.adv_ref);
+            }
+            __onBackTap() {
+                this.__goBack();
+            }
+        }
+        customElements.define(TripTicketView.is, TripTicketView);
+    </script>
+</dom-module>

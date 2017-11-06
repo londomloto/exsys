@@ -97,7 +97,7 @@ class Item extends \Micro\Model {
             $data['currency_name'] = $this->currency->currency_name;
         }
 
-        $data['currency_rate_displayed'] = number_format($data['currency_offset_rate'], 2, ',', '.');
+        $data['currency_rate_displayed'] = number_format($data['currency_offset_rate'], 6, ',', '.');
 
         $forms = ItemForm::get()
             ->columns(array(

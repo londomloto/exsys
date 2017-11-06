@@ -54,7 +54,9 @@
     "vaadin-date-picker": "vaadin/vaadin-date-picker#^2.0.5",
     "vaadin-material-theme": "vaadin/vaadin-material-theme#^0.3.0",
     "web-animations-js": "^2.3.1",
-    "shadydom": "webcomponents/shadydom#v1.0.0"
+    "shadydom": "webcomponents/shadydom#v1.0.0",
+    "socket.io": "^2.0.4",
+    "DOMPurify": "dompurify#^1.0.2"
   },
   "resolutions": {
     "polymer": "^2.0.0",

@@ -35,6 +35,8 @@ class History extends \Micro\Model {
 
         if ($this->user) {
             $data['user_act_name'] = $this->user->su_fullname;
+        } else if ($this->user_act == 0) {
+            $data['user_act_name'] = 'System';
         }
 
         if ($this->status) {

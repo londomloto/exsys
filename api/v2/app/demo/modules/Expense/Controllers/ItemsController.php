@@ -80,7 +80,7 @@ class ItemsController extends \Micro\Controller {
 
         $expense = Expense::get($post['id_exp'])->data;
         
-        if ($expense && $expense->catagory == 'opex') {
+        if ($expense && $expense->category == 'opex') {
             $offset = Currency::offset();
             $target = Currency::get($post['currency_id'])->data;
 
@@ -129,7 +129,7 @@ class ItemsController extends \Micro\Controller {
 
             $expense = $query->data->expense;
 
-            if ($expense && $expense->catagory == 'opex') {
+            if ($expense && $expense->category == 'opex') {
                 $offset = Currency::offset();
                 $target = Currency::get($post['currency_id'])->data;
 

@@ -62,8 +62,12 @@
                                     <label>Advance: </label>
                                     <div><a href="#" on-click="__onAdvanceTap">[[ record.trip.adv_no ]]</a></div>
                                 </div>
+                                <div class="display-field" hidden$="[[ !record.trip.adv_ref ]]">
+                                    <label>Advance Status: </label>
+                                    <div>[[ record.trip.adv_status_name ]]</div>
+                                </div>
                                 <div class="display-field">
-                                    <label>Status: </label>
+                                    <label>Trip Status: </label>
                                     <div>[[ record.trip.status_name ]]</div>
                                 </div>
                             </div>

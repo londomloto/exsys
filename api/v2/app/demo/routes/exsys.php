@@ -10,11 +10,11 @@ Router::group(array(
 ->post('/{id}/upload', 'uploadById')
 ->post('/{id}/reject', 'rejectById')
 ->post('/{id}/approve', 'approveById')
-->post('/{id}/request', 'requestById')
+->post('/{id}/returned', 'returnedById')
 ->post('/{id}/fa-receive', 'faReceiveById')
 ->post('/{id}/fa-approve', 'faApproveById')
 ->post('/{id}/fa-reject', 'faRejectById')
-->post('/{id}/fa-request', 'faRequestById');
+->post('/{id}/fa-returned', 'faReturnedById');
 
 Router::group(array(
     'prefix' => '/expense',
@@ -30,11 +30,11 @@ Router::group(array(
 ->post('/{id}/upload', 'uploadById')
 ->post('/{id}/reject', 'rejectById')
 ->post('/{id}/approve', 'approveById')
-->post('/{id}/request', 'requestById')
+->post('/{id}/returned', 'returnedById')
 ->post('/{id}/fa-receive', 'faReceiveById')
 ->post('/{id}/fa-approve', 'faApproveById')
 ->post('/{id}/fa-reject', 'faRejectById')
-->post('/{id}/fa-request', 'faRequestById');
+->post('/{id}/fa-returned', 'faReturnedById');
 
 Router::group(array(
     'prefix' => '/trips',
@@ -46,6 +46,6 @@ Router::group(array(
 ->post('/{id}/upload', 'uploadById')
 ->post('/{id}/reject', 'rejectById')
 ->post('/{id}/approve', 'approveById')
-->post('/{id}/request', 'requestById')
+->post('/{id}/returned', 'returnedById')
 ->post('/{id}/finish-ticket', 'finishTicketById')
 ->post('/{id}/reject-ticket', 'rejectTicketById');

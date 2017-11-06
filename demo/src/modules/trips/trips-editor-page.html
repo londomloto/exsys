@@ -18,6 +18,8 @@
 <link rel="import" href="../../elements/kct-form/kct-form-validator.html">
 <link rel="import" href="../../elements/kct-checkbox/kct-checkbox.html">
 <link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
+<link rel="import" href="../../helpers/node-helper.html">
+<link rel="import" href="../../helpers/date-helper.html">
 <link rel="import" href="../advance/advance-editor-page.html">
 
 <dom-module id="trips-editor-page">
@@ -59,7 +61,7 @@
         <kct-ajax id="ajax"></kct-ajax>
 
         <kct-vbox>
-            <page-header-block title="EDITOR" description="Expense Request" icon="description">
+            <page-header-block title="Editor" description="Trip Request" icon="description">
                 <paper-button hidden$="[[ __tripIsPhantom ]]"  disabled="[[ __tripInvalid ]]" class="btn-primary" on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Save Changes</paper-button>
             </page-header-block>
             <div class="flex scroll-y padding">
@@ -245,7 +247,7 @@
             <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to list" on-tap="__onBackTap"></paper-fab>
         </div>
 
-        <kct-dialog id="item-editor" title="Item Editor" width="500" height="100%" scrollable>
+        <kct-dialog id="item-editor" title="Item Editor" width="500" height="100%" on-ready="__onEditorReady" scrollable>
             <template preserve-content>
                 <style include="theme-helper">
                     #master-item {
@@ -370,6 +372,14 @@
                 this.__comboPurposeRequired = false;
                 this.__stamping = false;
                 this.__disabledAdvanceEditor = false;
+                this.__dirty = false;
+            }
+
+            ready() {
+                super.ready();
+                this.shadowRoot.querySelectorAll('vaadin-date-picker').forEach(picker => {
+                    NodeHelper.formatDatePicker(picker);
+                });
             }
 
             handleRouteParams(action, id) {
@@ -386,6 +396,7 @@
                 });
 
                 this.set('items', []);
+                this.__dirty = false;
 
                 if (action == 'edit') {
                     this.mask('Loading...');
@@ -406,7 +417,14 @@
                     });
                 } else {
                     this.__loadReferences().then(() => {
-                        this.set('record', { type: '1' });
+                        let type = this.types[0];
+
+                        this.set('record', { 
+                            type: type ? type.type_id : '',
+                            date_start: DateHelper.today(),
+                            date_end: DateHelper.nextday()
+                        });
+
                         this.set('advanceRecord', {});
                         this.$['trip-validator'].validate();
                     });
@@ -439,9 +457,7 @@
 
                 function loadTypes() {
                     return this.$.ajax.GET('/types', {
-                        params: { 
-                            type_id: '1' 
-                        }
+                        display: 'travelling'
                     }).then(res => {
                         this.set('types', res.data);
                     });
@@ -449,9 +465,7 @@
 
                 function loadPurposes() {
                     return this.$.ajax.GET('/types/purposes', {
-                        params: {
-                            parent_id: '1'
-                        }
+                        display: 'travelling'
                     }).then(res => {
                         this.set('purposes', res.data);
                         this.set('__purposes', res.data);
@@ -483,8 +497,6 @@
                 let data = this.record;
                 let def = this._defer();
 
-                data['catagory'] = 'trip';
-
                 if (data.id_trip) {
                     this.$.ajax.PUT('/trips/' + data.id_trip, data).then(done.bind(this));
                 } else {
@@ -496,6 +508,7 @@
                         let id = res.data.id_trip;
 
                         this.set('record.id_trip', id);
+                        this.__dirty = true;
 
                         if (this.attachment) {
                             this.$.ajax.UPLOAD('/trips/' + id + '/upload', {
@@ -531,6 +544,11 @@
             __onAttachTap() {
                 this.$.attachment.browse();
             }
+            __onEditorReady(e) {
+                e.target.shadowRoot.querySelectorAll('vaadin-date-picker').forEach(picker => {
+                    NodeHelper.formatDatePicker(picker);
+                });
+            }
             __onAddItemTap() {
                 this.set('item', { visa: '0' });
                 this.$['item-editor'].open();
@@ -550,6 +568,7 @@
 
                 function done(res) {
                     if (res.success) {
+                        this.__dirty = true;
                         this.__loadItems();
                     }
                 }
@@ -567,6 +586,7 @@
                 this.confirm('Confirm', `Are you sure you want to delete item?`).then(b => {
                     if (b) {
                         this.$.ajax.DELETE('/trips/items/' + item.trip_item_id).then(() => {
+                            this.__dirty = true;
                             this.__loadItems();
                         });
                     }
@@ -602,6 +622,8 @@
                 this.confirm('Confirm', 'Are you sure want to delete this advance?').then(y => {
                     if (y) {
                         this.$.ajax.DELETE('/advance/' + this.record.adv_ref).then(() => {
+                            this.__dirty = true;
+
                             this.set('record.has_advance', false);
                             this.set('record.adv_ref', '');
                             this.set('record.amounts', 0);
@@ -628,6 +650,8 @@
 
                 if (advance) {
                     this.__saveChanges().then(() => {
+                        this.__dirty = true;
+
                         this.set('record.has_advance', true);
                         this.set('advanceRecord', advance);
 
@@ -640,7 +664,8 @@
                 }
             }
             __onBackTap() {
-                this.set('route.path', '/trips');
+                let path = this.__dirty ? '/trips?reload=yes' : '/trips';
+                this.set('route.path', path);
             }
         }
         customElements.define(TripsEditorPage.is, TripsEditorPage);

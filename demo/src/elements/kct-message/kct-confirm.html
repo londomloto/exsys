@@ -2,6 +2,7 @@
 <link rel="import" href="../../../bower_components/paper-dialog/paper-dialog.html">
 <link rel="import" href="../../../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../vendors/dompurify/dompurify.html">
 <link rel="import" href="../../mixins/resolver.html">
 <link rel="import" href="../../mixins/dialog.html">
 <dom-module id="kct-confirm">
@@ -9,7 +10,7 @@
         <style include="theme-helper"></style>
         <style>
             paper-dialog {
-                min-width: 400px;
+                min-width: 300px;
                 max-width: 600px;
             }
             h2, ::slotted(h2) {
@@ -48,7 +49,7 @@
                     <h2>[[ title ]]</h2>
                 </slot>
                 <slot>
-                    <p>[[ message ]]</p>
+                    <p id="message"></p>
                 </slot>
             </div>
             <div class="footer">
@@ -69,12 +70,22 @@
                     value: { type: String, notify: true, value: 'no' }
                 }
             }
+            static get observers() {
+                return [
+                    '__messageChanged(message)'
+                ];
+            }
             open() {
                 this._relocate();
 
                 this.__d = this._defer();
                 this.$.dialog.open();
                 return this.__d.promise;
+            }
+
+            __messageChanged(message) {
+                let clean = DOMPurify.sanitize(message);
+                this.$.message.innerHTML = clean;
             }
 
             __onSubmitTap() {
