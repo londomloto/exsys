@@ -19,6 +19,15 @@ class Advance extends \Micro\Model {
         );
 
         $this->hasOne(
+            'refund_status',
+            'App\Statuses\Models\Status',
+            'status_id',
+            array(
+                'alias' => 'RefundStatus'
+            )
+        );
+
+        $this->hasOne(
             'type',
             'App\Types\Models\Type',
             'type_id',
@@ -77,6 +86,24 @@ class Advance extends \Micro\Model {
                 )
             )
         );
+
+        $this->hasOne(
+            'id_adv',
+            'App\Expense\Models\Expense',
+            'adv_ref',
+            array(
+                'alias' => 'Expense'
+            )
+        );
+
+        $this->hasMany(
+            'id_adv',
+            'App\Advance\Models\Refund',
+            'id_adv',
+            array(
+                'alias' => 'RefundItems'
+            )
+        );
     }
 
     public function getSource() {
@@ -98,12 +125,19 @@ class Advance extends \Micro\Model {
         $data['date_start_short'] = date('d/m/Y', strtotime($this->date_start));
         $data['date_end_short'] = date('d/m/Y', strtotime($this->date_end));
         $data['has_items'] = $this->items->count() > 0 ? 1 : 0;
+        $data['has_refund'] = $this->refundItems->count() > 0;
         $data['amounts_formatted'] = number_format($data['amounts'], 2, ',', '.');
 
         if ($this->lastStatus) {
             $data['status_code'] = $this->lastStatus->status_code;
             $data['status_name'] = $this->lastStatus->status_name;
             $data['status_color'] = empty($this->lastStatus->status_color) ? 'var(--paper-grey-400)' : $this->lastStatus->status_color;
+        }
+
+        if ($this->refundStatus) {
+            $data['refund_status_code'] = $this->refundStatus->status_code;
+            $data['refund_status_name'] = $this->refundStatus->status_name;
+            $data['refund_status_color'] = empty($this->refundStatus->status_color) ? 'var(--paper-grey-400)' : $this->refundStatus->status_color;
         }
 
         if ($this->advanceType) {
@@ -148,6 +182,7 @@ class Advance extends \Micro\Model {
 
         // create history
         $history = new History();
+        $history->category = 'advance';
         $history->id_adv = $this->id_adv;
         $history->status_id = $status;
         $history->user_act = $user['su_id'];
@@ -192,6 +227,7 @@ class Advance extends \Micro\Model {
 
         // tambah history
         $history = new History();
+        $history->category = 'advance';
         $history->id_adv = $this->id_adv;
         $history->status_id = $status;
         $history->user_act = $user['su_id'];
@@ -236,6 +272,7 @@ class Advance extends \Micro\Model {
 
         // tambah history
         $history = new History();
+        $history->category = 'advance';
         $history->id_adv = $this->id_adv;
 
         $status = NULL;
@@ -262,7 +299,7 @@ class Advance extends \Micro\Model {
         $this->save();
 
         if ($status == Status::val('final-approved')) {
-            $this->faSubmit('receive-request');
+            $this->faSubmit('approval-request');
         }
     }
 
@@ -282,6 +319,7 @@ class Advance extends \Micro\Model {
 
         // tambah history
         $history = new History();
+        $history->category = 'advance';
         $history->id_adv = $this->id_adv;
         $history->status_id = $status;
         $history->user_act = $user['su_id'];
@@ -306,6 +344,7 @@ class Advance extends \Micro\Model {
                 $history = new History();
                 
                 $history->id_adv = $this->id_adv;
+                $history->category = 'advance';
                 $history->date = date('Y-m-d H:i:s');
                 $history->user_act = 0;
                 $history->notes = 'Send to finance by system';
@@ -360,7 +399,7 @@ class Advance extends \Micro\Model {
                     'currency_code' => $item['currency_code'],
                     'currency_rate' => $item['currency_rate'],
                     'summary_value' => 0,
-                    'summary_label' => 'Total advance in '.$code.' ('.$item['currency_name'].')'
+                    'summary_label' => 'Advance total in '.$code.' ('.$item['currency_name'].')'
                 );
             }
 

@@ -9,6 +9,7 @@
 <link rel="import" href="../../elements/kct-message/kct-prompt.html">
 <link rel="import" href="../../elements/kct-dialog/kct-dialog.html">
 <link rel="import" href="../../elements/kct-checkbox/kct-checkbox.html">
+<link rel="import" href="../../elements/kct-file/kct-file-input.html">
 <link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
 <link rel="import" href="../../helpers/node-helper.html">
 <link rel="import" href="../../helpers/date-helper.html">
@@ -193,6 +194,7 @@
                             <paper-input label="Transport Name" value="{{ item.transport_operator }}" required auto-validate error-message="Transport name is required"></paper-input>
                             <paper-input label="Transport Departure Time" value="{{ item.transport_departure_time }}" required auto-validate error-message="Transport departure time is required"></paper-input>
                             <paper-input label="Transport Price" value="{{ item.transport_prices }}" allowed-pattern="[0-9]" required auto-validate error-message="Transport price is required"></paper-input>
+                            <kct-file-input label="Attachment" value="{{ item.attachment }}" file="{{ userfile }}"></kct-file-input>
                         </div>
                         <paper-input label="Special Request" value="{{ item.special_request }}"></paper-input>
                         <kct-checkbox value="{{ item.visa }}">Need visa?</kct-checkbox>
@@ -315,7 +317,19 @@
 
                 function done(res) {
                     if (res.success) {
-                        this.__loadDocument(res.data.id_trip);
+                        let id = res.data.trip_item_id;
+
+                        if (this.userfile) {
+                            this.$.ajax.UPLOAD('/trips/items/' + id + '/upload', {
+                                files: [
+                                    { name: 'userfile', file: this.userfile }
+                                ]
+                            }).then(() => {
+                                this.__loadDocument(res.data.id_trip);
+                            });
+                        } else {
+                            this.__loadDocument(res.data.id_trip);    
+                        }
                     }
                 }
             }

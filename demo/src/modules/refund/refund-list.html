@@ -1,0 +1,142 @@
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+
+<dom-module id="refund-list">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-grid 
+            id="grid" 
+            url="/advance/find-refund" 
+            selection-model="row" 
+            columns="[[ columns ]]" 
+            title="Datasheet" 
+            description="List of Outstanding Advance" 
+            pagination>
+            
+            <template preserve-content>
+                <style include="theme-helper"></style>
+            </template>
+
+        </kct-grid>
+
+    </template>
+    <script>
+        class RefundList extends KctView {
+
+            static get is() {
+                return 'refund-list';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Advance Return', notify: true },
+                    columns: {
+                        type: Array,
+                        value: () => ([
+                            { type: 'rownumber' },
+                            { text: 'Advance No.', dataIndex: 'adv_no', width: 120, align: 'center' },
+                            { text: 'Subject', dataIndex: 'subject_adv' },
+                            { 
+                                text: 'Date Created', 
+                                dataIndex: 'date', 
+                                width: 120,  
+                                align: 'center',
+                                renderer: (e) => {
+                                    return e.data ? e.data.date_short : '';
+                                }
+                            },
+                            { 
+                                text: 'Amounts (IDR)', 
+                                dataIndex: 'amounts', 
+                                align: 'right', 
+                                width: 150,
+                                renderer: (e) => {
+                                    return e.data ? e.data.amounts_formatted : '-';
+                                }
+                            },
+                            { 
+                                text: 'Return Status', 
+                                dataIndex: 'refund_status_name', 
+                                width: 150,
+                                renderer: (e) => {
+                                    if (e.data) {
+                                        return `<iron-icon icon="image:lens" style="color: ${e.data.refund_status_color}"></iron-icon>&nbsp;<span>${e.data.refund_status_name}</span>`;
+                                    }
+                                    return '';
+                                }
+                            },
+                            { 
+                                text: 'Action',
+                                type: 'action',
+                                width: 200,
+                                renderer: (e) => {
+                                    if (e.data) {
+                                        let buttons = '';
+                                        let status = e.data.refund_status_code;
+
+                                        if (status == 'draft' || status == 'change-request') {
+                                            buttons += `<paper-button on-tap="__onRefundTap" class="btn-purple" title="View"><iron-icon icon="image:edit"></iron-icon>&nbsp;Refund</paper-button>`;
+                                            if (e.data.has_refund) {
+                                                buttons += `<paper-button on-tap="__onSubmitTap" class="btn-cyan" title="View"><iron-icon icon="send"></iron-icon>&nbsp;Submit</paper-button>`;
+                                            }
+                                        } else {
+                                            buttons += `<paper-button on-tap="__onRefundTap" class="btn-muted" title="View"><iron-icon icon="search"></iron-icon>&nbsp;Refund</paper-button>`;
+                                        }
+
+                                        return buttons;
+                                    }
+                                    return '';
+                                }
+                            }
+                        ])
+                    }
+                };
+            }
+
+            handleRouteParams(action) {
+                if (action) return;
+
+                if (this.$.grid) {
+                    this.$.grid.deferAutoresize();
+
+                    if (this.route.query.reload == 'yes') {
+                        this.$.grid.load();    
+                    } else {
+                        this.$.grid.deferAutoload();
+                    }
+                    
+                }
+            }
+
+            handleResizing(width, height) {
+                this.$.grid && this.$.grid.resize();
+            }
+
+            __onSubmitTap(e) {
+                this.confirm('Confirm', 'Are you sure want to submit?').then(y => {
+                    if (y) {
+                        this.$.ajax.POST('/advance/' + e.data.id_adv + '/refund-submit').then(() => {
+                            this.$.grid.load();
+                        });
+                    }   
+                });
+            }
+
+            __onRefundTap(e) {
+                this.set('route.path', '/refund/refund/view/' + e.data.id_adv);
+            }
+
+        }
+
+        customElements.define(RefundList.is, RefundList);
+    </script>
+</dom-module>

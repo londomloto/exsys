@@ -1,0 +1,59 @@
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-pages/kct-pages.html">
+<link rel="import" href="refund-list.html">
+<link rel="import" href="refund-view.html">
+
+<dom-module id="refund-page">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: var(--refund-page-height, 100%);
+                background-color: var(--page-background-color);
+            }
+
+            #pages {
+                display: block;
+                height: 100%;
+            }
+        </style>
+
+        <kct-pages id="pages" attr-for-selected="name" selected="{{ page }}">
+            <refund-list name="list" route="{{ route }}" state="[[ state ]]"></refund-list>
+            <refund-view name="view" route="{{ route }}" state="[[ state ]]"></refund-view>
+        </kct-pages>
+
+    </template>
+    <script>
+        class RefundPage extends KctView {
+
+            static get is() {
+                return 'refund-page';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Advance Return', notify: true },
+                    page: { type: String }
+                };
+            }
+
+            handleResizing(width, height) {
+                this.updateStyles({
+                    '--refund-page-height': height + 'px'
+                });
+
+                let pageItem = this.$.pages.selectedItem;
+
+                if (pageItem) {
+                    pageItem.handleResizing(width, height);
+                }
+            }
+
+            handleRouteParams(action) {
+                this.set('page', action ? 'view' : 'list');
+            }
+        }
+
+        customElements.define(RefundPage.is, RefundPage);
+    </script>
+</dom-module>

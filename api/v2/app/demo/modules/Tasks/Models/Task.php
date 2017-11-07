@@ -48,6 +48,7 @@ class Task extends \Micro\Model {
             case 'advance':
             case 'advance-receive':
             case 'advance-finance':
+            case 'advance-refund':
                 $advance = $this->getAdvance();
 
                 if ($advance) {
@@ -64,6 +65,8 @@ class Task extends \Micro\Model {
                         case 'advance-receive':
                             $data['t_verb'] = 'Advance document receipment request';
                             break;
+                        case 'advance-refund':
+                            $data['t_verb'] = 'Advance return approval request';
                     }
                     
                     $data['t_sender'] = $advance['user_fullname'];

@@ -76,7 +76,7 @@
         <kct-vbox>
             <page-header-block title="EDITOR" description="Expense Document" icon="description">
                 <paper-button hidden$="[[ __expenseIsPhantom ]]"  disabled$="[[ __expenseInvalid ]]" class="btn-primary" on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Update</paper-button>
-                <paper-button hidden$="[[ __expenseIsEmpty ]]"  disabled$="[[ __expenseInvalid ]]" class="btn-cyan" on-tap="__onSendTap"><iron-icon icon="done-all"></iron-icon>&nbsp;Submit</paper-button>
+                <paper-button hidden$="[[ __expenseIsEmpty ]]"  disabled$="[[ __expenseInvalid ]]" class="btn-cyan" on-tap="__onSendTap"><iron-icon icon="send"></iron-icon>&nbsp;Submit</paper-button>
             </page-header-block>
 
             <div class="flex scroll-y padding">
@@ -832,7 +832,8 @@
                 function loadAdvance() {
                     return this.$.ajax.GET('/advance', {
                         params: { 
-                            status_code: 'fa-approved' 
+                            status_code: ['IN', ['fa-approved', 'paid']],
+                            is_open: 1
                         }
                     }).then(res => {
                         let advance = [{ id_adv: '0', subject_adv: 'None' }];
@@ -1072,6 +1073,7 @@
                 this.confirm('Confirm', `Are you sure you want to submit ${record.exp_no} ?`).then(b => {
                     if (b) {
                         this.$.ajax.POST('/expense/' + record.id_exp + '/submit').then(() => {
+                            this.__dirty = true;
                             this.__onBackTap();
                         });
                     }

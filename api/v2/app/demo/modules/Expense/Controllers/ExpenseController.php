@@ -273,6 +273,22 @@ class ExpenseController extends \Micro\Controller {
             $expense->status = $status;
             $expense->save();
 
+            if ($expense->advance) {
+                $summary = $expense->getSummary();
+                
+                $outstanding = array_filter($summary['remains'], function($elem){
+                    return $elem['remains_value'] > 0;
+                });
+
+                if (count($outstanding)) {
+                    $expense->advance->status = Status::val('outstanding');
+                } else {
+                    $expense->advance->status = Status::val('closed');
+                }
+
+                $expense->advance->save();
+            }
+
         }
 
         return array(

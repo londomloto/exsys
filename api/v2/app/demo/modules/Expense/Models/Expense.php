@@ -270,6 +270,12 @@ class Expense extends \Micro\Model {
 
                 $task->save();
             }
+
+            if($this->advance) {
+                $this->advance->is_open = 0;
+                $this->advance->save();
+            }
+
         }
     }
 
@@ -552,7 +558,7 @@ class Expense extends \Micro\Model {
                     'currency_offset_id' => $item['currency_offset_id'],
                     'currency_offset_code' => $row->currencyOffset ? $row->currencyOffset->currency_code : '',
                     'expense_value' => 0,
-                    'expense_label' => 'Expense total in '.$code.' ('.$item['currency_name'].')'
+                    'expense_label' => 'Expense in '.$code.' ('.$item['currency_name'].')'
                 );
 
                 //$replica[$expense[$code]['currency_offset_code']] = $expense[$code];
@@ -610,7 +616,7 @@ class Expense extends \Micro\Model {
                     'currency_code' => $sum['currency_code'],
                     'currency_rate' => $sum['currency_rate'],
                     'expense_value' => 0,
-                    'expense_label' => 'Summary total in '.$code.' ('.$sum['currency_name'].')'
+                    'expense_label' => 'Expense total in '.$code.' ('.$sum['currency_name'].')'
                 );
 
                 if (isset($inverse[$code])) {

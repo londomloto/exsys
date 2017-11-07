@@ -19,7 +19,7 @@
         <kct-ajax id="ajax"></kct-ajax>
 
         <kct-vbox>
-            <page-header-block icon="history" description="Advance History">
+            <page-header-block icon="event" description="Advance History">
                 
             </page-header-block>
 
@@ -101,12 +101,6 @@
                         <h3 class="block-title">Advance Summary</h3>
                         <div class="table-responsive">
                             <table class="table bordered">
-                                <thead>
-                                    <tr>
-                                        <th>Description</th>
-                                        <th width="120" class="text-right">Amounts</th>
-                                    </tr>
-                                </thead>
                                 <tbody>
                                     <template is="dom-repeat" items="[[ record.summary ]]">
                                         <tr>

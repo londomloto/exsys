@@ -1,0 +1,459 @@
+<link rel="import" href="../../../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../../bower_components/vaadin-material-theme/vaadin-date-picker.html">
+<link rel="import" href="../../../bower_components/vaadin-date-picker/vaadin-date-picker.html">
+<link rel="import" href="../../../bower_components/vaadin-combo-box/vaadin-combo-box.html">
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../elements/kct-form/kct-form-validator.html">
+<link rel="import" href="../../elements/kct-file/kct-file-input.html">
+<link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
+<link rel="import" href="../../helpers/node-helper.html">
+<link rel="import" href="../../helpers/date-helper.html">
+
+<dom-module id="refund-view">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+            [hidden] {
+                display: none;
+            }
+        </style>
+        
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-vbox>
+            <page-header-block icon="reply" description="Advance Return">
+                <paper-button on-tap="__onSendTap" hidden$="[[ ! __approvable ]]" class="btn-cyan"><iron-icon  icon="send"></iron-icon>&nbsp;Submit</paper-button>
+            </page-header-block>
+            <div class="flex scroll-y padding">
+                
+                <paper-card class="block">
+                    <div class="card-content">
+                        <h3 class="block-title">Advance Detail ([[ record.advance.adv_no ]])</h3>
+                        <kct-column columns="3" gutter="1.5rem">
+                            <div>
+                                <div class="display-field">
+                                    <label>Subject: </label>
+                                    <div>[[ record.advance.subject_adv ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Type: </label>
+                                    <div>[[ record.advance.type_name ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Purpose: </label>
+                                    <div>[[ record.advance.purpose_name ]]</div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="display-field">
+                                    <label>Proposed By: </label>
+                                    <div>[[ record.advance.user_fullname ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Start Date: </label>
+                                    <div>[[ record.advance.date_start_short ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>End Date: </label>
+                                    <div>[[ record.advance.date_end_short ]]</div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="display-field">
+                                    <label>Advance Status: </label>
+                                    <div>[[ record.advance.status_name ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Return Status: </label>
+                                    <div>[[ record.advance.refund_status_name ]]</div>
+                                </div>
+                            </div>
+                        </kct-column>
+
+                        <h3 class="block-title m-t-lg">Advance Summary</h3>
+                        <div class="table-responsive">
+                            <table class="table bordered">
+                                <tbody>
+                                    <template is="dom-repeat" items="[[ record.advance_summary ]]">
+                                        <tr>
+                                            <td>[[ item.summary_label ]]</td>
+                                            <td class="text-right">[[ item.summary_value_formatted ]]</td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+                </paper-card>
+
+                <paper-card class="block">
+                    <div class="card-content">
+                        <h3 class="block-title">Expense Detail ([[ record.expense.exp_no ]])</h3>
+                        <kct-column columns="3" gutter="1.5rem">
+                            <div>
+                                <div class="display-field">
+                                    <label>Subject: </label>
+                                    <div>[[ record.expense.subject_exp ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Type: </label>
+                                    <div>[[ record.expense.type_name ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Purpose: </label>
+                                    <div>[[ record.expense.purpose_name ]]</div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="display-field">
+                                    <label>Proposed By: </label>
+                                    <div>[[ record.expense.user_fullname ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Start Date: </label>
+                                    <div>[[ record.expense.date_start_short ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>End Date: </label>
+                                    <div>[[ record.expense.date_end_short ]]</div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="display-field">
+                                    <label>Expense Status: </label>
+                                    <div>[[ record.expense.status_name ]]</div>
+                                </div>
+                            </div>
+                        </kct-column>
+
+                        <h3 class="block-title m-t-lg">Expense Summary</h3>
+                        <div class="table-responsive">
+                            <table class="table bordered">
+                                <tbody>
+                                    <template is="dom-repeat" items="[[ record.expense_summary.expense ]]">
+                                        <tr>
+                                            <td>[[ item.expense_label ]]</td>
+                                            <td class="text-right">[[ item.expense_value_formatted ]]</td>
+                                        </tr>
+                                    </template>
+                                    <template is="dom-repeat" items="[[ record.expense_summary.remains ]]">
+                                        <tr>
+                                            <td>[[ item.remains_label ]]</td>
+                                            <td class="text-right">[[ item.remains_value_formatted ]]</td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+                </paper-card>
+
+                <paper-card class="block">
+                    <div class="card-content">
+                        <h3 class="block-title">Advance Return</h3>
+                        <div class="m-b">
+                            <paper-button hidden$="[[ !__editable ]]" on-tap="__onAddItemTap" class="btn-sm btn-cyan"><iron-icon icon="add"></iron-icon>&nbsp;Add Item</paper-button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table striped">
+                                <thead>
+                                    <tr>
+                                        <th width="40" class="text-center">No.</th>
+                                        <th width="40" class="text-center">File</th>
+                                        <th width="120">Return Date</th>
+                                        <th>Remarks</th>
+                                        <th width="120">Currency</th>
+                                        <th width="120" class="text-right">Amounts</th>
+                                        <td width="150" hidden$="[[ !__editable ]]"></td>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template is="dom-repeat" items="[[ refundItems ]]">
+                                        <tr>
+                                            <td class="text-center">[[ __computeNo(index) ]]</td>
+                                            <td class="text-center action">
+                                                <paper-icon-button on-tap="__onItemDownloadTap" icon="file-download" title="Download attachment"></paper-icon-button>
+                                            </td>
+                                            <td>[[ item.date_formatted ]]</td>
+                                            <td>[[ item.remarks ]]</td>
+                                            <td>[[ item.currency_code ]]</td>
+                                            <td class="text-right">[[ item.amounts_formatted ]]</td>
+                                            <td class="text-right" hidden$="[[ !__editable ]]">
+                                                <paper-button on-tap="__onItemEditTap" class="btn-xs btn-amber">Edit</paper-button>
+                                                <paper-button on-tap="__onItemDeleteTap" class="btn-xs btn-danger">Delete</paper-button>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </paper-card>
+
+                <paper-card class="block">
+                    <div class="card-content">
+                        <h3 class="block-title">Return History</h3>
+                        <div class="table-responsive">
+                            <table class="table striped">
+                                <thead>
+                                    <th width="40" class="text-center">No.</th>
+                                    <th width="120">Date</th>
+                                    <th>History</th>
+                                    <th>User</th>
+                                    <th>Notes</th>
+                                </thead>
+                                <tbody>
+                                    <template is="dom-repeat" items="[[ record.refund_history ]]">
+                                        <tr>
+                                            <td class="text-center">[[ __computeNo(index) ]]</td>
+                                            <td>[[ item.date_short ]]</td>
+                                            <td>[[ item.status_name ]]</td>
+                                            <td>[[ item.user_act_name ]]</td>
+                                            <td>[[ item.notes ]]</td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+
+                    </div>
+                </paper-card>
+
+            </div>
+        </kct-vbox>
+
+        <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to list" on-tap="__onBackTap" hidden$="[[ dialogMode ]]"></paper-fab>
+        </div>
+
+        <kct-dialog id="editor" title="Advance Return" width="400" height="100%" on-ready="__onEditorReady" scrollable>
+            <template preserve-content>
+                <style include="theme-helper"></style>
+                <div slot="dialog-body">
+                    <kct-form-validator id="validator" auto-validate>
+                        <vaadin-date-picker label="Return Date" value="{{ refundRecord.date }}"></vaadin-date-picker>
+                        <vaadin-combo-box 
+                            label="Currency" 
+                            value="{{ refundRecord.currency_id }}"
+                            items="[[ currencies ]]" 
+                            item-label-path="currency_display" 
+                            item-value-path="currency_id" 
+                            required 
+                            auto-validate 
+                            error-message="Currency is required"></vaadin-combo-box>
+                        <paper-input label="Amounts" value="{{ refundRecord.amounts }}" allowed-pattern="[0-9.]" required auto-validate error-message="Amounts is required"></paper-input>
+                        <paper-input label="Remarks" value="{{ refundRecord.remarks }}"></paper-input>
+                        <kct-file-input label="Attachment" value="{{ refundRecord.attachment }}" file="{{ userfile }}"></kct-file-input>
+                    </kct-form-validator>
+                    
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSaveTap">Save</paper-button>
+                    <paper-button on-tap="__onEditorCloseTap">Close</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class RefundView extends KctView {
+
+            static get is() {
+                return 'refund-view';
+            }
+
+            static get properties() {
+                return {
+                    title: { type: String, value: 'Advance Return', notify: true },
+                    record: { type: Object },
+                    refundItems: { type: Array },
+                    refundRecord: { type: Object },
+                    currencies: { type: Array }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__computeApprovable(record.advance.refund_status_code, refundItems.*)',
+                    '__computeEditable(record.advance.refund_status_code)'
+                ];
+            }
+
+            constructor() {
+                super();
+                this.__dirty = false;
+                this.__approvable = false;
+                this.__editable = false;
+            }
+
+            handleRouteParams(action, id) {
+                if (action != 'view') return;
+
+                this.set('refundItems', []);
+                this.__dirty = false;
+
+                this.$.ajax.GET('/advance/' + id + '/view-refund').then(res => {
+                    this.set('record', res.data);
+                    this.__loadItems();
+                });
+            }
+
+            __computeEditable(code) {
+                this.set('__editable', (code == 'draft' || code == 'change-request'));
+            }
+
+            __computeApprovable(code) {
+                let approvable = false;
+
+                if ((code == 'draft' || code == 'change-request') && this.refundItems.length) {
+                    approvable = true;
+                }
+                this.set('__approvable', approvable);
+            }
+
+            __computeNo(index) {
+                return index + 1;
+            }
+
+            __loadItems() {
+                this.set('refundItems', []);
+
+                this.$.ajax.GET('/advance/refund', {
+                    params: {
+                        id_adv: this.record.advance.id_adv
+                    }
+                }).then(res => {
+                    this.set('refundItems', res.data);
+                });
+            }
+
+            __loadReferences() {
+                return Promise.all([
+                    loadCurrencies.bind(this)()
+                ]);
+
+                function loadCurrencies() {
+                    this.$.ajax.GET('/currencies', { params: { currency_acceptable: 1 } }).then(res => {
+                        this.set('currencies', res.data);
+                    });
+                }
+            }
+
+            __onAddItemTap() {
+                this.mask('Opening...');
+
+                this.__loadReferences().then(() => {
+                    this.unmask();
+
+                    this.set('refundRecord', {
+                        date: DateHelper.today(),
+                        attachment: ''
+                    });
+
+                    this.$.editor.open();
+                    this.$.validator.validate();
+                });
+                
+            }
+
+            __onItemEditTap(e) {
+                this.mask('Opening...');
+
+                this.__loadReferences().then(() => {
+                    this.unmask();
+
+                    this.set('refundRecord', Object.assign({}, e.model.item));
+                    this.$.editor.open();
+                    this.$.validator.validate();
+                });
+            }
+
+            __onItemDeleteTap(e) {
+                this.confirm('Confirm', 'Are you sure want to delete this item?').then(y => {
+                    if (y) {
+                        this.$.ajax.DELETE('/advance/refund/' + e.model.item.refund_id).then(() => {
+                            this.__dirty = true;
+                            this.__loadItems();
+                        });
+                    }
+                });
+            }
+
+            __onItemDownloadTap(e) {
+                this.$.ajax.DOWNLOAD('/advance/refund/' + e.model.item.refund_id + '/download');
+            }
+
+            __onEditorSaveTap() {
+                this.$.editor.close();
+
+                let data = this.refundRecord;
+                data.id_adv = this.record.advance.id_adv;
+
+                if (data.refund_id) {
+                    this.$.ajax.PUT('/advance/refund/' + data.refund_id, data).then(done.bind(this));
+                } else {
+                    this.$.ajax.POST('/advance/refund', data).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        let id = res.data.refund_id;
+                        this.__dirty = true;
+
+                        if (this.userfile) {
+                            this.$.ajax.UPLOAD('/advance/refund/' + id + '/upload', {
+                                files: [
+                                    { name: 'userfile', file: this.userfile }
+                                ]
+                            }).then(() => {
+                                this.__loadItems();    
+                            })
+                        } else {
+                            this.__loadItems();    
+                        }
+                    }
+                }
+            }
+
+            __onEditorCloseTap() {
+                this.$.editor.close();
+            }
+
+            __onEditorReady(e) {
+                e.target.shadowRoot.querySelectorAll('vaadin-date-picker').forEach(picker => {
+                    NodeHelper.formatDatePicker(picker);
+                });
+            }
+
+            __onSendTap() {
+                this.confirm('Confirm', 'Are you sure want to submit?').then(y => {
+                    if (y) {
+                        this.$.ajax.POST('/advance/' + this.record.advance.id_adv + '/refund-submit').then(() => {
+                            this.__dirty = true;
+                            this.__onBackTap();
+                        });
+                    }   
+                });
+            }
+
+            __onBackTap() {
+                let path = this.__dirty ? '/refund?reload=yes' : '/refund';
+                this.set('route.path', path);
+            }
+        }
+
+        customElements.define(RefundView.is, RefundView);
+    </script>
+</dom-module>

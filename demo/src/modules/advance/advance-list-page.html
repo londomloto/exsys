@@ -78,19 +78,18 @@
                             { 
                                 text: 'Action',
                                 type: 'action',
-                                width: 300,
                                 renderer: (e) => {
                                     if (e.data) {
-                                        let status = e.data.status;
+                                        let status = e.data.status_code;
                                         let buttons = `<paper-button on-tap="__onViewTap" class="btn-muted btn-icon" title="View"><iron-icon icon="search"></iron-icon></paper-button>`;
 
-                                        if (status == 1 || status == 10) {
+                                        if (status == 'draft' || status == 'change-request') {
                                             buttons += `
                                                 <paper-button on-tap="__onEditTap" class="btn-amber btn-icon" title="Edit"><iron-icon icon="image:edit"></iron-icon></paper-button>
                                                 <paper-button on-tap="__onDeleteTap" class="btn-danger btn-icon" title="Delete"><iron-icon icon="clear"></iron-icon></paper-button>
                                             `;
                                             if (e.data.has_items) {
-                                                buttons += `<paper-button on-tap="__onSubmitTap" class="btn-cyan btn-icon" title="Submit"><iron-icon icon="done"></iron-icon></paper-button>`;
+                                                buttons += `<paper-button on-tap="__onSubmitTap" class="btn-cyan btn-icon" title="Submit"><iron-icon icon="send"></iron-icon></paper-button>`;
                                             }
                                         }
                                         return buttons;

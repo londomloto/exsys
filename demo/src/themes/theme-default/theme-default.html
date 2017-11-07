@@ -504,13 +504,20 @@
             }
             .display-field > label {
                 font-weight: 400;
-                width: 120px;
                 color: var(--app-primary);
             }
             .display-field > div {
                 text-align: right;
                 @apply --layout-flex;
-            } 
+            }
+            .display-field .badge {
+                background-color: #999;
+                color: #fff;
+                font-size: 11px;
+                text-transform: uppercase;
+                padding: 3px 10px;
+                border-radius: 2px;
+            }
 
             /** boxes */
             .box,
@@ -719,6 +726,16 @@
             .table tr.group-row td iron-icon {
                 position: relative;
                 top: -1px;
+            }
+            .table th.action,
+            .table td.action {
+                padding: 4px 0 0 0;
+            }
+            .table th.action paper-icon-button,
+            .table td.action paper-icon-button {
+                padding: 4px;
+                width: 24px;
+                height: 24px;
             }
 
         </style>

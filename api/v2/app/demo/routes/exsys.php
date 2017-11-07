@@ -5,7 +5,9 @@ Router::group(array(
     'handler' => 'App\Advance\Controllers\AdvanceController',
     'middleware' => 'auth'
 ))
+->get('/find-refund', 'findRefund')
 ->get('/{id}/view', 'viewById')
+->get('/{id}/view-refund', 'viewRefundById')
 ->post('/{id}/submit', 'submitById')
 ->post('/{id}/upload', 'uploadById')
 ->post('/{id}/reject', 'rejectById')
@@ -14,7 +16,19 @@ Router::group(array(
 ->post('/{id}/fa-receive', 'faReceiveById')
 ->post('/{id}/fa-approve', 'faApproveById')
 ->post('/{id}/fa-reject', 'faRejectById')
-->post('/{id}/fa-returned', 'faReturnedById');
+->post('/{id}/fa-returned', 'faReturnedById')
+->post('/{id}/refund-submit', 'refundSubmitById')
+->post('/{id}/refund-approve', 'refundApproveById')
+->post('/{id}/refund-returned', 'refundReturnedById');
+
+Router::group(array(
+    'prefix' => '/advance/refund',
+    'handler' => 'App\Advance\Controllers\RefundController',
+    'middleware' => 'auth'
+))
+->post('/{id}/upload', 'uploadById')
+->post('/{id}/download', 'downloadById');
+
 
 Router::group(array(
     'prefix' => '/expense',
@@ -49,3 +63,11 @@ Router::group(array(
 ->post('/{id}/returned', 'returnedById')
 ->post('/{id}/finish-ticket', 'finishTicketById')
 ->post('/{id}/reject-ticket', 'rejectTicketById');
+
+Router::group(array(
+    'prefix' => '/trips/items',
+    'handler' => 'App\Trips\Controllers\ItemsController',
+    'middleware' => 'auth'
+))
+->post('/{id}/upload', 'uploadById')
+->post('/{id}/download', 'downloadById');
