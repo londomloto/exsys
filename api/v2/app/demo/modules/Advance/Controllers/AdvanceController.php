@@ -452,8 +452,78 @@ class AdvanceController extends \Micro\Controller {
         );
     }
 
+    public function faRejectByIdAction($id) {
+        $advance = Advance::get($id)->data;
+        $post = $this->request->getJson();
+        $user = $this->auth->user();
+
+        if ($advance) {
+            $notes = isset($post['notes']) ? $post['notes'] : '-';
+            $status = Status::val('reject');
+
+            // delete tasks
+            \App\Tasks\Models\Task::find(array(
+                't_type = :type: AND t_link = :link:',
+                'bind' => array(
+                    'type' => 'advance-finance',
+                    'link' => $advance->id_adv
+                )
+            ))->delete();
+
+            // create history
+            $history = new History();
+            $history->category = 'advance';
+            $history->status_id = $status;
+            $history->id_adv = $advance->id_adv;
+            $history->date = date('Y-m-d H:i:s');
+            $history->user_act = $user['su_id'];
+            $history->notes = $notes;
+            $history->save();
+
+            // update advance
+            $advance->status = $status;
+            $advance->is_open = 0;
+            $advance->save();
+        }
+
+        return array(
+            'success' => TRUE
+        );
+    }
+
     public function faReturnedByIdAction($id) {
         $advance = Advance::get($id)->data;
+        $post = $this->request->getJson();
+        $user = $this->auth->user();
+
+        if ($advance) {
+            $notes = isset($post['notes']) ? $post['notes'] : '-';
+            $status = Status::val('change-request');
+
+            // delete tasks
+            \App\Tasks\Models\Task::find(array(
+                't_type = :type: AND t_link = :link:',
+                'bind' => array(
+                    'type' => 'advance-finance',
+                    'link' => $advance->id_adv
+                )
+            ))->delete();
+            
+            // create history
+            $history = new History();
+            $history->category = 'advance';
+            $history->status_id = $status;
+            $history->id_adv = $advance->id_adv;
+            $history->date = date('Y-m-d H:i:s');
+            $history->user_act = $user['su_id'];
+            $history->notes = $notes;
+            $history->save();
+            
+            // update advance
+            $advance->status = $status;
+            $advance->is_open = 0;
+            $advance->save();
+        }
 
         return array(
             'success' => TRUE
