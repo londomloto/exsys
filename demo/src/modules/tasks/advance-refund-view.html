@@ -193,7 +193,7 @@
                                         <tr>
                                             <td class="text-center">[[ __computeNo(index) ]]</td>
                                             <td class="text-center action">
-                                                <paper-icon-button on-tap="__onItemDownloadTap" icon="file-download" title="Download attachment"></paper-icon-button>
+                                                <paper-icon-button hidden$="[[ !item.has_attachment ]]" on-tap="__onItemDownloadTap" icon="file-download" title="Download attachment"></paper-icon-button>
                                             </td>
                                             <td>[[ item.date_formatted ]]</td>
                                             <td>[[ item.remarks ]]</td>
@@ -439,6 +439,10 @@
                         });
                     }
                 });
+            }
+
+            __onItemDownloadTap(e) {
+                this.$.ajax.DOWNLOAD('/advance/refund/' + e.model.item.refund_id + '/download');
             }
 
             __onEditorSaveTap() {

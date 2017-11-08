@@ -160,20 +160,30 @@ class AdvanceController extends \Micro\Controller {
         if ($query->data) {
             if ($this->request->hasFiles()) {
                 foreach($this->request->getFiles() as $file) {
-                    // $type = $file->getExtension();
-                    $name = $query->data->attachment;
+                    $type = $file->getExtension();
+                    $name = 'advance_'.$query->data->id_adv.'.'.$type;
                     $path = APPPATH.'public/resources/attachments/'.$name;
 
                     if (@$file->moveTo($path)) {
-                        // $query->data->save(array(
-                        //     'attachment' => $name
-                        // ));
+                        $query->data->save(array(
+                            'attachment' => $name
+                        ));
                     }
                 }
             }
         }
 
         return $query;
+    }
+
+    public function downloadByIdAction($id) {
+        $advance = Advance::get($id)->data;
+        if ($advance && $advance->hasAttachment()) {
+            $this->file->download($advance->getAttachment());
+        } else {
+            throw new \Phalcon\Exception("Attachemnt doesn't exists", 404);
+            
+        }
     }
 
     public function submitByIdAction($id) {

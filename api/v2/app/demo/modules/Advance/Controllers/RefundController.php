@@ -64,6 +64,13 @@ class RefundController extends \Micro\Controller {
     }
 
     public function downloadByIdAction($id) {
-        
+        $item = Refund::get($id)->data;
+
+        if ($item && $item->hasAttachment()) {
+            $attachment = $item->getAttachment();
+            $this->file->download($attachment);
+        } else {
+            throw new \Phalcon\Exception("Attachment doesn't exists", 404);
+        }
     }
 }

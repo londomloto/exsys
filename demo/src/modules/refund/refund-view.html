@@ -183,7 +183,7 @@
                                         <tr>
                                             <td class="text-center">[[ __computeNo(index) ]]</td>
                                             <td class="text-center action">
-                                                <paper-icon-button on-tap="__onItemDownloadTap" icon="file-download" title="Download attachment"></paper-icon-button>
+                                                <paper-icon-button hidden$="[[ !item.has_attachment ]]" on-tap="__onItemDownloadTap" icon="file-download" title="Download attachment"></paper-icon-button>
                                             </td>
                                             <td>[[ item.date_formatted ]]</td>
                                             <td>[[ item.remarks ]]</td>
@@ -253,7 +253,7 @@
                             required 
                             auto-validate 
                             error-message="Currency is required"></vaadin-combo-box>
-                        <paper-input label="Amounts" value="{{ refundRecord.amounts }}" allowed-pattern="[0-9.]" required auto-validate error-message="Amounts is required"></paper-input>
+                        <paper-input label="Amounts" value="{{ refundRecord.amounts }}" allowed-pattern="[0-9.-]" required auto-validate error-message="Amounts is required"></paper-input>
                         <paper-input label="Remarks" value="{{ refundRecord.remarks }}"></paper-input>
                         <kct-file-input label="Attachment" value="{{ refundRecord.attachment }}" file="{{ userfile }}"></kct-file-input>
                     </kct-form-validator>

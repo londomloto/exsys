@@ -10,6 +10,7 @@ Router::group(array(
 ->get('/{id}/view-refund', 'viewRefundById')
 ->post('/{id}/submit', 'submitById')
 ->post('/{id}/upload', 'uploadById')
+->post('/{id}/download', 'downloadById')
 ->post('/{id}/reject', 'rejectById')
 ->post('/{id}/approve', 'approveById')
 ->post('/{id}/returned', 'returnedById')

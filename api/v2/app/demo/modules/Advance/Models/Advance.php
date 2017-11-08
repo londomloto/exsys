@@ -115,6 +115,20 @@ class Advance extends \Micro\Model {
         $this->purpose = $this->purpose == '' ? NULL : $this->purpose;
     }
 
+    public function hasAttachment() {
+        $attachment = $this->getAttachment();
+        if ( ! empty($attachment)) {
+            return file_exists($attachment);
+        }
+    }
+
+    public function getAttachment() {
+        if ( ! empty($this->attachment)) {
+            return APPPATH.'public/resources/attachments/'.$this->attachment;
+        }
+        return '';
+    }
+
     public function toArray($columns = NULL) {
         $data = parent::toArray($columns);
 
@@ -126,6 +140,7 @@ class Advance extends \Micro\Model {
         $data['date_end_short'] = date('d/m/Y', strtotime($this->date_end));
         $data['has_items'] = $this->items->count() > 0 ? 1 : 0;
         $data['has_refund'] = $this->refundItems->count() > 0;
+        $data['has_attachment'] = $this->hasAttachment();
         $data['amounts_formatted'] = number_format($data['amounts'], 2, ',', '.');
 
         if ($this->lastStatus) {

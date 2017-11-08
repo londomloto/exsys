@@ -98,7 +98,7 @@
                                         <tr>
                                             <td class="text-center">[[ __computeNo(index) ]]</td>
                                             <td class="text-center action">
-                                                <paper-icon-button on-tap="__onItemDownloadTap" icon="file-download" title="Download attachment"></paper-icon-button>
+                                                <paper-icon-button hidden$="[[ !item.has_attachment ]]" on-tap="__onItemDownloadTap" icon="file-download" title="Download attachment"></paper-icon-button>
                                             </td>
                                             <td>[[ item.departure_date_short ]]</td>
                                             <td>[[ item.origin ]]</td>
@@ -204,6 +204,9 @@
             }
             __onTicketEditorCloseTap() {
                 this.$['ticket-editor'].close();
+            }
+            __onItemDownloadTap(e) {
+                this.$.ajax.DOWNLOAD('/trips/items/' + e.model.item.trip_item_id + '/download');
             }
             __onAdvanceTap(e) {
                 e.preventDefault();

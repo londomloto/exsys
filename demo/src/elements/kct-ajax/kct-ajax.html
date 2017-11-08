@@ -4,6 +4,8 @@
 <link rel="import" href="../../mixins/storage.html">
 <link rel="import" href="../../mixins/location.html">
 <link rel="import" href="../kct-config/kct-config.html">
+<link rel="import" href="../kct-router/kct-router.html">
+<link rel="import" href="../kct-mask/spinner-mask.html">
 
 <dom-module id="kct-ajax">
     <script>
@@ -171,118 +173,256 @@
                 let d = this._defer();
 
                 this.__resolveUrl(path).then(url => {
-                    this._import(
-                        '../kct-mask/spinner-mask.html',
-                        () => {
-                            // create mask indicator
-                            let mask = document.createElement('spinner-mask');
-                            document.body.appendChild(mask);
-                            mask.text = 'Uploading...';
-                            mask.open();
+                    // create mask indicator
+                    let mask = document.createElement('spinner-mask');
+                    document.body.appendChild(mask);
+                    mask.text = 'Uploading...';
+                    mask.open();
 
-                            // create ajax
-                            let xhr = new XMLHttpRequest();
-                            xhr.upload.addEventListener('progress', (e) => {
-                                if (e.lengthComputable) {
-                                    let pct = parseInt((e.loaded / e.total) * 100, 10);
-                                    mask.text = 'Uploading...' + pct + '%';
-                                }
-                            });
+                    // create ajax
+                    let xhr = new XMLHttpRequest();
+                    xhr.upload.addEventListener('progress', (e) => {
+                        if (e.lengthComputable) {
+                            let pct = parseInt((e.loaded / e.total) * 100, 10);
+                            mask.text = 'Uploading...' + pct + '%';
+                        }
+                    });
 
-                            xhr.onreadystatechange = () => {
-                                if (xhr.readyState === 4) {
-                                    let status = xhr.status,
-                                        success = (status >= 200 && status <= 300) || status == 304 || status == 1223 || ! status;
+                    xhr.onreadystatechange = () => {
+                        if (xhr.readyState === 4) {
+                            let status = xhr.status,
+                                success = (status >= 200 && status <= 300) || status == 304 || status == 1223 || ! status;
 
-                                    mask.close();
+                            mask.close();
 
-                                    if (success) {
-                                        try {
-                                            let res = JSON.parse((xhr.responseText || '').replace(/^\{\}&&/,''));
+                            if (success) {
+                                try {
+                                    let res = JSON.parse((xhr.responseText || '').replace(/^\{\}&&/,''));
 
-                                            if ( ! this.novalidate) {
-                                                this.__validateResponse(res);
-                                            }
-
-                                            d.resolve(res);
-                                        } catch(e) {};
+                                    if ( ! this.novalidate) {
+                                        this.__validateResponse(res);
                                     }
-                                }
-                            };
 
-                            let fd = new FormData();
+                                    d.resolve(res);
+                                } catch(e) {};
+                            }
+                        }
+                    };
 
-                            for (let key in data) {
-                                if (key != 'files') {
-                                    fd.append(key, data[key]);
+                    let fd = new FormData();
+
+                    for (let key in data) {
+                        if (key != 'files') {
+                            let val = data[key];
+                            // request asep
+                            if (typeof val == 'object') {
+                                val = JSON.stringify(val);
+                            }
+                            fd.append(key, val);
+                        } else {
+                            for (let item of data.files) {
+                                if (item.file instanceof Blob) {
+                                    fd.append(item.name, item.file);
                                 } else {
-                                    for (let item of data.files) {
-                                        if (item.file instanceof Blob) {
-                                            fd.append(item.name, item.file);
-                                        } else {
-                                            fd.append(item.name, item.file.files[0]);    
-                                        }
-                                    }
+                                    fd.append(item.name, item.file.files[0]);    
                                 }
                             }
-
-                            xhr.open('POST', url, true);
-
-                            this.__resolveToken().then((token) => {
-                                if (token) {
-                                    xhr.setRequestHeader('Authorization','Bearer ' + token);
-                                    xhr.send(fd);
-                                }
-                            });
                         }
-                    );
+                    }
+
+                    xhr.open('POST', url, true);
+
+                    this.__resolveToken().then((token) => {
+                        if (token) {
+                            xhr.setRequestHeader('Authorization','Bearer ' + token);
+                            xhr.send(fd);
+                        }
+                    });
                 });
                 
 
                 return d.promise;
             }
 
-            DOWNLOAD(path, data = {}, options) {
-                return this.__resolveUrl(path).then(url => {
-                    let target = document.createElement('iframe');
+            DOWNLOAD(path, data, options) {
+                let def = this._defer();
+
+                Promise.all([
+                    this.__resolveUrl(path),
+                    this.__resolveToken()
+                ]).then(values => {
+                    // create mask indicator
+                    let mask = document.createElement('spinner-mask');
+                    document.body.appendChild(mask);
+
+                    mask.text = 'Downloading...';
+                    mask.open();
+
+                    options = Object.assign({
+                        method: 'POST',
+                        headers: {}
+                    }, options);
+
+                    let [url, token] = values;
+
+                    let xhr = document.createElement('iron-ajax');
                     
-                    target.id = 'post-target';
-                    target.name = 'post-target';
-                    target.style = 'display: none;';
+                    xhr.url = url;
+                    xhr.method = options.method;
+                    xhr.handleAs = 'arraybuffer';
+                    xhr.contentType = 'application/json';
 
-                    document.body.appendChild(target);
+                    if (data) {
+                        if (options.method == 'GET') {
+                            xhr.params = {};
+                            Object.keys(data).forEach(k => {
+                                let v = data[k];
+                                if (typeof v == 'object') {
+                                    v = JSON.stringify(v);
+                                }
+                                xhr.params[k] = v;
+                            });
+                        } else {
+                            xhr.body = data;
+                        }    
+                    }
 
-                    let form = document.createElement('form');
-                    form.style = 'display: none';
+                    let headers = options.headers;
 
-                    Object.keys(data).forEach(k => {
-                        let input = document.createElement('input');
-                        input.type = 'hidden';
-                        input.name = k;
+                    if (token) {
+                        headers['Authorization'] = 'Bearer ' + token;
+                    }
 
-                        let value = data[k];
+                    xhr.headers = headers;
 
-                        if (typeof value == 'object') {
-                            value = JSON.stringify(value);
+                    let req = xhr.generateRequest();
+
+                    req.completes.then(
+                        () => {
+                            const NAV = window.navigator;
+                            const URL = window.URL || window.webkitURL;
+
+                            let filename = '';
+                            let disposition = req.xhr.getResponseHeader('Content-Disposition');
+                            let response = req.response;
+                            let result = { 
+                                success: true,
+                                data: {
+                                    name: '',
+                                    type: ''
+                                }
+                            };
+
+                            if (disposition && disposition.indexOf('attachment') !== -1) {
+                                let nameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/,
+                                    matches = nameRegex.exec(disposition);
+
+                                if (matches && matches[1]) {
+                                    filename = matches[1].replace(/['"]/g, '');
+                                }
+
+                                nameRegex = null;
+                            }
+
+                            let type = req.xhr.getResponseHeader('Content-Type');
+
+                            type = type.split(/;/)[0];
+
+                            result.data.name = filename;
+                            result.data.type = type;
+
+                            let blob = typeof File === 'function' 
+                                ? new File([response], filename, { type: type }) 
+                                : new Blob([response], { type: type });
+
+                            if (typeof NAV.msSaveBlob !== 'undefined') {
+                                NAV.msSaveBlob(blob, filename);
+                                blob = null;
+                            } else {
+                                let href = URL.createObjectURL(blob);
+                                blob = null;
+
+                                // disable router
+                                KctRouter.disable();
+
+                                if (filename) {
+                                    let a = document.createElementNS('http://www.w3.org/1999/xhtml', 'a');
+
+                                    if ('download' in a) {
+                                        document.body.appendChild(a);
+                                        
+                                        a.style.display = 'none';
+                                        a.download = filename;
+                                        a.href = href;
+                                        a.click();
+                                        
+                                        document.body.removeChild(a);
+                                        
+                                    } else {
+                                        window.open(href, '_blank');
+                                    }
+                                } else {
+                                    if (type == 'application/json') {
+                                        try {
+
+                                            // convert arraybuffer to string
+                                            let buff = new Uint8Array(response);
+                                            let size = buff.length;
+                                            let text = '';
+                                            let salt = Math.pow(2, 16) - 1;
+
+                                            for (let i = 0; i < size; i+=salt) {
+                                                if (i + salt > size) {
+                                                    salt = size - i;
+                                                }
+                                                text += String.fromCharCode.apply(null, buff.subarray(i, i + salt));
+                                            }
+
+                                            if (text) {
+                                                result = JSON.parse(text);
+                                                this.__validateResponse(result);
+                                            }
+
+                                            buff = null;
+                                        } catch(ex){
+
+                                        }
+                                    } else {
+                                        window.open(href, '_blank');
+                                    }
+                                }
+                                
+                                // enable router
+                                KctRouter.enable();
+
+                                // cleanup
+                                let timer = setTimeout(() => {
+                                    clearTimeout(timer);
+                                    timer = null;
+
+                                    URL.revokeObjectURL(href);
+                                }, 100);
+                            }
+
+                            mask.close();
+
+                            def.resolve(result);
+
+                        },
+                        (err) => {
+                            this.__showError(
+                                "Download Error",
+                                "An error occurred while downloading file"
+                            );
+                            
+                            def.reject(err);
+                            mask.close();
                         }
+                    );
 
-                        input.value = value;
-                        form.appendChild(input);
-                    });
-
-                    form.target = 'post-target';
-                    form.action = url;
-                    form.method = 'POST';
-
-                    document.body.appendChild(form);
-                    form.submit();
-                    
-                    setTimeout(() => {
-                        document.body.removeChild(form);
-                        document.body.removeChild(target);
-                    }, 5000);
- 
                 });
+                
+                return def.promise;
             }
 
             __resolveUrl(path) {
@@ -395,12 +535,14 @@
 
                 if (config.data) {
                     if (config.method == 'GET') {
-                        xhr.params = config.data;
-                        if (xhr.params && xhr.params.params) {
-                            if (typeof xhr.params.params == 'object') {
-                                xhr.params.params = JSON.stringify(xhr.params.params);
+                        xhr.params = {};
+                        Object.keys(config.data).forEach(k => {
+                            let v = config.data[k];
+                            if (typeof v == 'object') {
+                                v = JSON.stringify(v);
                             }
-                        }
+                            xhr.params[k] = v;
+                        });
                     } else {
                         xhr.body = config.data;    
                     }
@@ -464,6 +606,12 @@
                                 ).then(() => {
                                     location.href = this.loginUrl;
                                 });
+                                break;
+                            case 404:
+                                this.__showError(
+                                    "Not Found",
+                                    message
+                                );
                                 break;
                         }
                     }

@@ -25,7 +25,16 @@
             pagination>
 
                 <template preserve-content>
-                    <style include="theme-helper"></style>
+                    <style include="theme-helper">
+                        .cell-attachment {
+                            padding: 6px 0 0 0 !important;
+                        }
+                        .cell-attachment paper-icon-button {
+                            padding: 4px;
+                            width: 24px;
+                            height: 24px;
+                        }
+                    </style>
                 </template>
 
             <paper-button class="btn-primary" slot="primary-toolbar" on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Advance Request</paper-button>
@@ -64,6 +73,19 @@
                                     return e.data ? e.data.amounts_formatted : '-';
                                 }
                             },
+                            {
+                                type: 'action',
+                                text: 'File',
+                                width: 50,
+                                align: 'center',
+                                cls: 'cell-attachment',
+                                renderer: (e) => {
+                                    if (e.data) {
+                                        return e.data.has_attachment ? `<paper-icon-button on-tap="__onDownloadTap" icon="file-download" title="Download attachment"></paper-icon-button>` : '';
+                                    }
+                                    return '';
+                                }
+                            },
                             { 
                                 text: 'Status', 
                                 dataIndex: 'status_name', 
@@ -75,6 +97,7 @@
                                     return '';
                                 }
                             },
+
                             { 
                                 text: 'Action',
                                 type: 'action',
@@ -147,6 +170,9 @@
                         });
                     }
                 });   
+            }
+            __onDownloadTap(e) {
+                this.$.ajax.DOWNLOAD('/advance/' + e.data.id_adv + '/download');
             }
         }
         customElements.define(AdvanceListPage.is, AdvanceListPage);

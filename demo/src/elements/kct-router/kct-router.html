@@ -4,7 +4,7 @@
 
 <dom-module id="kct-router">
     <template>
-        <app-location route="{{ address }}"></app-location>
+        <app-location id="app-location" route="{{ address }}"></app-location>
         <kct-auth id="auth" config="[[ config ]]" name="[[ auth ]]"></kct-auth>
     </template>
     <script>
@@ -67,6 +67,18 @@
                 ];
             }
 
+            static disable() {
+                if (KctRouter.__instance) {
+                    KctRouter.__instance.disable();
+                }
+            }
+
+            static enable() {
+                if (KctRouter.__instance) {
+                    KctRouter.__instance.enable();
+                }
+            }
+
             constructor() {
                 super();
 
@@ -78,17 +90,34 @@
                 // dependencies resolver
                 this.__configResolver = this._defer();
                 this.__configResolver.done = false;
+
+                if ( ! KctRouter.__instance) {
+                    KctRouter.__instance = this;
+                }
             }
 
             ready() {
                 super.ready();
                 this._ensureAttribute('hidden', true);
+                this.__appLocation = this.$['app-location'];
             }
 
             go(path) {
                 this.__resolveBase().then((base) => {
                     this.set('route.path', base + path);
                 });
+            }
+
+            enable() {
+                if ( ! this.shadowRoot.querySelector('app-location')) {
+                    this.shadowRoot.appendChild(this.__appLocation);
+                }
+            }
+
+            disable() {
+                if (this.shadowRoot.querySelector('app-location')) {
+                    this.shadowRoot.removeChild(this.__appLocation);
+                }
             }
 
             __resolveConfig() {

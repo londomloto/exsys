@@ -80,4 +80,13 @@ class ItemsController extends \Micro\Controller {
         return $query;
     }
 
+    public function downloadByIdAction($id) {
+        $item = Item::get($id)->data;
+        if ($item && $item->hasAttachment()) {
+            $this->file->download($item->getAttachment());
+        } else {
+            throw new \Phalcon\Exception("Attachment doesn't exists!");
+        }
+    }
+
 }
