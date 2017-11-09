@@ -76,9 +76,17 @@ class ItemsController extends \Micro\Controller {
             $post['item_id'] = NULL;
         } else {
             if (isset($params['cnb'])) {
-                $user = $this->auth->user();
+                $user = $this->auth->user();    
                 $cost = Cost::validateGrade($post['item_id'], $user['su_id'], $post['currency_id'], $post['amounts']);
-                $post['cnb'] = $cost ? 1 : 0;
+                
+                if ($cost->action == 'ACCEPT') {
+                    $post['cnb'] = 1;
+                } else if ($cost->action == 'REJECT') {
+                    return array(
+                        'success' => FALSE,
+                        'message' => $cost->message
+                    );
+                }
             }
         }
 
@@ -138,7 +146,15 @@ class ItemsController extends \Micro\Controller {
             if (isset($params['cnb'])) {
                 $user = $this->auth->user();    
                 $cost = Cost::validateGrade($post['item_id'], $user['su_id'], $post['currency_id'], $post['amounts']);
-                $post['cnb'] = $cost ? 1 : 0;
+
+                if ($cost->action == 'ACCEPT') {
+                    $post['cnb'] = 1;
+                } else if ($cost->action == 'REJECT') {
+                    return array(
+                        'success' => FALSE,
+                        'message' => $cost->message
+                    );
+                }
             }
         }
 

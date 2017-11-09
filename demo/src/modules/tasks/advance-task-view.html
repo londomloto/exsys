@@ -65,8 +65,12 @@
                             </div>
                             <div>
                                 <div class="display-field">
-                                    <label>Current Status: </label>
+                                    <label>Status: </label>
                                     <div>[[ record.advance.status_name ]]</div>
+                                </div>
+                                <div class="display-field" hidden$="[[ !record.advance.has_attachment ]]">
+                                    <label>Attachemnt: </label>
+                                    <div><a href="javascript:void(0);" on-tap="__onDownloadTap">Download</a></div>
                                 </div>
                             </div>
                         </kct-column>
@@ -238,6 +242,9 @@
                         });
                     }
                 });
+            }
+            __onDownloadTap() {
+                this.$.ajax.DOWNLOAD('/advance/' + this.record.advance.id_adv + '/download');
             }
             __onBackTap() {
                 this.__goBack();

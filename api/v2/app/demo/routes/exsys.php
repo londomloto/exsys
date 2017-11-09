@@ -62,6 +62,7 @@ Router::group(array(
 ->get('/{id}/view', 'viewById')
 ->post('/{id}/submit', 'submitById')
 ->post('/{id}/upload', 'uploadById')
+->post('/{id}/download', 'downloadById') 
 ->post('/{id}/reject', 'rejectById')
 ->post('/{id}/approve', 'approveById')
 ->post('/{id}/returned', 'returnedById')
@@ -75,3 +76,10 @@ Router::group(array(
 ))
 ->post('/{id}/upload', 'uploadById')
 ->post('/{id}/download', 'downloadById');
+
+Router::group(array(
+    'prefix' => '/tasks',
+    'handler' => 'App\Tasks\Controllers\TasksController',
+    'middleware' => 'auth'
+))
+->get('/summary', 'summary');

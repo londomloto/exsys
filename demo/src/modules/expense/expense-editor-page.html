@@ -1188,6 +1188,8 @@
                     if (res.success) {
                         this.__dirty = true;
                         this.__loadItems();
+                    } else {
+                        this.alert('Warning', res.message);
                     }
                 }
             }

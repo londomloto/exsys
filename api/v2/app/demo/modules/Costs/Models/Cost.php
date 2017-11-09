@@ -67,23 +67,32 @@ class Cost extends \Micro\Model {
         $coff = Currency::offset();
 
         $found = Cost::findFirst(array(
-            'item_id = :item: AND grade_id = :grade: AND allow_over = 1',
+            'item_id = :item: AND grade_id = :grade:',
             'bind' => array(
                 'item' => $itemId,
                 'grade' => $user->su_grade_id
             )
         ));
 
+        $result = new \stdClass();
+        $result->action = NULL;
+        $result->message = NULL;
+
         if ($found) {
             if ($curr->currency_id != $coff->currency_id) {
                 $amounts = $amounts * $curr->currency_rate;
             }
             if ($amounts > $found->amounts) {
-                return TRUE;
+                if ($found->allow_over) {
+                    $result->action = 'ACCEPT';
+                } else {
+                    $result->action = 'REJECT';
+                    $result->message = 'Cost limit for item `'.$found->masterItem->item_name.'` has been reached (max: '.number_format($found->amounts, 2, ',', '.') .')';
+                }
             }
         }
 
-        return FALSE;
+        return $result;
     }
 
 }

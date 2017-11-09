@@ -26,4 +26,23 @@ class TasksController extends \Micro\Controller {
         return $query;
     }
 
+    public function summaryAction() {
+        $user = $this->auth->user();
+        
+        // count unread
+        $unread = Task::get()
+            ->where('t_user = :user: AND t_read = 0', array(
+                'user' => $user['su_id']
+            ))
+            ->execute();
+
+        $data = array(
+            'unread' => $unread->count()
+        );
+
+        return array(
+            'success' => TRUE,
+            'data' => $data
+        );
+    }
 }

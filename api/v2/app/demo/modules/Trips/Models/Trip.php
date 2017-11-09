@@ -82,6 +82,21 @@ class Trip extends \Micro\Model {
         $this->purpose = $this->purpose == '' ? NULL : $this->purpose;
     }
 
+    public function hasAttachment() {
+        $attachment = $this->getAttachment();
+        if ( ! empty($attachment)) {
+            return file_exists($attachment);
+        }
+        return FALSE;
+    }
+
+    public function getAttachment() {
+        if ( ! empty($this->attachment)) {
+            return APPPATH.'public/resources/attachments/'.$this->attachment;
+        }
+        return '';
+    }
+
     public function getAmounts() {
         $amounts = 0;
 
@@ -101,7 +116,7 @@ class Trip extends \Micro\Model {
         $data['date_end_short'] = date('d/m/Y', strtotime($this->date_end));
         $data['has_items'] = $this->items->count() > 0 ? 1 : 0;
         $data['has_advance'] = FALSE;
-        
+        $data['has_attachment'] = $this->hasAttachment();
 
         if ($this->lastStatus) {
             $data['status_code'] = $this->lastStatus->status_code;

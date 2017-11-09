@@ -71,7 +71,7 @@
                         value: [
                             { type: 'rownumber' },
                             { text: 'Grade', dataIndex: 'grade_code', width: 100, align: 'center' },
-                            { text: 'Description', dataIndex: 'grade_desc' },
+                            { text: 'Description', dataIndex: 'grade_desc', width: 150 },
                             {
                                 text: 'Verificator',
                                 dataIndex: 'verificator',
@@ -91,9 +91,10 @@
                                 }
                             },
                             { 
-                                text: 'Approval Limit (IDR)', 
+                                text: 'Limit (IDR)', 
                                 dataIndex: 'grade_limit', 
                                 align: 'right',
+                                width: 150,
                                 renderer: (e) => {
                                     return e.data ? (e.data.grade_limit ? e.data.grade_limit_formatted : '-')  : '-';
                                 }

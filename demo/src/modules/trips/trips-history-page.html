@@ -16,6 +16,9 @@
                 height: 100%;
                 background-color: var(--paper-grey-100);
             }
+            [hidden] {
+                display: none;
+            }
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
@@ -61,15 +64,15 @@
                             <div>
                                 <div class="display-field" hidden$="[[ !record.trip.adv_no ]]">
                                     <label>Advance: </label>
-                                    <div><a href="#" on-click="__onAdvanceTap">[[ record.trip.adv_no ]]</a></div>
-                                </div>
-                                <div class="display-field" hidden$="[[ !record.trip.adv_ref ]]">
-                                    <label>Advance Status: </label>
-                                    <div>[[ record.trip.adv_status_name ]]</div>
+                                    <div><a href="#" on-click="__onAdvanceTap">[[ record.trip.adv_no ]]</a> ([[ record.trip.adv_status_name ]])</div>
                                 </div>
                                 <div class="display-field">
-                                    <label>Trip Status: </label>
+                                    <label>Status: </label>
                                     <div>[[ record.trip.status_name ]]</div>
+                                </div>
+                                <div class="display-field" hidden$="[[ !record.trip.has_attachment ]]">
+                                    <label>Attachment: </label>
+                                    <div><a href="javascript:;" on-tap="__onDownloadTap">Download</a></div>
                                 </div>
                             </div>
                         </kct-column>
@@ -204,6 +207,9 @@
             }
             __onTicketEditorCloseTap() {
                 this.$['ticket-editor'].close();
+            }
+            __onDownloadTap() {
+                this.$.ajax.DOWNLOAD('/trips/' + this.record.trip.id_trip + '/download');
             }
             __onItemDownloadTap(e) {
                 this.$.ajax.DOWNLOAD('/trips/items/' + e.model.item.trip_item_id + '/download');

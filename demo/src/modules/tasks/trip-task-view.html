@@ -30,7 +30,7 @@
                         <div class="action-buttons text-right">
                             <paper-button on-tap="__onConfirmTap" class="btn-green">Approve</paper-button>
                             <paper-button on-tap="__onRejectTap" class="btn-red">Reject</paper-button>
-                            <paper-button on-tap="__onRequestTap" class="btn-amber">Request Change</paper-button>    
+                            <paper-button on-tap="__onRequestTap" class="btn-amber">Change Request</paper-button>    
                         </div>
                     </div>
                 </paper-card>
@@ -69,15 +69,15 @@
                             <div>
                                 <div class="display-field" hidden$="[[ !record.trip.has_advance ]]">
                                     <label>Advance: </label>
-                                    <div><a href="#" on-click="__onAdvanceTap">[[ record.trip.adv_no ]]</a></div>
-                                </div>
-                                <div class="display-field" hidden$="[[ !record.trip.adv_ref ]]">
-                                    <label>Advance Status: </label>
-                                    <div>[[ record.trip.adv_status_name ]]</div>
+                                    <div><a href="#" on-click="__onAdvanceTap">[[ record.trip.adv_no ]]</a> ([[ record.trip.adv_status_name ]])</div>
                                 </div>
                                 <div class="display-field">
-                                    <label>Trip Status: </label>
+                                    <label>Status: </label>
                                     <div>[[ record.trip.status_name ]]</div>
+                                </div>
+                                <div class="display-field" hidden$="[[ !record.trip.has_attachment ]]">
+                                    <label>Attachment: </label>
+                                    <div><a href="javascript:;" on-tap="__onDownloadTap">Download</a></div>
                                 </div>
                             </div>
                         </kct-column>
@@ -90,22 +90,22 @@
                         <div class="table-responsive">
                             <table class="table striped">
                                 <thead>
-                                    <th width="50">No.</th>
-                                    <th width="150" class="text-center">Departure Date</th>
+                                    <th width="40" class="text-center">No.</th>
+                                    <th width="120">Departure</th>
                                     <th>Origin</th>
                                     <th>Destination</th>
-                                    <th width="150" class="text-center">Transport</th>
-                                    <th width="80" class="text-center">Visa</th>
+                                    <th width="120">Transport</th>
+                                    <th width="80">Visa</th>
                                 </thead>
                                 <tbody>
                                     <template is="dom-repeat" items="[[ record.items ]]">
                                         <tr>
-                                            <td>[[ __computeNo(index) ]]</td>
-                                            <td class="text-center">[[ item.departure_date_short ]]</td>
+                                            <td class="text-center">[[ __computeNo(index) ]]</td>
+                                            <td>[[ item.departure_date_short ]]</td>
                                             <td>[[ item.origin ]]</td>
                                             <td>[[ item.destination ]]</td>
-                                            <td class="text-center">[[ item.transport_name ]]</td>
-                                            <td class="text-center">[[ __computeVisa(item.visa) ]]</td>
+                                            <td>[[ item.transport_name ]]</td>
+                                            <td>[[ __computeVisa(item.visa) ]]</td>
                                         </tr>
                                     </template>
                                 </tbody>
@@ -122,7 +122,7 @@
                         <div class="table-responsive">
                             <table  class="table striped">
                                 <thead>
-                                    <th width="50">No.</th>
+                                    <th width="40" class="text-center">No.</th>
                                     <th width="120">Date</th>
                                     <th>Status</th>
                                     <th>User</th>
@@ -131,7 +131,7 @@
                                 <tbody>
                                     <template is="dom-repeat" items="[[ record.history ]]">
                                         <tr>
-                                            <td>[[ __computeNo(index) ]]</td>
+                                            <td class="text-center">[[ __computeNo(index) ]]</td>
                                             <td>[[ item.date_short ]]</td>
                                             <td>[[ item.status_name ]]</td>
                                             <td>[[ item.user_act_name ]]</td>
@@ -233,6 +233,9 @@
             __onAdvanceTap(e) {
                 e.preventDefault();
                 this.set('route.path', '/advance/advance/view/' + this.record.trip.adv_ref);
+            }
+            __onDownloadTap() {
+                this.$.ajax.DOWNLOAD('/trips/' + this.record.trip.id_trip + '/download');
             }
             __onBackTap() {
                 this.__goBack();

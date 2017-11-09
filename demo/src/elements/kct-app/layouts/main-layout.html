@@ -15,6 +15,7 @@
 <link rel="import" href="../../../elements/kct-message/kct-confirm.html">
 <link rel="import" href="../../../elements/kct-media/kct-media.html">
 <link rel="import" href="../../../elements/kct-auth/kct-auth.html">
+<link rel="import" href="../../../elements/kct-ajax/kct-ajax.html">
 
 <link rel="import" href="../blocks/navigation-block.html">
 <link rel="import" href="base-layout.html">
@@ -133,12 +134,35 @@
                 float: left;
                 height: 42px;
                 padding: 0;
-                color: var(--paper-green-500);
             }
             .nav-spinner {
                 position: relative;
                 margin-right: 3px;
                 top: 7px;
+                color: var(--paper-green-500);
+            }
+            .nav-notif {
+                position: relative;
+                top: 2px;
+                margin: 0 10px;
+                color: var(--paper-grey-600);
+            }
+            .nav-notif .badge {
+                display: inline-block;
+                position: absolute;
+                right: 2px;
+                top: 2px;
+                background-color: var(--app-danger);
+                color: #fff;
+                width: 16px;
+                height: 16px;
+                text-align: center;
+                line-height: 16px;
+                font-size: 11px;
+                border-radius: 3px;
+            }
+            .nav-notif .badge[hidden] {
+                display: none;
             }
             .nav-profile {
                 position: relative;
@@ -193,9 +217,11 @@
             }
             .primary-toolbar.sm .nav-profile a.text,
             .primary-toolbar.sm .nav-profile a.icon { display: none; }
+            
         </style>
         
         <kct-auth id="auth" config="[[ config ]]" user="{{ user }}"></kct-auth>
+        <kct-ajax id="ajax" config="[[ config ]]"></kct-ajax>
         <kct-media size="{{ __responsive }}"></kct-media>
 
         <app-drawer-layout id="viewport" class="unresolved" fullbleed>
@@ -216,6 +242,10 @@
                         </div>
                         <div class="navbar">
                             <div class="nav-spinner"><paper-spinner-lite class="spinner" active$="[[ busy ]]"></paper-spinner-lite></div>
+                            <div class="nav-notif">
+                                <paper-icon-button on-tap="__onNotifTap" icon="social:notifications-none" title$="You have [[ todo ]] notification(s)"></paper-icon-button>
+                                <span class="badge" hidden$="[[ __computeHideNotif(todo) ]]">[[ todo ]]</span>
+                            </div>
                         </div>
                         <!-- <paper-icon-button icon="search" on-tap="__onSearchTap"></paper-icon-button> -->
                     </app-toolbar>
@@ -269,7 +299,8 @@
                         value: () => {
                             return [];
                         }
-                    }
+                    },
+                    todo: { type: Number, value: 0 }
                 };
             }
 
@@ -294,6 +325,15 @@
                 });
             }
 
+            ready() {
+                super.ready();
+
+                // load todo
+                this.$.ajax.GET('/tasks/summary').then(res => {
+                    this.set('todo', +res.data.unread);
+                });
+            }
+
             connectedCallback() {
                 super.connectedCallback();
                 this.$.workspace.addEventListener('iron-resize', this.__workspaceResizeHandler);
@@ -314,6 +354,10 @@
                     },
                     1000
                 );
+            }
+
+            __computeHideNotif(todo) {
+                return todo > 0 ? false : true;
             }
 
             __doLayout() {
@@ -453,6 +497,10 @@
                         0
                     );
                 }
+            }
+
+            __onNotifTap() {
+                this.set('route.path', '/tasks');
             }
 
             __onLogoutTap() {

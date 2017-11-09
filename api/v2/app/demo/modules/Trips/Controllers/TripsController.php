@@ -98,20 +98,30 @@ class TripsController extends \Micro\Controller {
         if ($query->data) {
             if ($this->request->hasFiles()) {
                 foreach($this->request->getFiles() as $file) {
-                    // $type = $file->getExtension();
-                    $name = $query->data->attachment;
+                    $type = $file->getExtension();
+                    
+                    $name = 'trip_'. $query->data->id_trip.'.'.$type;
                     $path = APPPATH.'public/resources/attachments/'.$name;
 
                     if (@$file->moveTo($path)) {
-                        // $query->data->save(array(
-                        //     'attachment' => $name
-                        // ));
+                        $query->data->save(array(
+                            'attachment' => $name
+                        ));
                     }
                 }
             }
         }
 
         return $query;
+    }
+
+    public function downloadByIdAction($id) {
+        $data = Trip::get($id)->data;
+        if ($data->hasAttachment()) {
+            $this->file->download($data->getAttachment());
+        } else {
+            throw new \Phalcon\Exception("Attachment doesn't exists", 404);
+        }
     }
 
     public function submitByIdAction($id) {
