@@ -4,10 +4,11 @@ namespace App\Advance\Models;
 use App\Advance\Models\History,
     App\Users\Models\User,
     App\Statuses\Models\Status,
+    App\Tasks\Models\Task,
     Phalcon\Mvc\Model\Relation;
 
 class Advance extends \Micro\Model {
-
+    
     public function initialize() {
         $this->hasOne(
             'status',
@@ -191,38 +192,21 @@ class Advance extends \Micro\Model {
     }
 
     public function submit() {
-        $user = \Micro\App::getDefault()->auth->user();
+        $auth = \Micro\App::getDefault()->auth->user();
+        $user = User::get($auth['su_id'])->data;
 
-        $status = Status::val('submitted');
-
-        // create history
-        $history = new History();
-        $history->category = 'advance';
-        $history->id_adv = $this->id_adv;
-        $history->status_id = $status;
-        $history->user_act = $user['su_id'];
-        $history->date = date('Y-m-d H:i:s');
-        $history->save();
-
-        $this->status = $status;
+        // update status
+        $this->status = Status::val('submitted');
         $this->save();
 
-        $user = User::get($user['su_id'])->data;
-
-        // entry task
+        // log history
+        History::log('advance', $this);
+        
+        // assign next task
         $superiors = $user->getSuperiors($this->amounts);
 
         foreach($superiors as $super) {
-            $task = new \App\Tasks\Models\Task();
-            
-            $task->t_type = 'advance';
-            $task->t_link = $this->id_adv;
-            $task->t_code = $this->adv_no;
-            $task->t_user = $super['user_id'];
-            $task->t_date = date('Y-m-d H:i:s');
-            $task->t_read = 0;
-
-            $task->save();
+            Task::log('advance', $super['user_id'], $this);
         }
     }
 

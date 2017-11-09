@@ -23,6 +23,11 @@
                 padding: 0;
             }
 
+            td iron-icon {
+                --iron-icon-width: 18px;
+                --iron-icon-height: 18px;
+            }
+
             .form-row td {
                 padding-top: 0;
                 padding-bottom: 0;
@@ -52,19 +57,12 @@
                                     <div>[[ record.expense.subject_exp ]]</div>
                                 </div>
                                 <div class="display-field">
-                                    <label>Type: </label>
-                                    <div>-</div>
-                                </div>
-                                <div class="display-field">
-                                    <label>Purpose: </label>
-                                    <div>-</div>
-                                </div>
-                            </div>
-                            <div>
-                                <div class="display-field">
                                     <label>Proposed By: </label>
                                     <div>[[ record.expense.user_fullname ]]</div>
                                 </div>
+                            </div>
+                            <div>
+                                
                                 <div class="display-field">
                                     <label>Start Date: </label>
                                     <div>[[ record.expense.date_start_short ]]</div>
@@ -93,6 +91,7 @@
                                 <thead>
                                     <th width="40" class="text-center">No.</th>
                                     <th>Description</th>
+                                    <th width="60" class="text-center">C & B</th>
                                     <th width="100">Payment</th>
                                     <th width="100">Currency</th>
                                     <th width="120" class="text-right">Amounts</th>
@@ -100,7 +99,7 @@
                                 <tbody>
                                     <template is="dom-repeat" items="[[ record.items ]]" as="group">
                                         <tr class="group-row">
-                                            <td colspan="5"><iron-icon icon="label-outline"></iron-icon>&nbsp; [[ group.group_name ]]</td>
+                                            <td colspan="6"><iron-icon icon="label-outline"></iron-icon>&nbsp; [[ group.group_name ]]</td>
                                         </tr>
                                         <template is="dom-repeat" items="[[ group.group_items ]]">
                                             <tr>
@@ -112,8 +111,8 @@
                                             </tr>
                                             <tr class="form-row">
                                                 <td></td>
-                                                <td colspan="3">
-                                                    <kct-column columns="3">
+                                                <td colspan="4">
+                                                    <kct-column columns="4">
                                                         <template is="dom-repeat" items="[[ item.item_forms ]]" as="form">
                                                             <div class="item-form">
                                                                 <div class="label">[[ form.item_form_label ]]</div>
@@ -125,7 +124,7 @@
                                                 <td></td>
                                             </tr>
                                             <tr class="separator">
-                                                <td colspan="5"></td>
+                                                <td colspan="6"></td>
                                             </tr>
                                         </template>
                                     </template>

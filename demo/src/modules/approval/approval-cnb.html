@@ -1,0 +1,540 @@
+<link rel="import" href="../../../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../elements/kct-layouts/kct-hbox.html">
+<link rel="import" href="../../elements/kct-pages/kct-pages.html">
+<link rel="import" href="../../elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../elements/kct-combobox/kct-combobox.html">
+<link rel="import" href="../../elements/kct-checkbox/kct-checkbox.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../elements/kct-form/kct-form-validator.html">
+<link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
+
+<dom-module id="approval-cnb">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: var(--page-background-color);
+            }
+            #pages {
+                height: 100%;
+                display: block;
+            }
+            .sidebar {
+                width: 200px;
+                height: 100%;
+                background-color: var(--page-background-color);
+                /*border-right: 1px solid #dfdfdf;*/
+            }
+            paper-listbox {
+                background-color: transparent;
+                padding: 0;
+            }
+            paper-item {
+                font-weight: 400;
+                cursor: pointer;
+                --paper-item-min-height: 36px;
+            }
+            paper-item.iron-selected {
+                background-color: #DCDCDC;
+            }
+            kct-grid {
+                border-left: 1px solid #dfdfdf;
+            }
+
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to Setting" on-tap="__onBackTap"></paper-fab>
+        </div>
+
+        <kct-vbox>
+            <page-header-block title="Settings" description="Manage Cost Approvals">
+                <paper-icon-button on-tap="__onReloadTap" icon="refresh"></paper-icon-button>
+                <div class="separator"></div>
+                <paper-button on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Add Record</paper-button>
+            </page-header-block>
+            <div class="flex">
+                <kct-hbox fit>
+                    <div class="sidebar">
+                        <paper-listbox selected="{{ selectedMenu }}" attr-for-selected="name">
+                            <template is="dom-repeat" items="[[ menus ]]">
+                                <paper-item name="[[ item.grid ]]">
+                                    <iron-icon icon="[[ item.icon ]]"></iron-icon>
+                                    <paper-item-body>&nbsp;[[ item.text ]]</paper-item-body>
+                                </paper-item>
+                            </template>
+                        </paper-listbox>
+                    </div>
+                    <div class="flex">
+                        <kct-pages id="pages" selected="[[ selectedMenu ]]" selectable="kct-grid" attr-for-selected="name">
+                            
+                            <kct-grid 
+                                url="/costs?display=grade" 
+                                name="grid-grade" 
+                                columns="[[ columnsGrade ]]" 
+                                selection-model="row" 
+                                hide-header 
+                                pagination>
+                                <template preserve-content>
+                                    <style include="theme-helper"></style>
+                                </template>
+                            </kct-grid>
+
+                            <kct-grid 
+                                url="/costs?display=location" 
+                                name="grid-location" 
+                                columns="[[ columnsLocation ]]" 
+                                selection-model="row" 
+                                hide-header 
+                                pagination >
+                                <template preserve-content>
+                                    <style include="theme-helper"></style>
+                                </template>        
+                            </kct-grid>
+
+                            <kct-grid 
+                                url="/costs?display=position" 
+                                name="grid-position" 
+                                columns="[[ columnsPosition ]]" 
+                                selection-model="row" 
+                                hide-header 
+                                pagination>
+                                <template preserve-content>
+                                    <style include="theme-helper"></style>
+                                </template>        
+                            </kct-grid>
+
+                        </kct-pages>
+                    </div>
+                </kct-hbox>
+            </div>
+        </kct-vbox>
+
+        <kct-dialog id="editor-grid-grade" title="Grade Editor" width="400" height="100%">
+            <template preserve-content>
+                <div slot="dialog-body">
+                    <kct-form-validator id="grid-grade-validator" invalid="{{ __gradeInvalid }}" auto-validate>
+                        <kct-combobox   
+                            label="Item" 
+                            value="{{ editingRecord.item_id }}"
+                            items="[[ masterItems ]]" 
+                            item-value-path="item_id" 
+                            item-label-path="item_name" 
+                            on-change="__onComboItemChange" 
+                            required 
+                            auto-validate 
+                            error-message="Item is required">
+                            
+                            <template>
+                                <style>
+                                    .item { font-size: 14px; }
+                                    .elbow { display: inline-block; border-top: 1px solid #ccc; height: 1px; position: relative; top: -4px; }
+                                    .item.level-1 .elbow { margin-right: 10px; }
+                                </style>
+                                <div class$="item level-[[ item.item_level ]]">
+                                    <span class="elbow" style="width: [[ item.item_pad ]]"></span>[[ item.item_name ]]
+                                </div>
+                            </template>        
+
+                        </kct-combobox>
+
+                        <kct-combobox   
+                            id="combo-grade" 
+                            url="/grades" 
+                            label="Grade"
+                            value="{{ editingRecord.grade_id }}" 
+                            page-size="10" 
+                            item-label-path="grade_label" 
+                            item-value-path="grade_id" 
+                            required 
+                            auto-validate 
+                            error-message="Item is required"></kct-combobox>
+
+                        <paper-input label="Amounts" value="{{ editingRecord.amounts }}" allow-pattern="[0-9.]" required auto-validate error-message="Amounts is required"></paper-input>
+
+                        <kct-checkbox value="{{ editingRecord.allow_over }}">Allow over?</kct-checkbox>
+                    </kct-form-validator>
+                    
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSaveTap" disabled$="[[ __gradeInvalid ]]">Save</paper-button>
+                    <paper-button on-tap="__onEditorCloseTap">Close</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+        <kct-dialog id="editor-grid-location" title="Location Editor" width="400" height="100%">
+            <template preserve-content>
+                <div slot="dialog-body">
+                    <kct-combobox   
+                        label="Item" 
+                        items="[[ masterItems ]]" 
+                        item-value-path="item_id" 
+                        item-label-path="item_name" 
+                        on-change="__onComboItemChange" 
+                        required 
+                        auto-validate 
+                        error-message="Item is required">
+                        <template>
+                            <style>
+                                .item { font-size: 14px; }
+                                .elbow { display: inline-block; border-top: 1px solid #ccc; height: 1px; position: relative; top: -4px; }
+                                .item.level-1 .elbow { margin-right: 10px; }
+                            </style>
+                            <div class$="item level-[[ item.item_level ]]">
+                                <span class="elbow" style="width: [[ item.item_pad ]]"></span>[[ item.item_name ]]
+                            </div>
+                        </template>     
+                    </kct-combobox>
+
+                    <kct-combobox   
+                        label="Location"></kct-combobox>
+
+                    <paper-input label="Amounts"></paper-input>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSaveTap">Save</paper-button>
+                    <paper-button on-tap="__onEditorCloseTap">Close</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+        <kct-dialog id="editor-grid-position" title="Position Editor" width="400" height="100%">
+            <template preserve-content>
+                <div slot="dialog-body">
+                    <kct-form-validator id="grid-position-validator" invalid="{{ __positionInvalid }}" auto-validate>
+                        <kct-combobox   
+                            label="Item" 
+                            value="{{ editingRecord.item_id }}"
+                            items="[[ masterItems ]]" 
+                            item-value-path="item_id" 
+                            item-label-path="item_name" 
+                            on-change="__onComboItemChange" 
+                            required 
+                            auto-validate 
+                            error-message="Item is required">
+                            <template>
+                                <style>
+                                    .item { font-size: 14px; }
+                                    .elbow { display: inline-block; border-top: 1px solid #ccc; height: 1px; position: relative; top: -4px; }
+                                    .item.level-1 .elbow { margin-right: 10px; }
+                                </style>
+                                <div class$="item level-[[ item.item_level ]]">
+                                    <span class="elbow" style="width: [[ item.item_pad ]]"></span>[[ item.item_name ]]
+                                </div>
+                            </template>         
+                        </kct-combobox>
+
+                        <kct-combobox   
+                            id="combo-position" 
+                            url="/positions" 
+                            label="Position" 
+                            value="{{ editingRecord.position_id }}" 
+                            page-size="10" 
+                            item-label-path="pos_name" 
+                            item-value-path="pos_id" 
+                            required 
+                            auto-validate 
+                            error-message="Item is required"></kct-combobox>
+
+                        <paper-input label="Amounts" value="{{ editingRecord.amounts }}" allow-pattern="[0-9.]" required auto-validate error-message="Amounts is required"></paper-input>
+                    </kct-form-validator>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSaveTap" disabled$="[[ __positionInvalid ]]">Save</paper-button>
+                    <paper-button on-tap="__onEditorCloseTap">Close</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+        
+    </template>
+    <script>
+        class ApprovalCnb extends KctView {
+            static get is() {
+                return 'approval-cnb';
+            }
+
+            static get properties() {
+                return {
+                    menus: {
+                        type: Array,
+                        value: () => ([
+                            { grid: 'grid-grade', text: 'By Grade', icon: 'label-outline', desc: 'Mapping item to grade' },
+                            // { grid: 'grid-location', text: 'By Location', icon: 'label-outline', desc: 'Mapping item to location' },
+                            { grid: 'grid-position', text: 'By Position', icon: 'label-outline', desc: 'Mapping item to position' }
+                        ])
+                    },
+                    selectedMenu: { type: String, value: 'grid-grade' },
+                    columnsGrade: {
+                        type: Array,
+                        value: () => ([
+                            { type: 'rownumber' },
+                            { text: 'Item Description', dataIndex: 'item_name', grouping: true },
+                            { text: 'Grade', dataIndex: 'grade_label' },
+                            { 
+                                text: 'Over', 
+                                dataIndex: 'allow_over',
+                                width: 100,
+                                align: 'center',
+                                renderer: (e) => {
+                                    return e.data ? (e.data.allow_over == 1 ? '<iron-icon icon="done"></icon-icon>' : '') : '';
+                                }
+                            },
+                            { 
+                                text: 'Amounts', 
+                                dataIndex: 'amounts', 
+                                align: 'right',
+                                width: 120,
+                                renderer: (e) => {
+                                    return e.data ? e.data.amounts_formatted : '';
+                                }
+                            },
+                            
+                            {
+                                type: 'action',
+                                width: 'auto',
+                                renderer: (e) => {
+                                    if (e.data) {
+                                        let buttons = `
+                                            <paper-button class="btn-cyan btn-icon" on-tap="__onEditTap" title="Edit record"><iron-icon icon="image:edit"></iron-icon></paper-button>
+                                            <paper-button class="btn-danger btn-icon" on-tap="__onDeleteTap" title="Delete record"><iron-icon icon="close"></iron-icon></paper-button>
+                                        `;
+                                        return buttons;
+                                    }
+                                    return '';
+                                }
+                            }
+                        ])
+                    },
+                    columnsLocation: {
+                        type: Array,
+                        value: () => ([
+                            { type: 'rownumber' },
+                            { text: 'Item Description' },
+                            { text: 'Location' },
+                            { text: 'Amounts' }
+                        ])
+                    },
+                    columnsPosition: {
+                        type: Array,
+                        value: () => ([
+                            { type: 'rownumber' },
+                            { text: 'Item Description', dataIndex: 'item_name' },
+                            { text: 'Position', dataIndex: 'position_name', width: 250 },
+                            { 
+                                text: 'Amounts', 
+                                dataIndex: 'amounts', 
+                                align: 'right',
+                                width: 120,
+                                renderer: (e) => {
+                                    return e.data ? e.data.amounts_formatted : '';
+                                }
+                            },
+                            {
+                                type: 'action',
+                                renderer: (e) => {
+                                    if (e.data) {
+                                        let buttons = `
+                                            <paper-button class="btn-amber" on-tap="__onEditTap"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>
+                                            <paper-button class="btn-danger" on-tap="__onDeleteTap"><iron-icon icon="close"></iron-icon>&nbsp;Delete</paper-button>
+                                        `;
+                                        return buttons;
+                                    }
+                                    return '';
+                                }
+                            }
+                        ])
+                    },
+                    masterItems: { type: Array },
+                    masterGrades: { type: Array },
+                    editingRecord: { type: Object }
+                }
+            }
+
+            static get observers() {
+                return [
+                    '__selectedMenuChange(selectedMenu)'
+                ];
+            }
+
+            get grid() {
+                return this.$.pages.selectedItem;
+            }
+
+            get validator() {
+                return this.$[this.selectedMenu + '-validator'];
+            }
+
+            get editor() {
+                return this.$['editor-' + this.selectedMenu];
+            }
+
+            /**
+             * @Override
+             */
+            handleRouteParams(setting, type) {
+                if (type != 'approval-cnb') return;
+
+                // load master items
+                this.$.ajax.GET('/items?display=combo').then(res => {
+                    this.set('masterItems', res.data);
+                });
+
+                if (this.grid) {
+                    this.grid.deferAutoload();
+                }
+            }
+
+            handleResizing(width, height) {
+                if (this.grid) {
+                    this.grid.resize();
+                }
+            }
+
+            __openEditor() {
+                if (this.editor) {
+                    this.editor.open();
+                }
+            }
+
+            __closeEditor() {
+                if (this.editor) {
+                    this.editor.close();
+                }
+            }
+
+            __validateEditor() {
+                if (this.validator) {
+                    this.validator.validate();
+                }
+            }
+
+            __selectedMenuChange(menu) {
+                if (this.grid) {
+                    this.grid.deferAutoload();
+                    this.grid.resize();
+                }
+            }
+
+            __loadEditorReferences() {
+                let promises = [];
+
+                if (this.selectedMenu == 'grid-grade') {
+                    promises = [ this.$['combo-grade'].load() ];
+                } else if (this.selectedMenu == 'grid-position') {
+                    promises = [ this.$['combo-position'].load() ];
+                }
+
+                return Promise.all(promises);
+            }
+
+            __onReloadTap() {
+                if ( ! this.grid) return;
+                this.grid.load();
+            }
+
+            __onAddTap() {
+                if ( ! this.grid) return;
+
+                this.mask('Opening...');
+
+                this.__loadEditorReferences().then(() => {
+                    this.unmask();
+
+                    this.set('editingRecord', {
+                        item_id: null,
+                        grade_id: null,
+                        position_id: null,
+                        location_id: null
+                    });
+
+                    this.__openEditor();
+                    this.__validateEditor();
+                });
+                
+            }
+
+            __onEditTap(e) {
+                if ( ! this.grid) return;
+
+                this.mask('Opening...');
+
+                this.__loadEditorReferences().then(() => {
+                    this.unmask();
+
+                    this.set('editingRecord', Object.assign({}, e.data));
+                    this.__openEditor();
+                    this.__validateEditor();
+                });
+
+                
+            }
+
+            __onDeleteTap(e) {
+                this.confirm('Confirm', 'Are you sure want to delete this item?').then(y => {
+                    if (y) {
+                        this.$.ajax.DELETE('/costs/' + e.data.cnb_id).then(() => {
+                            this.grid.load();
+                        });
+                    }
+                });
+            }
+
+            __onEditorCloseTap() {
+                this.__closeEditor();
+            }
+
+            __onEditorSaveTap() {
+                
+                let data = this.editingRecord;
+
+                if (data.cnb_id) {
+                    this.$.ajax.PUT('/costs/' + data.cnb_id, data).then(done.bind(this));
+                } else {
+                    this.$.ajax.POST('/costs', data).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.__closeEditor();
+                        this.grid.load();
+                    } else {
+                        this.alert('Warning', res.message);
+                    }
+                }
+            }
+
+            __onComboItemChange(e) {
+                let combo = e.target,
+                    value = combo.value;
+
+                let itemRecord;
+
+                if (value) {
+                    itemRecord = this.masterItems.find(elem => elem.item_id == value);
+                    if (itemRecord && ! itemRecord.parent_id) {
+                        this.alert('Warning', `xxx`);
+                        combo.value = '';
+                    }
+                }
+
+            }
+
+            __onBackTap() {
+                this.set('route.path', '/settings');
+            }
+        }
+
+        customElements.define(ApprovalCnb.is, ApprovalCnb);
+    </script>
+</dom-module>

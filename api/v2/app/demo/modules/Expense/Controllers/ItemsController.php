@@ -4,7 +4,8 @@ namespace App\Expense\Controllers;
 use App\Expense\Models\Item,
     App\Expense\Models\Expense,
     App\Expense\Models\ItemDetail,
-    App\Currencies\Models\Currency;
+    App\Currencies\Models\Currency,
+    App\Costs\Models\Cost;
 
 class ItemsController extends \Micro\Controller {
 
@@ -65,11 +66,20 @@ class ItemsController extends \Micro\Controller {
     }
 
     public function createAction() {
+        $params = $this->request->getParams();
         $post = $this->request->getJson();
+        
+        unset($post['cnb']);
 
         // fixup $post
         if (empty($post['item_id'])) {
             $post['item_id'] = NULL;
+        } else {
+            if (isset($params['cnb'])) {
+                $user = $this->auth->user();
+                $cost = Cost::validateGrade($post['item_id'], $user['su_id'], $post['currency_id'], $post['amounts']);
+                $post['cnb'] = $cost ? 1 : 0;
+            }
         }
 
         if ( ! isset($post['currency_offset_id'])) {
@@ -116,11 +126,20 @@ class ItemsController extends \Micro\Controller {
     }
 
     public function updateAction($id) {
+        $params = $this->request->getParams();
         $post = $this->request->getJson();
-
+        
+        unset($post['cnb']);
+        
         // fixup $post
         if (empty($post['item_id'])) {
             $post['item_id'] = NULL;
+        } else {
+            if (isset($params['cnb'])) {
+                $user = $this->auth->user();    
+                $cost = Cost::validateGrade($post['item_id'], $user['su_id'], $post['currency_id'], $post['amounts']);
+                $post['cnb'] = $cost ? 1 : 0;
+            }
         }
 
         $query = Item::get($id);

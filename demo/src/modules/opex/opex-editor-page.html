@@ -41,6 +41,11 @@
                 padding: 0;
             }
 
+            td iron-icon {
+                --iron-icon-width: 18px;
+                --iron-icon-height: 18px;
+            }
+
             .form-row td {
                 padding-top: 0;
                 padding-bottom: 0;
@@ -113,6 +118,7 @@
                                     <tr>
                                         <th width="40" class="text-center">No.</th>
                                         <th>Description</th>
+                                        <th width="60" class="text-center">C & B</th>
                                         <th width="100">Payment</th>
                                         <th width="100">Currency</th>
                                         <th width="120" class="text-right">Amounts</th>
@@ -122,12 +128,15 @@
                                 <tbody>
                                     <template is="dom-repeat" items="[[ items ]]" as="group">
                                         <tr class="group-row">
-                                            <td colspan="6"><iron-icon icon="label-outline"></iron-icon>&nbsp;[[ group.group_name ]]</td>
+                                            <td colspan="7"><iron-icon icon="label-outline"></iron-icon>&nbsp;[[ group.group_name ]]</td>
                                         </tr>
                                         <template is="dom-repeat" items="[[ group.group_items ]]">
                                             <tr>
-                                                <td  class="text-center">[[ item.item_seq ]]</td>
+                                                <td class="text-center">[[ item.item_seq ]]</td>
                                                 <td>[[ item.item_name ]]</td>
+                                                <td class="text-center">
+                                                    <iron-icon icon="done" hidden$="[[ !item.is_cnb ]]"></iron-icon>
+                                                </td>
                                                 <td>[[ item.payment_type_name ]]</td>
                                                 <td>[[ item.currency_code ]]</td>
                                                 <td class="text-right">[[ item.amounts_formatted ]]</td>
@@ -139,7 +148,7 @@
                                             <tr class="form-row">
                                                 <td></td>
                                                 <td colspan="4">
-                                                    <kct-column columns="3">
+                                                    <kct-column columns="4">
                                                         <template is="dom-repeat" items="[[ item.item_forms ]]" as="form">
                                                             <div class="item-form">
                                                                 <div class="label">[[ form.item_form_label ]]</div>
@@ -317,7 +326,7 @@
                         this.set('record', res.data);
                         this.__loadItems();
 
-                        if (res.data && res.data.status_code != 'draft') {
+                        if (res.data && ['draft', 'change-request'].indexOf(res.data.status_code) === -1) {
                             this.set('route.path', '/opex/opex/view/' + id);
                         }
                     });
@@ -505,9 +514,9 @@
                 data.dynamic = this.dynamic;
 
                 if (data.exp_item_id) {
-                    this.$.ajax.PUT('/expense/items/' + data.exp_item_id, data).then(done.bind(this));
+                    this.$.ajax.PUT('/expense/items/' + data.exp_item_id + '?cnb=yes', data).then(done.bind(this));
                 } else {
-                    this.$.ajax.POST('/expense/items', data).then(done.bind(this));
+                    this.$.ajax.POST('/expense/items?cnb=yes', data).then(done.bind(this));
                 }
 
                 function done(res) {

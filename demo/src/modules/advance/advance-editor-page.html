@@ -244,7 +244,7 @@
 
                             this.$.validator.validate();
                             
-                            if (res.data && res.data.status_code != 'draft') {
+                            if (res.data && ['draft', 'change-request'].indexOf(res.data.status_code) === -1) {
                                 this.set('route.path', '/advance/advance/view/' + res.data.id_adv);
                             }
                         });

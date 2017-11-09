@@ -52,16 +52,9 @@
                 z-index: 3;
             }
 
-            .card-info {
-                line-height: 1.3rem;
-                color: var(--paper-grey-600);
-                --iron-icon-width: 14px;
-                --iron-icon-height: 14px;
-            }
-
-            .card-info p { font-size: 13px;  }
-            .card-info iron-icon { position: relative; top: -1px;  }
-
+            .card-info { line-height: 1.2rem; font-size: 13px;  }
+            .card-info .label { color: var(--paper-grey-400)  }
+            .card-info .value { color: var(--paper-grey-700)  }
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
@@ -71,7 +64,7 @@
         </div>
 
         <kct-vbox>
-            <page-header-block icon="social:person-outline" description="Application Users">
+            <page-header-block icon="social:person-outline" title="Settings" description="Manage application users">
                 <paper-icon-button icon="refresh" on-tap="__onRefreshTap"></paper-icon-button>
                 <div class="separator"></div>
                 <paper-button on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Add User</paper-button>
@@ -91,9 +84,12 @@
                                 
                                 <div class="card-content">
                                     <div class="card-info">
-                                        <p><iron-icon icon="mail"></iron-icon>&nbsp;[[ item.su_email ]]</strong></p>
-                                        <p><iron-icon icon="work"></iron-icon>&nbsp;[[ item.su_position_name ]]</p>
-                                        <p><iron-icon icon="stars"></iron-icon>&nbsp;[[ item.su_grade_desc ]]</p>
+                                        <div class="label">Email</div>
+                                        <div class="value">[[ item.su_email ]]</div>
+                                        <div class="label">Position</div>
+                                        <div class="value">[[ item.su_position_name ]]</div>
+                                        <div class="label">Grade</div>
+                                        <div class="value">[[ item.su_grade_desc ]]</div>
                                     </div>
                                 </div>
                                 <div class="card-actions">

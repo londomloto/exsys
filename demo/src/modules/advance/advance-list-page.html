@@ -54,7 +54,7 @@
                         value: [
                             { type: 'rownumber' },
                             { text: 'Advance No.', dataIndex: 'adv_no', width: 120, align: 'center' },
-                            { text: 'Subject', dataIndex: 'subject_adv' },
+                            { text: 'Subject', dataIndex: 'subject_adv', width: 300 },
                             { 
                                 text: 'Date Created', 
                                 dataIndex: 'date', 
@@ -71,19 +71,6 @@
                                 width: 150,
                                 renderer: (e) => {
                                     return e.data ? e.data.amounts_formatted : '-';
-                                }
-                            },
-                            {
-                                type: 'action',
-                                text: 'File',
-                                width: 50,
-                                align: 'center',
-                                cls: 'cell-attachment',
-                                renderer: (e) => {
-                                    if (e.data) {
-                                        return e.data.has_attachment ? `<paper-icon-button on-tap="__onDownloadTap" icon="file-download" title="Download attachment"></paper-icon-button>` : '';
-                                    }
-                                    return '';
                                 }
                             },
                             { 

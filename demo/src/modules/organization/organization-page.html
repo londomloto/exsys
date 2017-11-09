@@ -20,14 +20,14 @@
             columns="[[ columns ]]" 
             selection-model="cell" 
             icon="view-list" 
-            title="Datasheet" 
-            description="Organization Reference">
+            title="Settings" 
+            description="Manage company organizations">
 
             <template preserve-content>
                 <style include="theme-helper"></style>
             </template>
             
-            <paper-button on-tap="__onAddTap" class="btn-primary" slot="primary-toolbar"><iron-icon icon="add"></iron-icon>&nbsp;Add Organization</paper-button>
+            <paper-button on-tap="__onAddTap" slot="primary-toolbar"><iron-icon icon="add"></iron-icon>&nbsp;Add Record</paper-button>
 
         </kct-grid>
 
@@ -105,16 +105,16 @@
                                     return '';
                                 }
                             },
-                            { text: 'Code', dataIndex: 'org_code' },
-                            { text: 'Type', dataIndex: 'org_type_name' },
+                            { text: 'Code', dataIndex: 'org_code', width: 100 },
+                            { text: 'Type', dataIndex: 'org_type_name', width: 120 },
                             {
                                 text: '',
                                 type: 'action',
                                 renderer: (e) => {
                                     if (e.data) {
                                         return `
-                                            <paper-button on-tap="__onEditTap" class="btn-amber"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>
-                                            <paper-button on-tap="__onDeleteTap" class="btn-danger"><iron-icon icon="close"></iron-icon>&nbsp;Delete</paper-button>
+                                            <paper-button on-tap="__onEditTap" class="btn-amber btn-icon" title="Update record"><iron-icon icon="image:edit"></iron-icon></paper-button>
+                                            <paper-button on-tap="__onDeleteTap" class="btn-danger btn-icon" title="Delete record"><iron-icon icon="close"></iron-icon></paper-button>
                                         `;
                                     }
                                     return '';

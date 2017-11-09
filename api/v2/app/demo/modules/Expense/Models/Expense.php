@@ -412,7 +412,29 @@ class Expense extends \Micro\Model {
 
         if ($this->save()) {
             if ($status == Status::val('final-approved')) {
-                $this->faSubmit('receive-request');
+                $cnb = \App\Expense\Models\Item::findFirst('cnb = 1');
+
+                if ($cnb) {
+                    // hrd task
+                    $subscribers = User::findInRoles(array('human-resource'));
+
+                    foreach($subscribers as $sub) {
+                        $task = new \App\Tasks\Models\Task();
+                            
+                        $task->t_type = 'expense-hr';
+                        $task->t_link = $this->id_exp;
+                        $task->t_code = $this->exp_no;
+                        $task->t_user = $sub->su_id;
+                        $task->t_date = date('Y-m-d H:i:s');
+                        $task->t_read = 0;
+
+                        $task->save();
+                    }
+
+                } else {
+                    $this->faSubmit('receive-request');    
+                }
+                
             }
         }
         

@@ -5,6 +5,7 @@ use App\Expense\Models\Expense,
     App\Expense\Models\History,
     App\System\Models\Autonumber,
     App\Users\Models\User,
+    App\Tasks\Models\Task,
     App\Statuses\Models\Status;
 
 class ExpenseController extends \Micro\Controller {
@@ -12,12 +13,16 @@ class ExpenseController extends \Micro\Controller {
     public function findAction() {
         $category = $this->request->getQuery('category');
         $category = empty($category) ? 'expense' : $category;
+        $user = $this->auth->user();
 
         return Expense::get()
             ->join('App\Statuses\Models\Status', 'a.status_id = status', 'a', 'left')
             ->sortable()
             ->filterable()
-            ->andWhere('category = :category:', array('category' => $category))
+            ->andWhere('category = :category: AND id_user = :user:', array(
+                'category' => $category,
+                'user' => $user['su_id']
+            ))
             ->paginate();
     }
 
@@ -133,14 +138,14 @@ class ExpenseController extends \Micro\Controller {
         if ($query->data) {
             if ($this->request->hasFiles()) {
                 foreach($this->request->getFiles() as $file) {
-                    // $type = $file->getExtension();
-                    $name = $query->data->attachment;
+                    $type = $file->getExtension();
+                    $name = 'expense_'.$query->data->id_exp.'.'.$type;
                     $path = APPPATH.'public/resources/attachments/'.$name;
 
                     if (@$file->moveTo($path)) {
-                        // $query->data->save(array(
-                        //     'attachment' => $name
-                        // ));
+                        $query->data->save(array(
+                            'attachment' => $name
+                        ));
                     }
                 }
             }
@@ -296,6 +301,35 @@ class ExpenseController extends \Micro\Controller {
         );
     }
 
+    public function hrApproveByIdAction($id) {
+        $data = Expense::get($id)->data;
+        $user = $this->auth->user();
+        $post = $this->request->getJson();
+
+        if ($data) {
+            // dispose tasks
+            Task::dispose('expense-hr', $user['su_id'], $data);
+
+            $status = Status::val('hr-approved');
+            $notes = isset($post['notes']) ? $post['notes'] : '-';
+            
+            // update status
+            $data->status = $status;
+            $done = $data->save();
+
+            // log history
+            History::log('expense', $data, $notes);
+
+            if ($done) {
+                $data->faSubmit('receive-request');
+            }
+        }
+
+        return array(
+            'success' => TRUE
+        );
+    }
+
     public function faRejectByIdAction($id) {
         $expense = Expense::get($id)->data;
         $user = $this->auth->user();
@@ -326,6 +360,29 @@ class ExpenseController extends \Micro\Controller {
             // update status
             $expense->status = $status;
             $expense->save();
+        }
+
+        return array(
+            'success' => TRUE
+        );
+    }
+
+    public function hrRejectByIdAction($id) {
+        $data = Expense::get($id)->data;
+        $user = $this->auth->user();
+        $post = $this->request->getJson();
+
+        if ($data) {
+            // dispose tasks
+            Task::dispose('expense-hr', $user['su_id'], $data);
+
+            // update status
+            $status = Status::val('reject');
+            $data->status = $status;
+            $data->save();
+
+            // log history
+            History::log('expense', $data, $post['notes']);
         }
 
         return array(
@@ -370,6 +427,29 @@ class ExpenseController extends \Micro\Controller {
         );
     }
 
+    public function hrReturnedByIdAction($id) {
+        $data = Expense::get($id)->data;
+        $user = $this->auth->user();
+        $post = $this->request->getJson();
+
+        if ($data) {
+            // dispose tasks
+            Task::dispose('expense-hr', $user['su_id'], $data);
+
+            // update status
+            $status = Status::val('change-request');
+            $data->status = $status;
+            $data->save();
+
+            // log history
+            History::log('expense', $data, $post['notes']);
+        }
+
+        return array(
+            'success' => TRUE
+        );
+    }
+
     public function cronAction() {
         $user = $this->auth->user();
         $post = $this->request->getJson();
@@ -378,10 +458,13 @@ class ExpenseController extends \Micro\Controller {
         $time = strtotime($date);
         $code = date('m/Y', $time);
 
-        $opex = Expense::findFirst("
-            DATE_FORMAT(date, '%m/%Y') = '".$code."' 
-            AND category = 'opex' 
-        ");
+        $opex = Expense::findFirst(array(
+            "DATE_FORMAT(date, '%m%Y') = :code: AND category = 'opex' AND id_user = :user:",
+            'bind' => array(
+                'code' => $code,
+                'user' => $user['su_id']
+            )
+        ));
 
         if ($opex) {
             return array(

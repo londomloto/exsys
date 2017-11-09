@@ -6,7 +6,7 @@ use App\Positions\Models\Position;
 class PositionsController extends \Micro\Controller {
 
     public function findAction() {
-        return Position::get()->sortable()->paginate();
+        return Position::get()->filterable()->sortable()->paginate();
     }
 
     public function createAction() {

@@ -39,7 +39,7 @@
         <kct-ajax id="ajax"></kct-ajax>
         
         <kct-vbox>
-            <page-header-block icon="done" title="Todo List" description="Operational Task View"></page-header-block>
+            <page-header-block icon="done" title="Todo List" description="Operational Task Action"></page-header-block>
             <div class="flex scroll-y padding">
                 <paper-card class="block">
                     <div class="card-content">
@@ -60,19 +60,12 @@
                                     <div>[[ record.expense.subject_exp ]]</div>
                                 </div>
                                 <div class="display-field">
-                                    <label>Type: </label>
-                                    <div>[[ record.expense.type_name ]]</div>
-                                </div>
-                                <div class="display-field">
-                                    <label>Purpose: </label>
-                                    <div>[[ record.expense.purpose_name ]]</div>
-                                </div>
-                            </div>
-                            <div>
-                                <div class="display-field">
                                     <label>Proposed By: </label>
                                     <div>[[ record.expense.user_fullname ]]</div>
                                 </div>
+                            </div>
+                            <div>
+                                
                                 <div class="display-field">
                                     <label>Start Date: </label>
                                     <div>[[ record.expense.date_start_short ]]</div>
@@ -119,7 +112,7 @@
                                             <tr class="form-row">
                                                 <td></td>
                                                 <td colspan="3">
-                                                    <kct-column columns="3">
+                                                    <kct-column columns="4">
                                                         <template is="dom-repeat" items="[[ item.item_forms ]]" as="form">
                                                             <div class="item-form">
                                                                 <div class="label">[[ form.item_form_label ]]</div>

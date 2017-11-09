@@ -115,6 +115,9 @@
                 height: 24px;
                 border-radius: 50%;
             }
+            .ag-material .ag-header-row > .ag-header-cell:first-child {
+                border-left-color: transparent;
+            }
 
         </style>
         <style>
@@ -838,7 +841,7 @@
                         if (col.sort !== undefined) {
                             item.sort = col.sort;
                         }
-
+                        
                         columns.push(item);
                     });
 

@@ -79,6 +79,7 @@ class Task extends \Micro\Model {
             case 'expense':
             case 'expense-receive':
             case 'expense-finance':
+            case 'expense-hr':
             case 'opex':
 
                 $expense = $this->getExpense();
@@ -92,6 +93,7 @@ class Task extends \Micro\Model {
                     switch($type) {
                         case 'expense':
                         case 'expense-finance':
+                        case 'expense-hr':
                             $data['t_verb'] = 'Expense approval request';
                             break;
                         case 'expense-receive':
@@ -166,4 +168,41 @@ class Task extends \Micro\Model {
 
         return $data;
     }
+
+    public static function log($type, $user, $data) {
+        $task = new Task();
+
+        $task->t_type = $type;
+        $task->t_user = is_numeric($user) ? $user : $user->su_id;
+        $task->t_date = date('Y-m-d H:i:s');
+        $task->t_read = 0;
+        
+        switch($type) {
+            case 'advance':
+                $task->t_link = $data->id_adv;
+                $task->t_code = $data->adv_no;
+                break;
+        }
+
+        $task->save();
+    }
+
+    public static function dispose($type, $user, $data) {
+
+        switch($type) {
+            case 'expense-hr':
+
+                self::find(array(
+                    't_type = :type: AND t_link = :link:',
+                    'bind' =>array(
+                        'type' => 'expense-hr',
+                        'link' => $data->id_exp
+                    )
+                ))->delete();
+
+                break;
+        }
+
+    }
+
 }

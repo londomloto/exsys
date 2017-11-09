@@ -168,8 +168,8 @@
                                     <th>Description</th>
                                     <th width="100">Payment</th>
                                     <th width="100">Currency</th>
-                                    <th width="150" class="text-right">Rates</th>
-                                    <th width="150" class="text-right">Amounts</th>
+                                    <th width="120" class="text-right">Rates</th>
+                                    <th width="120" class="text-right">Amounts</th>
                                 </thead>
                                 <tbody>
                                     <template is="dom-repeat" items="[[ record.items ]]" as="group">
@@ -181,14 +181,14 @@
                                                 <td class="text-center">[[ item.item_seq ]]</td>
                                                 <td>[[ item.item_name ]]</td>
                                                 <td>[[ item.payment_type_name ]]</td>
-                                                <td>[[ item.currency_name ]]</td>
-                                                <td class="text-right">[[ item.rates_formatted ]]</td>
+                                                <td>[[ item.currency_code ]]</td>
+                                                <td class="text-right">[[ item.currency_rate_displayed ]]</td>
                                                 <td class="text-right">[[ item.amounts_formatted ]]</td>
                                             </tr>
                                             <tr class="form-row">
                                                 <td></td>
                                                 <td colspan="4">
-                                                    <kct-column columns="3">
+                                                    <kct-column columns="4">
                                                         <template is="dom-repeat" items="[[ item.item_forms ]]" as="form">
                                                             <div class="item-form">
                                                                 <div class="label">[[ form.item_form_label ]]</div>

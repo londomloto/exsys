@@ -83,6 +83,7 @@ class Item extends \Micro\Model {
         $data['item_parent_name'] = NULL;
         $data['payment_type_name'] = $this->payment_type == 1 ? 'Cash' : 'Credit Card';
         $data['item_date_short'] = date('d/m/Y', strtotime($this->item_date));
+        $data['is_cnb'] = $this->cnb == 1 ? TRUE : FALSE;
 
         if ($this->masterItem) {
             $data['item_name'] = $this->masterItem->item_name;
