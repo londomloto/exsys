@@ -79,6 +79,8 @@ class ItemsController extends \Micro\Controller {
                 $user = $this->auth->user();    
                 $cost = Cost::validateGrade($post['item_id'], $user['su_id'], $post['currency_id'], $post['amounts']);
                 
+                $post['cnb'] = 0;
+
                 if ($cost->action == 'ACCEPT') {
                     $post['cnb'] = 1;
                 } else if ($cost->action == 'REJECT') {
@@ -147,6 +149,8 @@ class ItemsController extends \Micro\Controller {
                 $user = $this->auth->user();    
                 $cost = Cost::validateGrade($post['item_id'], $user['su_id'], $post['currency_id'], $post['amounts']);
 
+                $post['cnb'] = 0;
+                
                 if ($cost->action == 'ACCEPT') {
                     $post['cnb'] = 1;
                 } else if ($cost->action == 'REJECT') {

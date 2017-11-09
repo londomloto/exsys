@@ -788,10 +788,10 @@
             __computeEmpty(changed) {
                 this.set('__expenseIsEmpty', this.expenseItems.length == 0);
             }
-            __computePromo(type) {
+            __computePromo(id, type) {
                 this.set('__expenseIsPromo', false);
 
-                if (type && this.expenseRecord && this.expenseRecord.id_exp) {
+                if (type && id) {
                     let typeRecord = this.masterTypes.find(t => t.type_id == type);
                     if (typeRecord && typeRecord.is_promo) {
                         this.set('__expenseIsPromo', true);
@@ -1166,11 +1166,7 @@
                 
             }
             __onItemEditorSaveTap() {
-                if (this.__expenseIsTravelling) {
-                    this.$['dynamic-item-editor'].close();       
-                } else {
-                    this.$['fixed-item-editor'].close();
-                }
+                
                 
                 let data = this.itemRecord;
                 data.id_exp = this.expenseRecord.id_exp;
@@ -1187,6 +1183,13 @@
 
                 function done(res) {
                     if (res.success) {
+
+                        if (this.__expenseIsTravelling) {
+                            this.$['dynamic-item-editor'].close();       
+                        } else {
+                            this.$['fixed-item-editor'].close();
+                        }
+
                         this.__dirty = true;
                         this.__loadItems();
                     } else {
