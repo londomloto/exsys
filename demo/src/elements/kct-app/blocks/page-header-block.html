@@ -170,6 +170,9 @@
             .toolbar.sm .menu-responsive {
                 display: inline-block;
             }
+            .toolbar .menu-responsive[hidden] {
+                display: none;
+            }
             .toolbar.sm ::slotted(*) {
                 display: none;
             }
@@ -210,7 +213,7 @@
                         <div id="primary-separator" class="separator"></div>
                         <slot id="primary-toolbar"></slot>
 
-                        <paper-menu-button class="menu-responsive" horizontal-align="right">
+                        <paper-menu-button class="menu-responsive" horizontal-align="right" hidden$="[[ __hideResponsive ]]">
                             <paper-icon-button icon="menu" slot="dropdown-trigger"></paper-icon-button>
                             <paper-listbox slot="dropdown-content">
                                 <template is="dom-repeat" items="[[ __buttons ]]">
@@ -268,6 +271,7 @@
                 this.__buttons = [];
                 this.__iconHidden = false;
                 this.__imageHidden = true;
+                this.__hideResponsive = true;
             }
 
             ready() {
@@ -293,6 +297,7 @@
                     });
 
                 this.set('__buttons', buttons);
+                this.set('__hideResponsive', buttons.length ? false : true);
 
                 // next time should use observer
                 let primaryChildren = this.$['primary-toolbar'].assignedNodes().filter(node => node.localName !== undefined);

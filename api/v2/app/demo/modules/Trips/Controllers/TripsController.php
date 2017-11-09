@@ -196,7 +196,7 @@ class TripsController extends \Micro\Controller {
 
             // log history
             $history = new History();
-            $history->id_trip = $this->id_trip;
+            $history->id_trip = $trip->id_trip;
             $history->status_id = $status;
             $history->user_act = $user['su_id'];
             $history->date = date('Y-m-d H:i:s');
@@ -230,7 +230,7 @@ class TripsController extends \Micro\Controller {
             
             // log history
             $history = new History();
-            $history->id_trip = $this->id_trip;
+            $history->id_trip = $trip->id_trip;
             $history->status_id = $status;
             $history->user_act = $user['su_id'];
             $history->date = date('Y-m-d H:i:s');
