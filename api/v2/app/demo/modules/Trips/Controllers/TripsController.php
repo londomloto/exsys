@@ -187,8 +187,20 @@ class TripsController extends \Micro\Controller {
                 )
             ))->delete();
 
+            // update trip status;
+            $status = Status::val('ticket-issued');
+
             $trip->ticket_status = 1;
+            $trip->status = $status;
             $trip->save();
+
+            // log history
+            $history = new History();
+            $history->id_trip = $this->id_trip;
+            $history->status_id = $status;
+            $history->user_act = $user['su_id'];
+            $history->date = date('Y-m-d H:i:s');
+            $history->save();
         }
 
         return array(
@@ -201,7 +213,6 @@ class TripsController extends \Micro\Controller {
         $user = $this->auth->user();
 
         if ($trip) {
-
             // delete tasks
             \App\Tasks\Models\Task::find(array(
                 't_type = :type: AND t_link = :link:',
@@ -211,8 +222,19 @@ class TripsController extends \Micro\Controller {
                 )
             ))->delete();
 
+            $status = Status::val('no-ticket');
+
             $trip->ticket_status = 2;
+            $trip->status = $status;
             $trip->save();
+            
+            // log history
+            $history = new History();
+            $history->id_trip = $this->id_trip;
+            $history->status_id = $status;
+            $history->user_act = $user['su_id'];
+            $history->date = date('Y-m-d H:i:s');
+            $history->save();
         }
 
         return array(

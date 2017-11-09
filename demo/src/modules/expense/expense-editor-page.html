@@ -938,6 +938,7 @@
                         let id = res.data.id_exp;
 
                         this.set('expenseRecord.id_exp', id);
+                        this.set('expenseRecord.exp_no', res.data.exp_no);
 
                         if (this.attachment) {
                             this.$.ajax.UPLOAD('/expense/' + id + '/upload', {
