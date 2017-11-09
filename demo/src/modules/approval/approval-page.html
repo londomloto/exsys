@@ -2,7 +2,7 @@
 <link rel="import" href="../../elements/kct-pages/kct-pages.html">
 <link rel="import" href="approval-cnb.html">
 <link rel="import" href="approval-fa.html">
-<link rel="import" href="approval-grade.html">
+<link rel="import" href="approval-superior.html">
 
 <dom-module id="approval-page">
     <template>
@@ -20,7 +20,7 @@
         <kct-pages id="pages" selected="[[ page ]]" attr-for-selected="name">
             <approval-cnb name="approval-cnb" route="{{ route }}" state="[[ state ]]"></approval-cnb>
             <approval-fa name="approval-fa" route="{{ route }}" state="[[ state ]]"></approval-fa>
-            <approval-grade name="approval-grade"  route="{{ route }}" state="[[ state ]]"></approval-grade>
+            <approval-superior name="approval-superior"  route="{{ route }}" state="[[ state ]]"></approval-superior>
         </kct-pages>
 
     </template>
@@ -32,7 +32,7 @@
 
             static get properties() {
                 return {
-                    page: { type: String, value: 'index' }
+                    page: { type: String }
                 }
             }
 
@@ -46,6 +46,7 @@
 
             handleResizing(width, height) {
                 let pageItem = this.$.pages.selectedItem;
+                
                 if (pageItem) {
                     pageItem.handleResizing(width, height);
                 }

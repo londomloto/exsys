@@ -7,21 +7,29 @@ class GradesController extends \Micro\Controller {
 
     public function findAction() {
         $params = $this->request->getParams();
+        $query = Grade::get()->filterable()->sortable();
 
-        if (isset($params['fields']) && ! empty($params['fields'])) {
+        if (isset($params['fields'], $params['query']) && ! empty($params['query'])) {
             $fields = json_decode($params['fields']);
-
-            $fields = array_map(function($e){
-                return $e == 'grade_label' ? 'grade_code' : $e;
-            }, $fields);
-
-            if ( ! in_array('grade_name', $fields)) {
-                $fields[] = 'grade_name';
+            if ( ! in_array('grade_id', $fields)) {
+                $query->andWhere(
+                    "(
+                        grade_code LIKE :code: 
+                        OR grade_desc LIKE :desc: 
+                        OR (IF(verificator = 1, 'verificator', '') LIKE :type:) 
+                        OR (IF(approver = 1, 'approver', '') LIKE :type:) 
+                        OR (IF(verificator = 0 AND approver = 0, 'creator', '') LIKE :type:)
+                    )", 
+                    array(
+                        'code' => '%'.$params['query'].'%',
+                        'desc' => '%'.$params['query'].'%',
+                        'type' => '%'.$params['query'].'%'
+                    )
+                );
             }
-
-            $_REQUEST['fields'] = json_encode($fields);
         }
-        return Grade::get()->sortable()->filterable()->paginate();
+
+        return $query->paginate();
     }
 
     public function createAction() {

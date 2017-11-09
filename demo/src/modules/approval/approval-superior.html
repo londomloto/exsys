@@ -1,0 +1,212 @@
+<link rel="import" href="../../../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-grid/kct-grid.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../elements/kct-combobox/kct-combobox.html">
+
+<dom-module id="approval-superior">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+                background-color: var(--page-background-color);
+            }
+            #pages {
+                height: 100%;
+                display: block;
+            }
+            #grid {
+                display: block;
+                height: 100%;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <kct-grid 
+            id="grid" 
+            url="/users" 
+            columns="[[ columns ]]" 
+            selection-model="row" 
+            row-height="52" 
+            icon="settings" 
+            title="Settings" 
+            description="Manage superior approval" 
+            pagination>
+            <template preserve-content>
+                <style include="theme-helper">
+                    
+                    .render-desc { font-size: 11px; color: var(--paper-grey-500);  }
+                </style>
+            </template>        
+        </kct-grid>
+
+        <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to Setting" on-tap="__onBackTap"></paper-fab>
+        </div>
+
+        <kct-dialog id="editor" title="Superior Editor" width="400" height="100%" scrollable>
+            <template preserve-content>
+                <style include="theme-helper"></style>
+                <div slot="dialog-body">
+                    <paper-input label="Application User" value="{{ editing.su_fullname }}" readonly></paper-input>
+
+                    <kct-combobox 
+                        id="combo-superior" 
+                        url="/users" 
+                        label="Superior" 
+                        value="{{ editing.su_superior }}"
+                        item-value-path="su_id" 
+                        item-label-path="su_fullname" 
+                        on-load="__onComboSuperiorLoad" 
+                        page-size="10">
+                        <template>
+                            <style>
+                                .render-desc { font-size: 12px; color: #999;  }
+                            </style>
+                            <div class="render-name">[[ item.su_fullname ]]</div>
+                            <div class="render-desc">[[ item.su_grade_label ]]</div>
+                        </template>        
+                    </kct-combobox>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onEditorSaveTap">Save</paper-button>
+                    <paper-button on-tap="__onEditorCloseTap">Close</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class ApprovalSuperior extends KctView {
+            static get is() {
+                return 'approval-superior';
+            }
+
+            static get properties() {
+                return {
+                    columns: {
+                        type: Array,
+                        value: () => ([
+                            { type: 'rownumber' },
+                            { 
+                                text: 'Application User', 
+                                dataIndex: 'su_fullname',
+                                width: 300,
+                                renderer: (e) => {
+                                    if (e.data) {
+                                        return `
+                                            <div class="render-name">${e.data.su_fullname}</div> 
+                                            <div class="render-desc">${e.data.su_grade_label}</div> 
+                                        `;
+                                    }
+                                    return '';
+                                }
+                            },
+                            { 
+                                text: 'Superior', 
+                                dataIndex: 'su_fullname',
+                                width: 300,
+                                renderer: (e) => {
+                                    if (e.data) {
+                                        return `
+                                            <div class="render-name">${e.data.su_superior_fullname}</div> 
+                                            <div class="render-desc">${e.data.su_superior_gradel_label}</div> 
+                                        `;
+                                    }
+                                    return '';
+                                }
+                            },
+                            {
+                                type: 'action',
+                                renderer: (e) => {
+                                    if (e.data) {
+                                        return `<paper-button on-tap="__onEditTap" class="btn-cyan"><iron-icon icon="image:edit"></iron-icon>&nbsp;Change</paper-button>`;
+                                    }
+                                    return '';
+                                }
+                            }
+                        ])
+                    }
+                }
+            }
+
+            /**
+             * @Override
+             */
+            handleRouteParams(setting, type) {
+                if (type != 'approval-superior') return;
+
+                if (this.$.grid) {
+                    this.$.grid.deferAutoresize();
+                    this.$.grid.deferAutoload();
+                }
+            }
+
+            handleResizing(width, height) {
+                if (this.$.grid) {
+                    this.$.grid.resize();
+                }
+            }
+
+            __loadReferences() {
+                return Promise.all([
+                    this.$['combo-superior'].load()
+                ]);
+            }
+
+            __fixupSuperior() {
+                let combo = this.$['combo-superior'],
+                    items = (combo.items || []).slice();
+
+                if (this.editing && this.editing.su_id) {
+                    items = items.filter(elem => elem.su_id != this.editing.su_id);
+                }
+
+                combo.items = items;
+            }
+
+            __onComboSuperiorLoad() {
+                this.__fixupSuperior();
+            }
+
+            __onEditTap(e) {
+                this.mask('Opening...');
+
+                this.__loadReferences().then(() => {
+                    this.unmask();
+                    let editing = Object.assign({}, e.data);
+
+                    this.set('editing', editing);
+
+                    this.__fixupSuperior();
+                    this.$.editor.open();
+                });
+            }
+
+            __onEditorSaveTap() {
+                this.$.editor.close();
+                let data = this.editing;
+
+                if (data.su_id) {
+                    this.$.ajax.PUT('/users/' + data.su_id, data).then(res => {
+                        if (res.success) {
+                            this.$.grid.load();
+                        }
+                    });
+                }
+            }
+
+            __onEditorCloseTap() {
+                this.$.editor.close();
+            }
+
+            __onBackTap() {
+                this.set('route.path', '/settings');
+            }
+        }
+
+        customElements.define(ApprovalSuperior.is, ApprovalSuperior);
+    </script>
+</dom-module>

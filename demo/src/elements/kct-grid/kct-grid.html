@@ -660,11 +660,12 @@
                         () => {
                             let height = this.shadowRoot.querySelector('.grid-panel-body').clientHeight;
                             this.updateStyles({ '--grid-node-height': height + 'px' });
-                            if (this.__hasAutosizeColumn) {
+
+                            if (this.__hasAutosizeColumn && this.clientWidth > 0) {
                                 this.api.sizeColumnsToFit();
                             }
                         },
-                        1
+                        10
                     );
                     
                 }

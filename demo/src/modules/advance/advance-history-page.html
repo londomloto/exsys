@@ -14,6 +14,9 @@
                 height: 100%;
                 background-color: var(--paper-grey-100);
             }
+            [hidden] {
+                display: none;
+            }
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
@@ -61,6 +64,10 @@
                                 <div class="display-field">
                                     <label>Current Status: </label>
                                     <div>[[ record.advance.status_name ]]</div>
+                                </div>
+                                <div class="display-field" hidden$="[[ !record.advance.has_attachment ]]">
+                                    <label>Attachment: </label>
+                                    <div><a href="javascript:void(0)" on-tap="__onDownloadTap">Download</a></div>
                                 </div>
                             </div>
                         </kct-column>
@@ -174,6 +181,9 @@
             }
             __computeNo(index) {
                 return index + 1;
+            }
+            __onDownloadTap(){
+                this.$.ajax.DOWNLOAD('/advance/' + this.record.advance.id_adv + '/download');
             }
             __onBackTap() {
                 this.set('route.path', '/advance');

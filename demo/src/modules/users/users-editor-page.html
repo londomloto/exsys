@@ -82,15 +82,17 @@
                                 value="{{ record.su_position_id }}" 
                                 page-size="10" 
                                 item-label-path="pos_name" 
-                                item-value-path="pos_id"></kct-combobox>
+                                item-value-path="pos_id" 
+                                autoload></kct-combobox>
 
                             <kct-combobox 
                                 url="/grades" 
                                 label="Grade" 
                                 value="{{ record.su_grade_id }}" 
                                 page-size="10" 
-                                item-label-path="grade_code" 
-                                item-value-path="grade_id">
+                                item-label-path="grade_label" 
+                                item-value-path="grade_id" 
+                                autoload>
                                 <template>
                                     <style>
                                         .info { font-size: 13px; text-transform: uppercase; color: #777;  }

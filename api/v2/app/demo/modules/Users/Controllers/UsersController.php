@@ -17,6 +17,8 @@ class UsersController extends \Micro\Controller {
     
     public function createAction() {
         $post = $this->request->getJson();
+        $post['su_superior'] = $post['su_superior'] == '' ? NULL : $post['su_superior'];
+
         $user = new User();
 
         if (isset($post['su_passwd']) && ! empty($post['su_passwd'])) {
@@ -43,11 +45,12 @@ class UsersController extends \Micro\Controller {
 
         if ($query->data) {
             $post = $this->request->getJson();
+            $post['su_superior'] = $post['su_superior'] == '' ? NULL : $post['su_superior'];
 
             if (isset($post['su_passwd']) && ! empty($post['su_passwd'])) {
                 $post['su_passwd'] = $this->security->createHash($post['su_passwd']);
             }
-
+            
             if ($query->data->save($post)) {
                 if (isset($post['su_kanban'])) {
                     $query->data->saveKanban($post['su_kanban']);

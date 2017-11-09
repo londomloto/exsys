@@ -162,23 +162,34 @@ class User extends \Micro\Model {
             $array['su_position_name'] = $this->position->pos_name;
         }
 
-        $array['su_grade_desc'] = '';
         $array['su_grade_limit'] = 0;
+        $array['su_grade_code'] = '';
         $array['su_grade_type'] = '';
+        $array['su_grade_label'] = '';
 
         if ($this->grade) {
-            $array['su_grade_desc'] = $this->grade->grade_code;
+            $grade = $this->grade->toArray();
 
-            if ( ! empty($this->grade->grade_desc)) {
-                $array['su_grade_desc'] .= ' - '.$this->grade->grade_desc;
-            }
+            $array['su_grade_code']  = $grade['grade_code'];
+            $array['su_grade_label'] = $grade['grade_label'];
+            $array['su_grade_limit'] = $grade['grade_limit'];
 
-            $array['su_grade_limit'] = $this->grade->grade_limit;
-
-            if ($this->grade->approver == 1) {
+            if ($grade['approver'] == 1) {
                 $array['su_grade_type'] = 'approver';
-            } else if ($this->grade->verificator == 1) {
+            } else if ($grade['verificator'] == 1) {
                 $array['su_grade_type'] = 'verificator';
+            }
+        }
+
+        $array['su_superior_fullname'] = '';
+        $array['su_superior_gradel_label'] = '';
+
+        if ($this->superior) {
+            $array['su_superior_fullname'] = $this->superior->su_fullname;
+
+            if ($this->superior->grade) {
+                $grade = $this->superior->grade->toArray();
+                $array['su_superior_gradel_label'] = $grade['grade_label'];
             }
         }
 

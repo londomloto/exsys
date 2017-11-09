@@ -67,7 +67,7 @@ class Cost extends \Micro\Model {
         $coff = Currency::offset();
 
         $found = Cost::findFirst(array(
-            'item_id = :item: AND grade_id = :grade:',
+            'item_id = :item: AND grade_id = :grade: AND allow_over = 1',
             'bind' => array(
                 'item' => $itemId,
                 'grade' => $user->su_grade_id
