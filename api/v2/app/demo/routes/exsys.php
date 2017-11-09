@@ -75,7 +75,8 @@ Router::group(array(
     'middleware' => 'auth'
 ))
 ->post('/{id}/upload', 'uploadById')
-->post('/{id}/download', 'downloadById');
+->post('/{id}/download', 'downloadById')
+->post('/{id}/reschedule', 'rescheduleById');
 
 Router::group(array(
     'prefix' => '/tasks',

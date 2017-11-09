@@ -62,7 +62,8 @@
 
         <kct-vbox>
             <page-header-block title="Editor" description="Trip Request" icon="description">
-                <paper-button hidden$="[[ __tripIsPhantom ]]"  disabled="[[ __tripInvalid ]]" class="btn-primary" on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Update</paper-button>
+                <paper-button hidden$="[[ __tripIsPhantom ]]" disabled="[[ __tripInvalid ]]" class="btn-primary" on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Update</paper-button>
+                <paper-button hidden$="[[ __tripIsEmpty ]]" class="btn-cyan" on-tap="__onSendTap"><iron-icon icon="send"></iron-icon>&nbsp;Submit</paper-button>
             </page-header-block>
             <div class="flex scroll-y padding">
 
@@ -247,7 +248,7 @@
             <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to list" on-tap="__onBackTap"></paper-fab>
         </div>
 
-        <kct-dialog id="item-editor" title="Item Editor" width="500" height="100%" on-ready="__onEditorReady" scrollable>
+        <kct-dialog id="item-editor" title="Item Editor" width="400" height="100%" on-ready="__onEditorReady" scrollable>
             <template preserve-content>
                 <style include="theme-helper">
                     #master-item {
@@ -360,7 +361,8 @@
             static get observers() {
                 return [
                     '__purposesChanged(__purposes.*)',
-                    '__computePhantom(record.id_trip)'
+                    '__computePhantom(record.id_trip)',
+                    '__computeEmpty(items.*)'
                 ];
             }
             
@@ -368,6 +370,7 @@
                 super();
 
                 this.__tripIsPhantom = true;
+                this.__tripIsEmpty = true;
                 this.__purposes = [];
                 this.__comboPurposeRequired = false;
                 this.__stamping = false;
@@ -442,6 +445,9 @@
             }
             __computeVisa(visa) {
                 return visa == '1' ? 'Yes' : '-';
+            }
+            __computeEmpty() {
+                this.set('__tripIsEmpty', this.items.length == 0);
             }
             __purposesChanged() {
                 let required = this.__purposes.length > 0;
@@ -662,6 +668,16 @@
                         this.set('record.adv_desc', advance.adv_no + ' (' + advance.subject_adv + ')');
                     });
                 }
+            }
+            __onSendTap() {
+                this.confirm('Confirm', `Are you sure you want to submit this trip ?`).then(b => {
+                    if (b) {
+                        this.$.ajax.POST('/trips/' + this.record.id_trip + '/submit').then(() => {
+                            this.__dirty = true;
+                            this.__onBackTap();
+                        });
+                    }
+                }); 
             }
             __onBackTap() {
                 let path = this.__dirty ? '/trips?reload=yes' : '/trips';

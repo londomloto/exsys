@@ -4,9 +4,14 @@ namespace App\Trips\Models;
 use App\Users\Models\User,
     App\Trips\Models\History,
     App\Trips\Models\Task,
+    App\Trips\Models\Item,
     App\Statuses\Models\Status;
 
 class Trip extends \Micro\Model {
+
+    const STATUS_TICKET_ISSUED = 1;
+    const STATUS_TICKET_REJECTED = 2;
+    const STATUS_TICKET_RESCHEDULING = 2;
 
     public function initialize() {
         $this->hasOne(
@@ -150,10 +155,9 @@ class Trip extends \Micro\Model {
         }
         
         $data['amounts_formatted'] = number_format($data['amounts'], 2, ',', '.');
-        
+            
         $data['ticket_approvable'] = FALSE;
-        $data['ticket_approved'] = $this->ticket_status == 1 ? TRUE : FALSE;
-
+        
         foreach($this->items as $item) {
             if ( ! empty($item->transport_operator)) {
                 $data['ticket_approvable'] = TRUE;

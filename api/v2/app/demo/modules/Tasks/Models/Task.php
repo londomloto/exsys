@@ -127,7 +127,7 @@ class Task extends \Micro\Model {
                             $data['t_verb'] = 'Trip approval request';
                             break;
                         case 'trip-ticket':
-                            $data['t_verb'] = 'Ticket purchasing request';
+                            $data['t_verb'] = 'Ticket issuing request';
                             break;
                     }
                     

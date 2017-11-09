@@ -3,6 +3,7 @@ namespace App\Trips\Controllers;
 
 use App\Trips\Models\Trip,
     App\Trips\Models\History,
+    App\Trips\Models\Item,
     App\System\Models\Autonumber,
     App\Users\Models\User,
     App\Statuses\Models\Status;
@@ -189,11 +190,14 @@ class TripsController extends \Micro\Controller {
 
             // update trip status;
             $status = Status::val('ticket-issued');
-
-            $trip->ticket_status = 1;
             $trip->status = $status;
             $trip->save();
 
+            // update items status
+            foreach($trip->items as $item) {
+                $item->status = Item::STATUS_ISSUED;
+            }
+            
             // log history
             $history = new History();
             $history->id_trip = $trip->id_trip;
@@ -224,10 +228,10 @@ class TripsController extends \Micro\Controller {
 
             $status = Status::val('no-ticket');
 
-            $trip->ticket_status = 2;
+            $trip->ticket_status = Trip::STATUS_TICKET_REJECTED;
             $trip->status = $status;
             $trip->save();
-            
+
             // log history
             $history = new History();
             $history->id_trip = $trip->id_trip;

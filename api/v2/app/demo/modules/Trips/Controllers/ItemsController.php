@@ -1,7 +1,10 @@
 <?php
 namespace App\Trips\Controllers;
 
-use App\Trips\Models\Item;
+use App\Trips\Models\Item,
+    App\Trips\Models\ItemHistory,
+    App\Trips\Models\Trip,
+    App\Users\Models\User;
 
 class ItemsController extends \Micro\Controller {
 
@@ -87,6 +90,55 @@ class ItemsController extends \Micro\Controller {
         } else {
             throw new \Phalcon\Exception("Attachment doesn't exists!");
         }
+    }
+
+    public function rescheduleByIdAction($id) {
+        $query = Item::get($id);
+        $post = $this->request->getJson();
+
+        if ($query->data) {
+            $hist = $query->data->toArray();
+            $hist['status'] = Item::STATUS_RESCHEDULING;
+            $hist['history_date'] = date('Y-m-d H:i:s');
+            $item = new ItemHistory();
+            $item->save($hist);
+
+            $data = $query->data;
+            $data->status = Item::STATUS_RESCHEDULING;
+            $data->save($post);
+
+            // create ticketing tasks
+            if ($data->trip) {
+                $subscribers = User::findInRoles(array('ticketing'));
+
+                foreach($subscribers as $sub) {
+                    $task = \App\Tasks\Models\Task::findFirst(array(
+                        't_type = :type: AND t_link = :link:',
+                        'bind' => array(
+                            'type' => 'trip-ticket',
+                            'link' => $data->trip->id_trip
+                        )
+                    ));
+
+                    if ( ! $task) {
+                        $task = new \App\Tasks\Models\Task();
+                        
+                        $task->t_type = 'trip-ticket';
+                        $task->t_link = $data->trip->id_trip;
+                        $task->t_code = $data->trip->trip_no;
+                        $task->t_user = $sub->su_id;
+                        $task->t_date = date('Y-m-d H:i:s');
+                        $task->t_read = 0;
+
+                        $task->save();
+                    }
+
+                }
+            }
+            
+        }
+
+        return $query;
     }
 
 }

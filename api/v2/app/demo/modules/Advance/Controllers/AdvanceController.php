@@ -10,6 +10,7 @@ use App\Advance\Models\Advance,
 class AdvanceController extends \Micro\Controller {
 
     public function findAction() {
+
         $params = $this->request->getParams();
         $display = isset($params['display']) ? $params['display'] : FALSE;
         $user = $this->auth->user();
@@ -20,10 +21,16 @@ class AdvanceController extends \Micro\Controller {
             default:
                 return Advance::get()
                     ->join('App\Statuses\Models\Status', 'a.status_id = status', 'a', 'left')
+                    ->join('App\Types\Models\Type', 'b.type_id = type', 'b', 'left')
                     ->sortable()
                     ->filterable()
-                    ->andWhere('type <> :type:', array('type' => 1))
-                    ->andWhere('id_user = :user:', array('user' => $user['su_id'])) 
+                    ->andWhere(
+                        "id_user = :user: AND (b.type_code <> :type: OR (b.type_code = 'travelling' AND a.status_code NOT IN ('draft')))", 
+                        array(
+                            'user' => $user['su_id'],
+                            'type' => 'travelling'
+                        )
+                    )
                     ->paginate();
         }
     }

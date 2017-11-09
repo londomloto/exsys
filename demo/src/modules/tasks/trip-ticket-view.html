@@ -97,6 +97,7 @@
                                     <th>Destination</th>
                                     <th width="120">Transport</th>
                                     <th width="80">Visa</th>
+                                    <th width="80">Status</th>
                                     <th></th>
                                 </thead>
                                 <tbody>
@@ -111,6 +112,7 @@
                                             <td>[[ item.destination ]]</td>
                                             <td>[[ item.transport_name ]]</td>
                                             <td>[[ __computeVisa(item.visa) ]]</td>
+                                            <td>[[ item.status_name ]]</td>
                                             <td class="text-right">
                                                 <paper-button on-tap="__onTicketTap" class="btn-xs btn-primary">Issue</paper-button>
                                             </td>
