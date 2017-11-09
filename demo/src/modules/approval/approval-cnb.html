@@ -527,7 +527,7 @@
                 if (value) {
                     itemRecord = this.masterItems.find(elem => elem.item_id == value);
                     if (itemRecord && ! itemRecord.parent_id) {
-                        this.alert('Warning', `xxx`);
+                        this.alert('Warning', `Header can't be used as item`);
                         combo.value = '';
                     }
                 }
