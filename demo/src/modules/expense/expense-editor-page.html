@@ -699,7 +699,7 @@
                     '__typeChanged(expenseRecord.type)',
                     '__purposesChanged(__masterPurposes.*)',
                     '__computePhantom(expenseRecord.id_exp)',
-                    '__computePromo(expenseRecord.type)',
+                    '__computePromo(expenseRecord.id_exp, expenseRecord.type)',
                     '__computeEmpty(expenseItems.*)',
                     '__computeExpenseHasAdvance(expenseRecord.adv_ref)',
                     '__computeExpenseHasExchange(expenseRecord.id_exp, expenseRecord.adv_ref)'
@@ -790,6 +790,7 @@
             }
             __computePromo(type) {
                 this.set('__expenseIsPromo', false);
+
                 if (type && this.expenseRecord && this.expenseRecord.id_exp) {
                     let typeRecord = this.masterTypes.find(t => t.type_id == type);
                     if (typeRecord && typeRecord.is_promo) {
