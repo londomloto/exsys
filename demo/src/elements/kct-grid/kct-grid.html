@@ -17,6 +17,7 @@
 <link rel="import" href="../kct-media/kct-media.html">
 <link rel="import" href="../kct-ajax/kct-ajax.html">
 <link rel="import" href="../kct-layouts/kct-hbox.html">
+<link rel="import" href="kct-grid-action.html">
 
 <dom-module id="kct-grid">
     <template>
@@ -1068,7 +1069,7 @@
                         // we only aware on <a/>, <paper-icon-button/> and <paper-button/>
                         let button = path[0],
                             action = button.getAttribute('on-tap');
-
+                            
                         if ( ! action && path[2]) {
                             button = path[2];
                             action = button.getAttribute('on-tap');

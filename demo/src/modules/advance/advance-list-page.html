@@ -91,15 +91,15 @@
                                 renderer: (e) => {
                                     if (e.data) {
                                         let status = e.data.status_code;
-                                        let buttons = `<paper-button on-tap="__onViewTap" class="btn-muted btn-icon" title="View"><iron-icon icon="search"></iron-icon></paper-button>`;
+                                        let buttons = `<kct-grid-action on-tap="__onViewTap" icon="search" title="View record" rounded></kct-grid-action>`;
 
                                         if (status == 'draft' || status == 'change-request') {
                                             buttons += `
-                                                <paper-button on-tap="__onEditTap" class="btn-amber btn-icon" title="Edit"><iron-icon icon="image:edit"></iron-icon></paper-button>
-                                                <paper-button on-tap="__onDeleteTap" class="btn-danger btn-icon" title="Delete"><iron-icon icon="clear"></iron-icon></paper-button>
+                                                <kct-grid-action on-tap="__onEditTap" icon="image:edit" accent="amber" title="Edit record" rounded></kct-grid-action>
+                                                <kct-grid-action on-tap="__onDeleteTap" icon="clear" accent="red" title="Delete record" rounded></kct-grid-action>
                                             `;
                                             if (e.data.has_items) {
-                                                buttons += `<paper-button on-tap="__onSubmitTap" class="btn-cyan btn-icon" title="Submit"><iron-icon icon="send"></iron-icon></paper-button>`;
+                                                buttons += `<kct-grid-action on-tap="__onSubmitTap" title="Submit record" icon="send" accent="cyan" rounded></kct-grid-action>`;
                                             }
                                         }
                                         return buttons;
