@@ -1,0 +1,58 @@
+<link rel="import" href="../../../../bower_components/paper-card/paper-card.html">
+
+<dom-module id="trip-history-block">
+    <template>
+        <style include="theme-helper"></style>
+
+        <paper-card class="block">
+            <div class="card-content">
+
+                <h3 class="block-title">Trip History</h3>
+
+                <div class="table-responsive">
+                    <table  class="table striped">
+                        <thead>
+                            <th width="40" class="text-center">No.</th>
+                            <th width="120">Date</th>
+                            <th>History</th>
+                            <th>Responsible</th>
+                            <th>Notes</th>
+                        </thead>
+                        <tbody>
+                            <template is="dom-repeat" items="[[ record.history ]]">
+                                <tr>
+                                    <td  class="text-center">[[ __computeNo(index) ]]</td>
+                                    <td>[[ item.date_short ]]</td>
+                                    <td>[[ item.status_name ]]</td>
+                                    <td>[[ item.user_act_name ]]</td>
+                                    <td>[[ item.notes ]]</td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+                
+
+            </div>
+        </paper-card>
+    </template>
+    <script>
+        class TripHistoryBlock extends Polymer.Element {
+            static get is() {
+                return 'trip-history-block';
+            }
+
+            static get properties() {
+                return {
+                    record: { type: Object }
+                };
+            }
+
+            __computeNo(index) {
+                return index + 1;
+            }
+        }
+
+        customElements.define(TripHistoryBlock.is, TripHistoryBlock);
+    </script>
+</dom-module>

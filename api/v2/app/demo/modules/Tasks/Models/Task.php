@@ -112,7 +112,8 @@ class Task extends \Micro\Model {
                 break;
 
             case 'trip':
-            case 'trip-ticket':
+            case 'trip-ticket-request':
+            case 'trip-ticket-reschedule':
 
                 $trip = $this->getTrip();
 
@@ -126,8 +127,11 @@ class Task extends \Micro\Model {
                         case 'trip':
                             $data['t_verb'] = 'Trip approval request';
                             break;
-                        case 'trip-ticket':
-                            $data['t_verb'] = 'Ticket issuing request';
+                        case 'trip-ticket-request':
+                            $data['t_verb'] = 'Request for ticket issuance';
+                            break;
+                        case 'trip-ticket-reschedule':
+                            $data['t_verb'] = 'Request for ticket rescheduling';
                             break;
                     }
                     
@@ -181,6 +185,12 @@ class Task extends \Micro\Model {
             case 'advance':
                 $task->t_link = $data->id_adv;
                 $task->t_code = $data->adv_no;
+                break;
+            case 'trip':
+            case 'trip-ticket-request':
+            case 'trip-ticket-reschedule':
+                $task->t_link = $data->id_trip;
+                $task->t_code = $data->trip_no;
                 break;
         }
 

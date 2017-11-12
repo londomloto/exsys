@@ -44,4 +44,18 @@ class History extends \Micro\Model {
         return $data;
     }
 
+    public static function log($type, $trip, $notes = '') {
+        $user = \Micro\App::getDefault()->auth->user();
+
+        // log history
+        $data = new History();
+        
+        $data->id_trip = $trip->id_trip;
+        $data->status_id = $trip->status;
+        $data->user_act = $user['su_id'];
+        $data->date = date('Y-m-d H:i:s');
+        $data->notes = $notes;
+
+        $data->save();
+    }
 }

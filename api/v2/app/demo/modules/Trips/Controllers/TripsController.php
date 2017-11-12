@@ -174,71 +174,47 @@ class TripsController extends \Micro\Controller {
         );
     }
 
-    public function finishTicketByIdAction($id) {
+    public function acceptTicketByIdAction($id) {
         $trip = Trip::get($id)->data;
-        $user = $this->auth->user();
 
         if ($trip) {
-            // delete tasks
-            \App\Tasks\Models\Task::find(array(
-                't_type = :type: AND t_link = :link:',
-                'bind' => array(
-                    'type' => 'trip-ticket',
-                    'link' => $trip->id_trip
-                )
-            ))->delete();
-
-            // update trip status;
-            $status = Status::val('ticket-issued');
-            $trip->status = $status;
-            $trip->save();
-
-            // update items status
-            foreach($trip->items as $item) {
-                $item->status = Item::STATUS_ISSUED;
-            }
-            
-            // log history
-            $history = new History();
-            $history->id_trip = $trip->id_trip;
-            $history->status_id = $status;
-            $history->user_act = $user['su_id'];
-            $history->date = date('Y-m-d H:i:s');
-            $history->save();
+            $trip->acceptTicket();
         }
 
         return array(
             'success' => TRUE
         );
-    }   
+    }
+
+    public function acceptRescheduleByIdAction($id) {
+        $trip = Trip::get($id)->data;
+
+        if ($trip) {
+            $trip->acceptReschedule();
+        }
+
+        return array(
+            'success' => TRUE
+        );
+    }
 
     public function rejectTicketByIdAction($id) {
         $trip = Trip::get($id)->data;
-        $user = $this->auth->user();
-
+        
         if ($trip) {
-            // delete tasks
-            \App\Tasks\Models\Task::find(array(
-                't_type = :type: AND t_link = :link:',
-                'bind' => array(
-                    'type' => 'trip-ticket',
-                    'link' => $trip->id_trip
-                )
-            ))->delete();
+            $trip->rejectTicket();
+        }
 
-            $status = Status::val('no-ticket');
+        return array(
+            'success' => TRUE
+        );
+    }
 
-            $trip->ticket_status = Trip::STATUS_TICKET_REJECTED;
-            $trip->status = $status;
-            $trip->save();
-
-            // log history
-            $history = new History();
-            $history->id_trip = $trip->id_trip;
-            $history->status_id = $status;
-            $history->user_act = $user['su_id'];
-            $history->date = date('Y-m-d H:i:s');
-            $history->save();
+    public function rejectRescheduleByIdAction($id) {
+        $trip = Trip::get($id)->data;
+        
+        if ($trip) {
+            $trip->rejectReschedule();
         }
 
         return array(

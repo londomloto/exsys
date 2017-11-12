@@ -3,15 +3,17 @@ namespace App\Trips\Models;
 
 use App\Users\Models\User,
     App\Trips\Models\History,
-    App\Trips\Models\Task,
     App\Trips\Models\Item,
-    App\Statuses\Models\Status;
+    App\Statuses\Models\Status,
+    App\Tasks\Models\Task;
 
 class Trip extends \Micro\Model {
 
+    const STATUS_TICKET_REQUEST = 0;
     const STATUS_TICKET_ISSUED = 1;
     const STATUS_TICKET_REJECTED = 2;
-    const STATUS_TICKET_RESCHEDULING = 2;
+    const STATUS_TICKET_RESCHEDULING = 3;
+    const STATUS_TICKET_RESCHEDULED = 4;
 
     public function initialize() {
         $this->hasOne(
@@ -154,13 +156,12 @@ class Trip extends \Micro\Model {
             $data['adv_status_name'] = $advance['status_name'];
         }
         
-        $data['amounts_formatted'] = number_format($data['amounts'], 2, ',', '.');
-            
-        $data['ticket_approvable'] = FALSE;
-        
+        $data['amounts_formatted'] = \Micro\Helpers\Number::format($data['amounts']);
+        $data['ticket_issuable'] = FALSE;
+
         foreach($this->items as $item) {
-            if ( ! empty($item->transport_operator)) {
-                $data['ticket_approvable'] = TRUE;
+            if ($item->isIssuable()) {
+                $data['ticket_issuable'] = TRUE;
                 break;
             }
         }
@@ -169,35 +170,21 @@ class Trip extends \Micro\Model {
     }
 
     public function submit() {
-        $user = \Micro\App::getDefault()->auth->user();
+        // update status
+        $this->status = Status::val('submitted');
 
-        // create history
-        $history = new History();
-        $history->id_trip = $this->id_trip;
-        $history->status_id = Status::val('submitted');
-        $history->user_act = $user['su_id'];
-        $history->date = date('Y-m-d H:i:s');
+        if ($this->save()) {
+            // log history
+            History::log('trip', $this);
 
-        if ($history->save()) {
-            $this->status = $history->status_id;
-            $this->save();
+            // log tasks
+            $auth = \Micro\App::getDefault()->auth->user();
+            $user = User::get($auth['su_id'])->data;
 
-            $user = User::get($user['su_id'])->data;
+            $subscribers = $user->getSuperiors($this->getAmounts());
 
-            // entry task
-            $superiors = $user->getSuperiors($this->getAmounts());
-
-            foreach($superiors as $super) {
-                $task = new \App\Tasks\Models\Task();
-                
-                $task->t_type = 'trip';
-                $task->t_link = $this->id_trip;
-                $task->t_code = $this->trip_no;
-                $task->t_user = $super['user_id'];
-                $task->t_date = date('Y-m-d H:i:s');
-                $task->t_read = 0;
-
-                $task->save();
+            foreach($subscribers as $sub) {
+                Task::log('trip', $sub['user_id'], $this);
             }
 
             // submit advance if any
@@ -205,112 +192,66 @@ class Trip extends \Micro\Model {
                 $this->advance->submit();
             }
         }
+
     }
 
     public function reject($post = array()) {
-        $user = \Micro\App::getDefault()->auth->user();
         $prevStatus = $this->status;
 
-        \App\Tasks\Models\Task::find(array(
-            't_type = :type: AND t_link = :link:',
-            'bind' => array(
-                'type' => 'trip',
-                'link' => $this->id_trip
-            )
-        ))->delete();
-
-        $status = Status::val('reject');
-
-        // tambah history
-        $history = new History();
-        $history->id_trip = $this->id_trip;
-        $history->status_id = $status;
-        $history->user_act = $user['su_id'];
-        $history->date = date('Y-m-d H:i:s');
-        $history->notes = $post['notes'];
-
-        $history->save();
-
         // update status
-        $this->status = $status;
-        $this->save();
+        $this->status = Status::val('reject');
 
-        // sync advance
-        if ($this->advance && $this->advance->status == $prevStatus) {
-            $this->advance->reject($post);
+        if ($this->save()) {
+            // delete tasks
+            Task::find(array(
+                't_type = :type: AND t_link = :link:',
+                'bind' => array(
+                    'type' => 'trip',
+                    'link' => $this->id_trip
+                )
+            ))->delete();
+
+            // log history
+            History::log('trip', $this, $post['notes']);
+
+            // sync advance
+            if ($this->advance && $this->advance->status == $prevStatus) {
+                $this->advance->reject($post);
+            }
         }
+        
     }
 
     public function returned($post = array()) {
-        $user = \Micro\App::getDefault()->auth->user();
         $prevStatus = $this->status;
 
-        // delete tasks
-        \App\Tasks\Models\Task::find(array(
-            't_type = :type: AND t_link = :link:',
-            'bind' => array(
-                'type' => 'trip',
-                'link' => $this->id_trip
-            )
-        ))->delete();
-
-        $status = Status::val('change-request');
-
-        // tambah history
-        $history = new History();
-        $history->id_trip = $this->id_trip;
-        $history->status_id = $status;
-        $history->user_act = $user['su_id'];
-        $history->date = date('Y-m-d H:i:s');
-        $history->notes = $post['notes'];
-
-        $history->save();
-
         // update status
-        $this->status = $status;
-        $this->save();
+        $this->status = Status::val('change-request');
 
-        if ($this->advance && $this->advance->status == $prevStatus) {
-            $this->advance->returned($post);
+        if ($this->save()) {
+            // delete tasks
+            Task::find(array(
+                't_type = :type: AND t_link = :link:',
+                'bind' => array(
+                    'type' => 'trip',
+                    'link' => $this->id_trip
+                )
+            ))->delete();
+
+            // log history
+            History::log('trip', $this, $post['notes']);
+
+            if ($this->advance && $this->advance->status == $prevStatus) {
+                $this->advance->returned($post);
+            }
         }
     }
 
     public function approve($post = array()) {
-        $user = \Micro\App::getDefault()->auth->user();
         $prevStatus = $this->status;
+        $user = \Micro\App::getDefault()->auth->user();
 
-        // delete lower tasks 
-        if ($user['su_grade_type'] == 'verificator') {
-            
-            \App\Tasks\Models\Task::find(array(
-                't_type = :type: AND t_link = :link: AND t_user = :user:',
-                'bind' => array(
-                    'type' => 'trip',
-                    'link' => $this->id_trip,
-                    'user' => $user['su_id']
-                )
-            ))->delete();
-
-        } else if ($user['su_grade_type'] == 'approver') {
-            $tasks = \App\Tasks\Models\Task::get()
-                ->where('t_type = :type: AND t_link = :link: AND grade.grade_limit <= :amounts:', array(
-                    'type' => 'trip',
-                    'link' => $this->id_trip,
-                    'amounts' => (int) $user['su_grade_limit']
-                ))
-                ->join('App\Users\Models\User', 'user.su_id = App\Tasks\Models\Task.t_user', 'user')
-                ->join('App\Grades\Models\Grade', 'grade.grade_id = user.su_grade_id', 'grade')
-                ->execute();
-
-            foreach($tasks as $task) {
-                $task->delete();
-            }
-        }
-
-        // tambah history
-        $history = new History();
-        $history->id_trip = $this->id_trip;
-
+        // update status
         $status = NULL;
 
         if ($user['su_grade_type'] == 'verificator') {
@@ -323,46 +264,226 @@ class Trip extends \Micro\Model {
             }
         }
 
-        $history->status_id = $status;
-        $history->user_act = $user['su_id'];
-        $history->date = date('Y-m-d H:i:s');
-        $history->notes = $post['notes'];
-
-        $history->save();
-
-        // update status
         $this->status = $status;
-        $this->save();
 
-        // sync advance
-        if ($this->advance && $this->advance->status == $prevStatus) {
-            $this->advance->approve($post);
-        }
+        if ($this->save()) {
+            // delete lower tasks 
+            if ($user['su_grade_type'] == 'verificator') {
+                
+                Task::find(array(
+                    't_type = :type: AND t_link = :link: AND t_user = :user:',
+                    'bind' => array(
+                        'type' => 'trip',
+                        'link' => $this->id_trip,
+                        'user' => $user['su_id']
+                    )
+                ))->delete();
 
-        if ($this->status == Status::val('final-approved')) {
-            $this->requestTicket();
+            } else if ($user['su_grade_type'] == 'approver') {
+                $tasks = Task::get()
+                    ->where('t_type = :type: AND t_link = :link: AND grade.grade_limit <= :amounts:', array(
+                        'type' => 'trip',
+                        'link' => $this->id_trip,
+                        'amounts' => (int) $user['su_grade_limit']
+                    ))
+                    ->join('App\Users\Models\User', 'user.su_id = App\Tasks\Models\Task.t_user', 'user')
+                    ->join('App\Grades\Models\Grade', 'grade.grade_id = user.su_grade_id', 'grade')
+                    ->execute();
+
+                foreach($tasks as $task) {
+                    $task->delete();
+                }
+            }
+
+            // log history
+            History::log('trip', $this, $post['notes']);
+
+            // sync advance
+            if ($this->advance && $this->advance->status == $prevStatus) {
+                $this->advance->approve($post);
+            }
+
+            if ($this->status == Status::val('final-approved')) {
+                $this->requestTicket();
+            }
         }
     }
 
     public function requestTicket() {
+        // update ticket status
+        $this->ticket_status = self::STATUS_TICKET_REQUEST;
 
-        $user = \Micro\App::getDefault()->auth->user();
-        $subscribers = User::findInRoles(array('ticketing'));
+        if ($this->save()) {
+            // delegate task
+            $subscribers = User::findInRoles(array('ticketing'));
 
-        foreach($subscribers as $sub) {
-            $task = new \App\Tasks\Models\Task();
-                
-            $task->t_type = 'trip-ticket';
-            $task->t_link = $this->id_trip;
-            $task->t_code = $this->trip_no;
-            $task->t_user = $sub->su_id;
-            $task->t_date = date('Y-m-d H:i:s');
-            $task->t_read = 0;
+            foreach($subscribers as $sub) {
+                Task::log('trip-ticket-request', $sub->su_id, $this);
+            }
 
-            $task->save();
-
+            // update item status
+            foreach($this->items as $item) {
+                $item->status = Item::STATUS_REQUEST;
+                $item->save();
+            }
         }
-
+        
     }
 
+    public function acceptTicket() {
+        $user = \Micro\App::getDefault()->auth->user();
+        
+        Task::find(array(
+            't_type = :type: AND t_link = :link:',
+            'bind' => array(
+                'type' => 'trip-ticket-request',
+                'link' => $this->id_trip
+            )
+        ))->delete();
+
+        // update trip status;
+        $this->status = Status::val('ticket-issued');
+        $this->ticket_status = self::STATUS_TICKET_ISSUED;
+        $this->save();
+
+        // update items status
+        foreach($this->items as $item) {
+            if ($item->isIssuable()) {
+                $item->status = Item::STATUS_ISSUED;
+            } else {
+                $item->status = Item::STATUS_EMPTY;
+            }
+            $item->save();
+        }
+        
+        // log history
+        History::log('trip', $this);
+    }
+
+    public function acceptReschedule() {
+        $user = \Micro\App::getDefault()->auth->user();
+        
+        Task::find(array(
+            't_type = :type: AND t_link = :link:',
+            'bind' => array(
+                'type' => 'trip-ticket-reschedule',
+                'link' => $this->id_trip
+            )
+        ))->delete();
+
+        // update trip status;
+        $this->status = Status::val('ticket-issued');
+        $this->ticket_status = self::STATUS_TICKET_RESCHEDULED;
+        $this->save();
+
+        // update items status
+        foreach($this->items as $item) {
+            if ($item->isIssuable()) {
+                $item->status = Item::STATUS_RESCHEDULED;
+                $hist = $item->getLastHistory();
+                if ($hist) {
+                    $hist->status = Item::STATUS_CANCELED;
+                    $hist->save();
+                }
+            } else {
+                $item->status = Item::STATUS_EMPTY;
+            }
+            $item->save();
+        }
+        
+        // log history
+        History::log('trip', $this);
+    }
+
+    public function rescheduleTicket() {
+        $user = \Micro\App::getDefault()->auth->user();
+
+        Task::find(array(
+            't_type = :type: AND t_link = :link:',
+            'bind' => array(
+                'type' => 'trip-ticket-reschedule',
+                'link' => $this->id_trip
+            )
+        ))->delete();
+
+        // update trip status;
+        $this->status = Status::val('ticket-issued');
+        $this->ticket_status = self::STATUS_TICKET_RESCHEDULED;
+        $this->save();
+
+        // update items status
+        foreach($this->items as $item) {
+            if ($item->isIssuable()) {
+                $item->status = Item::STATUS_RESCHEDULED;
+            } else {
+                $item->status = Item::STATUS_EMPTY;
+            }
+            $item->save();
+        }
+        
+        // log history
+        History::log('trip', $this);
+    }
+
+    public function rejectTicket() {
+        // update status
+        $this->status = Status::val('no-ticket');
+        $this->ticket_status = self::STATUS_TICKET_REJECTED;
+
+        if ($this->save()) {
+            // delete tasks
+            Task::find(array(
+                't_type = :type: AND t_link = :link:',
+                'bind' => array(
+                    'type' => 'trip-ticket-request',
+                    'link' => $this->id_trip
+                )
+            ))->delete();
+
+            // update items
+            foreach($this->items as $item) {
+                $item->status = Item::STATUS_REJECT;
+                $item->save();
+            }
+
+            // log history
+            History::log('trip', $this);
+        }
+        
+    }
+
+    public function rejectReschedule() {
+        // update status
+        $this->status = Status::val('ticket-issued');
+        $this->ticket_status = self::STATUS_TICKET_ISSUED;
+
+        if ($this->save()) {
+            // delete tasks
+            Task::find(array(
+                't_type = :type: AND t_link = :link:',
+                'bind' => array(
+                    'type' => 'trip-ticket-reschedule',
+                    'link' => $this->id_trip
+                )
+            ))->delete();
+
+            // update items
+            foreach($this->items as $item) {
+                if ($item->isIssuable()) {
+                    $item->status = Item::STATUS_ISSUED;
+                    $hist = $item->getLastHistory();
+                    if ($hist) {
+                        $hist->delete();
+                    }
+                } else {
+                    $item->status = Item::STATUS_EMPTY;
+                }
+                $item->save();
+            }
+
+            // log history
+            History::log('trip', $this, "Reschedule not accepted and tickets have been reverted");
+        }
+        
+    }
 }

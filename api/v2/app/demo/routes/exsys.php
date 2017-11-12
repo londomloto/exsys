@@ -66,14 +66,17 @@ Router::group(array(
 ->post('/{id}/reject', 'rejectById')
 ->post('/{id}/approve', 'approveById')
 ->post('/{id}/returned', 'returnedById')
-->post('/{id}/finish-ticket', 'finishTicketById')
-->post('/{id}/reject-ticket', 'rejectTicketById');
+->post('/{id}/accept-ticket', 'acceptTicketById')
+->post('/{id}/accept-reschedule', 'acceptRescheduleById')
+->post('/{id}/reject-ticket', 'rejectTicketById')
+->post('/{id}/reject-reschedule', 'rejectRescheduleById');
 
 Router::group(array(
     'prefix' => '/trips/items',
     'handler' => 'App\Trips\Controllers\ItemsController',
     'middleware' => 'auth'
 ))
+->get('/{id}/history', 'historyById')
 ->post('/{id}/upload', 'uploadById')
 ->post('/{id}/download', 'downloadById')
 ->post('/{id}/reschedule', 'rescheduleById');

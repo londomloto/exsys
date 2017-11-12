@@ -1,0 +1,86 @@
+<link rel="import" href="../../../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../elements/kct-ajax/kct-ajax.html">
+
+<dom-module id="trip-header-block">
+    <template>
+        <style include="theme-helper">
+            [hidden] { display: none; }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <paper-card class="block">
+            <div class="card-content">
+                <h3 class="block-title">[[ record.trip.trip_no ]]</h3>
+                <kct-column columns="3" gutter="1.5rem">
+                    <div>
+                        <div class="display-field">
+                            <label>Subject: </label>
+                            <div>[[ record.trip.subject_trip ]]</div>
+                        </div>
+                        <div class="display-field">
+                            <label>Type: </label>
+                            <div>[[ record.trip.type_name ]]</div>
+                        </div>
+                        <div class="display-field">
+                            <label>Purpose: </label>
+                            <div>[[ record.trip.purpose_name ]]</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="display-field">
+                            <label>Proposed By: </label>
+                            <div>[[ record.trip.user_fullname ]]</div>
+                        </div>
+                        <div class="display-field">
+                            <label>Start Date: </label>
+                            <div>[[ record.trip.date_start_short ]]</div>
+                        </div>
+                        <div class="display-field">
+                            <label>End Date: </label>
+                            <div>[[ record.trip.date_end_short ]]</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="display-field" hidden$="[[ !record.trip.has_advance ]]">
+                            <label>Advance: </label>
+                            <div><a href="#" on-click="__onAdvanceTap">[[ record.trip.adv_no ]]</a> ([[ record.trip.adv_status_name ]])</div>
+                        </div>
+                        <div class="display-field">
+                            <label>Status: </label>
+                            <div>[[ record.trip.status_name ]]</div>
+                        </div>
+                        <div class="display-field" hidden$="[[ !record.trip.has_attachment ]]">
+                            <label>Attachment: </label>
+                            <div><a href="javascript:;" on-tap="__onDownloadTap">Download</a></div>
+                        </div>
+                    </div>
+                </kct-column>
+            </div>
+        </paper-card>
+    </template>
+    <script>
+        class TripHeaderBlock extends Polymer.Element {
+            static get is() {
+                return 'trip-header-block';
+            }
+
+            static get properties() {
+                return {
+                    record: { type: Object }
+                };
+            }
+
+            __onAdvanceTap(e) {
+                e.preventDefault();
+                this.set('route.path', '/advance/advance/view/' + this.record.trip.adv_ref);
+            }
+
+            __onDownloadTap() {
+                this.$.ajax.DOWNLOAD('/trips/' + this.record.trip.id_trip + '/download');
+            }
+        }
+
+        customElements.define(TripHeaderBlock.is, TripHeaderBlock);
+    </script>
+</dom-module>

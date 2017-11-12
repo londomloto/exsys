@@ -1,0 +1,70 @@
+<link rel="import" href="../../../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../elements/kct-ajax/kct-ajax.html">
+
+<dom-module id="trip-item-history-block">
+    <template>
+        <style include="theme-helper">
+            paper-card { display: block; margin-bottom: 15px;  }
+            paper-card h3 { font-weight: 400; margin-bottom: 15px; }
+            [hidden] { display: none;  }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <template is="dom-repeat" items="[[ history ]]">
+            <paper-card>
+                <div class="card-content">
+                    <h3>[[ item.transport_operator ]]</h3>
+                    <div class="display-field">
+                        <label>Status:</label>
+                        <div>[[ item.status_name ]]</div>
+                    </div>
+                    <div class="display-field">
+                        <label>Departure Date: </label>
+                        <div>[[ item.departure_date_formatted ]]</div>
+                    </div>
+                    <div class="display-field">
+                        <label>Departure Time: </label>
+                        <div>[[ item.transport_departure_time ]]</div>
+                    </div>
+                    <div class="display-field">
+                        <label>Transport Price:</label>
+                        <div>[[ item.transport_prices_formatted ]]</div>
+                    </div>
+                    <div class="display-field">
+                        <label>Origin:</label>
+                        <div>[[ item.origin ]]</div>
+                    </div>
+                    <div class="display-field">
+                        <label>Destination:</label>
+                        <div>[[ item.destination ]]</div>
+                    </div>
+                    <div class="display-field" hidden$="[[ !item.has_attachment ]]">
+                        <label>Attachment:</label>
+                        <div><a href="javascript:;" on-tap="__onDownloadTap">Download</a></div>
+                    </div>
+                    <div class="m-b"></div>
+                </div>
+            </paper-card>
+        </template>
+    </template>
+    <script>
+        class TripItemHistoryBlock extends Polymer.Element {
+            static get is() {
+                return 'trip-item-history-block';
+            }
+
+            static get properties() {
+                return {
+                    history: { type: Array }
+                };
+            }
+
+            __onDownloadTap(e) {
+                this.$.ajax.DOWNLOAD('/trips/items/' + e.model.item.trip_item_id + '/download');
+            }
+        }
+
+        customElements.define(TripItemHistoryBlock.is, TripItemHistoryBlock);
+    </script>
+</dom-module>
