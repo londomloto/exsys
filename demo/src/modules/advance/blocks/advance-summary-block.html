@@ -1,0 +1,50 @@
+<link rel="import" href="../../../../bower_components/paper-card/paper-card.html">
+
+<dom-module id="advance-summary-block">
+    <template>
+        <style include="theme-helper"></style>
+
+        <paper-card class="block">
+            <div class="card-content">
+                <h3 class="block-title">Advance Summary</h3>
+                <div class="table-responsive">
+                    <table class="table bordered">
+                        <thead>
+                            <tr>
+                                <th>Description</th>
+                                <th width="120" class="text-right">Amounts</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template is="dom-repeat" items="[[ record.summary ]]">
+                                <tr>
+                                    <td>[[ item.summary_label ]]</td>
+                                    <td class="text-right">[[ item.summary_value_formatted ]]</td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </paper-card>
+    </template>
+    <script>
+        class AdvanceSummaryBlock extends Polymer.Element {
+            static get is() {
+                return 'advance-summary-block';
+            }
+
+            static get properties() {
+                return {
+                    record: { type: Object }
+                };
+            }
+
+            __computeNo(index) {
+                return index + 1;
+            }
+        }
+
+        customElements.define(AdvanceSummaryBlock.is, AdvanceSummaryBlock);
+    </script>
+</dom-module>

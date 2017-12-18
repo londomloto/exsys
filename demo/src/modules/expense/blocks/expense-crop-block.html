@@ -1,0 +1,70 @@
+<link rel="import" href="../../../../bower_components/paper-card/paper-card.html">
+
+<dom-module id="expense-crop-block">
+    <template>
+        <style include="theme-helper">
+            tr.group-row,
+            tr.separator {
+                border-bottom: 1px solid #d0d0d0;
+            }
+            tr.separator td {
+                padding: 0;
+            }
+            td iron-icon {
+                --iron-icon-width: 18px;
+                --iron-icon-height: 18px;
+            }
+        </style>
+
+        <paper-card class="block">
+            <div class="card-content">
+                <h3 class="block-title">Crops Promotion</h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th width="40" class="text-center">No.</th>
+                                <th>Description</th>
+                                <th>Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template is="dom-repeat" items="[[ record.crops ]]" as="group">
+                                <tr class="group-row">
+                                    <td colspan="3"><iron-icon icon="label-outline"></iron-icon>&nbsp; [[ group.group_name ]]</td>
+                                </tr>
+                                <template is="dom-repeat" items="[[ group.group_items ]]">
+                                    <tr>
+                                        <td class="text-center">[[ item.crop_seq ]]</td>
+                                        <td>[[ item.seed_label ]]</td>
+                                        <td>[[ item.remarks ]]</td>
+                                    </tr>
+                                    <tr class="separator">
+                                        <td colspan="3"></td>
+                                    </tr>
+                                </template>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </paper-card>
+    </template>
+    <script>
+        class ExpenseCropBlock extends Polymer.Element {
+            static get is() {
+                return 'expense-crop-block';
+            }
+            static get properties() {
+                return {
+                    record: { type: Object }
+                };
+            }
+            __computeNo(index) {
+                return index + 1;
+            }
+        }
+
+        customElements.define(ExpenseCropBlock.is, ExpenseCropBlock);
+    </script>
+</dom-module>

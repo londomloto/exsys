@@ -17,6 +17,7 @@
 <link rel="import" href="../../elements/kct-layouts/kct-column.html">
 <link rel="import" href="../../elements/kct-form/kct-form-validator.html">
 <link rel="import" href="../../elements/kct-combobox/kct-combobox.html">
+<link rel="import" href="../../elements/kct-input/kct-input-number.html">
 <link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
 <link rel="import" href="../../helpers/node-helper.html">
 <link rel="import" href="../../helpers/date-helper.html">
@@ -47,16 +48,6 @@
                 padding: 0;
             }
 
-            tr.summary-row {
-                background-color: transparent !important;
-                border-bottom: 1px solid #f0f0f0;
-            }
-
-            tr.summary-row td {
-                /*font-weight: 500;*/
-
-            }
-
             td iron-icon {
                 --iron-icon-width: 18px;
                 --iron-icon-height: 18px;
@@ -79,7 +70,7 @@
         <kct-ajax id="ajax"></kct-ajax>
 
         <kct-vbox>
-            <page-header-block title="EDITOR" description="Expense Document" icon="description">
+            <page-header-block title="EDITOR" description="Expense document editing" icon="description">
                 <paper-button hidden$="[[ __expenseIsPhantom ]]"  disabled$="[[ __expenseInvalid ]]" class="btn-primary" on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Update</paper-button>
                 <paper-button hidden$="[[ __expenseIsEmpty ]]"  disabled$="[[ __expenseInvalid ]]" class="btn-cyan" on-tap="__onSendTap"><iron-icon icon="send"></iron-icon>&nbsp;Submit</paper-button>
             </page-header-block>
@@ -88,10 +79,18 @@
 
                 <paper-card class="block">
                     <div class="card-content">
-                        <h3 class="block-title">Expense Summary</h3>
+                        <h3 class="block-title">Expense</h3>
                         <kct-form-validator id="expense-validator" invalid="{{ __expenseInvalid }}" auto-validate>
-                            <vaadin-combo-box id="combo-advance" label="Advance Reference" value="{{ expenseRecord.adv_ref }}" items="[[ masterAdvance ]]" item-value-path="id_adv" item-label-path="subject_adv" on-change="__onComboAdvanceChange"></vaadin-combo-box>
-
+                            <kct-combobox 
+                                id="combo-advance" 
+                                url="/advance" 
+                                label="Advance Reference" 
+                                value="{{ expenseRecord.adv_ref }}" 
+                                item-value-path="id_adv" 
+                                item-label-path="subject_adv" 
+                                page-size="10" 
+                                on-change="__onComboAdvanceChange"></kct-combobox>
+                            
                             <div hidden$="[[ __expenseHidden ]]">
                                 <paper-input label="Subject" value="{{ expenseRecord.subject_exp }}" required auto-validate error-message="Subject is required"></paper-input>
                                 
@@ -99,19 +98,35 @@
                                     <vaadin-date-picker id="date-start" label="Start Date" value="{{ expenseRecord.date_start }}" required auto-validate error-message="Start date is required"></vaadin-date-picker>
                                     <vaadin-date-picker id="date-end" label="End Date" value="{{ expenseRecord.date_end }}" required auto-validate error-message="End date is required"></vaadin-date-picker>
                                 </kct-column>
-                                    
-                                <vaadin-combo-box 
-                                    id="combo-type" 
-                                    label="Type" 
-                                    value="{{ expenseRecord.type }}" 
-                                    items="[[ masterTypes ]]" 
-                                    item-value-path="type_id" 
-                                    item-label-path="type_name" 
-                                    on-change="__onComboTypeChange" 
-                                    required auto-validate error-message="Type is required"></vaadin-combo-box>
 
-                                <vaadin-combo-box id="combo-purpose" label="Purpose" value="{{ expenseRecord.purpose }}" items="[[ __masterPurposes ]]" item-value-path="type_id" item-label-path="type_name" hidden$="[[ !__comboPurposeRequired ]]" required$="[[ __comboPurposeRequired ]]" auto-validate error-message="Purpose is required"></vaadin-combo-box>
-                                <paper-input id="text-purpose" label="Purpose" value="{{ expenseRecord.other_purpose }}" hidden$="[[ __comboPurposeRequired ]]" required$="[[ !__comboPurposeRequired ]]" auto-validate error-message="Purpose is required"></paper-input>
+                                <kct-column columns="2" gutter="1.5rem" spacer="0px">
+                                    <div>
+                                        <vaadin-combo-box 
+                                            id="combo-type" 
+                                            label="Type" 
+                                            value="{{ expenseRecord.type }}" 
+                                            items="[[ masterTypes ]]" 
+                                            item-value-path="type_id" 
+                                            item-label-path="type_name" 
+                                            on-change="__onComboTypeChange" 
+                                            required auto-validate error-message="Type is required"></vaadin-combo-box>
+                                    </div>
+                                    <div>
+                                        <vaadin-combo-box 
+                                            id="combo-purpose" 
+                                            label="Purpose" 
+                                            value="{{ expenseRecord.purpose }}" 
+                                            items="[[ __masterPurposes ]]" 
+                                            item-value-path="type_id" 
+                                            item-label-path="type_name" 
+                                            hidden$="[[ !__comboPurposeRequired ]]" 
+                                            required$="[[ __comboPurposeRequired ]]" 
+                                            auto-validate 
+                                            error-message="Purpose is required"></vaadin-combo-box>
+
+                                        <paper-input id="text-purpose" label="Purpose" value="{{ expenseRecord.other_purpose }}" hidden$="[[ __comboPurposeRequired ]]" required$="[[ !__comboPurposeRequired ]]" auto-validate error-message="Purpose is required"></paper-input>
+                                    </div>
+                                </kct-column>
 
                                 <div hidden$="[[ __expenseIsTravelling ]]">
                                     <kct-column columns="2" gutter="1.5rem" spacer="0px">
@@ -154,26 +169,34 @@
                             <paper-button on-tap="__onAddCropTap" class="btn-sm btn-primary"><iron-icon icon="add"></iron-icon>&nbsp;Add Crop</paper-button>
                         </div>
                         <div class="table-responsive">
-                            <table class="table striped">
+                            <table class="table">
                                 <thead>
                                     <tr>
                                         <th width="40" class="text-center">No.</th>
-                                        <th>Crop Item</th>
+                                        <th>Description</th>
                                         <th>Remarks</th>
                                         <td width="120"></td>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <template is="dom-repeat" items="[[ expenseCrops ]]">
-                                        <tr>
-                                            <td class="text-center">[[ __computeNo(index) ]]</td>
-                                            <td>[[ item.seed_label ]]</td>
-                                            <td>[[ item.remarks ]]</td>
-                                            <td class="text-right">
-                                                <paper-button on-tap="__onEditCropTap" class="btn-xs btn-amber">Edit</paper-button>
-                                                <paper-button on-tap="__onDeleteCropTap" class="btn-xs btn-danger">Delete</paper-button>
-                                            </td>
+                                    <template is="dom-repeat" items="[[ expenseCrops ]]" as="group">
+                                        <tr class="group-row">
+                                            <td colspan="4"><iron-icon icon="label-outline"></iron-icon>&nbsp; [[ group.group_name ]]</td>
                                         </tr>
+                                        <template is="dom-repeat" items="[[ group.group_items ]]">
+                                            <tr>
+                                                <td class="text-center">[[ item.crop_seq ]]</td>
+                                                <td>[[ item.seed_label ]]</td>
+                                                <td>[[ item.remarks ]]</td>
+                                                <td class="text-right">
+                                                    <paper-button on-tap="__onEditCropTap" class="btn-xs btn-amber">Edit</paper-button>
+                                                    <paper-button on-tap="__onDeleteCropTap" class="btn-xs btn-danger">Delete</paper-button>
+                                                </td>
+                                            </tr>
+                                            <tr class="separator">
+                                                <td colspan="4"></td>
+                                            </tr>
+                                        </template>
                                     </template>
                                 </tbody>
                             </table>
@@ -329,36 +352,6 @@
                     
                 </paper-card>
 
-                <paper-card class="block" hidden$="[[ __expenseIsPhantom ]]">
-                    <div class="card-content">
-                        <h3 class="block-title">Expense Summary</h3>
-                        <div class="table-responsive">
-                            <table class="table bordered">
-                                <thead>
-                                    <tr>
-                                        <th>Description</th>
-                                        <th class="text-right">Amounts</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <template is="dom-repeat" items="[[ expenseSummary.expense ]]">
-                                        <tr>
-                                            <td>[[ item.expense_label ]]</td>
-                                            <td class="text-right">[[ item.expense_value_formatted ]]</td>
-                                        </tr>
-                                    </template>
-                                    <template is="dom-repeat" items="[[ expenseSummary.remains ]]">
-                                        <tr>
-                                            <td>[[ item.remains_label ]]</td>
-                                            <td class="text-right">[[ item.remains_value_formatted ]]</td>
-                                        </tr>
-                                    </template>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </paper-card>
-
                 <paper-card class="block" hidden$="[[ !__expenseIsPhantom ]]">
                     <div class="card-content">
                         <kct-hbox>
@@ -440,20 +433,23 @@
                             on-change="__onCurrencyChange" 
                             required auto-validate error-message="Currency is required"></vaadin-combo-box>
 
-                        <paper-input 
-                            allowed-pattern="[0-9.]" 
+                        <kct-input-number 
                             label="Amounts" 
+                            mask="#.###,00" 
                             value="{{ itemRecord.amounts }}" 
-                            allowed-pattern="[0-9.]" 
-                            required auto-validate error-message="Amounts is required"></paper-input>
+                            required 
+                            auto-validate 
+                            error-message="Amounts is required"></kct-input-number>
 
                         <vaadin-combo-box 
                             label="Payment Type" 
                             value="{{ itemRecord.payment_type }}" 
                             items="[[ masterPayments ]]" 
-                            item-value-path="id" 
-                            item-label-path="text" 
-                            required auto-validate error-message="Payment type is required"></vaadin-combo-box>
+                            item-value-path="pym_id" 
+                            item-label-path="pym_name" 
+                            required 
+                            auto-validate 
+                            error-message="Payment type is required"></vaadin-combo-box>
                     </kct-form-validator>
                     
                 </div>
@@ -500,19 +496,21 @@
                             </div>
                         </kct-column>
 
-                        <paper-input 
+                        <kct-input-number 
                             label="Amounts" 
                             value="{{ itemRecord.amounts }}" 
-                            allowed-pattern="[0-9.]" 
-                            required auto-validate error-message="Amounts is required"></paper-input>
+                            mask="#.###,00" 
+                            required auto-validate error-message="Amounts is required"></kct-input-number>
 
                         <vaadin-combo-box 
                             label="Payment Type" 
                             value="{{ itemRecord.payment_type }}" 
                             items="[[ masterPayments ]]" 
-                            item-value-path="id" 
-                            item-label-path="text" 
-                            required auto-validate error-message="Payment type is required"></vaadin-combo-box> 
+                            item-value-path="pym_id" 
+                            item-label-path="pym_name" 
+                            required 
+                            auto-validate 
+                            error-message="Payment type is required"></vaadin-combo-box> 
 
                     </kct-form-validator>
                 </div>
@@ -550,14 +548,14 @@
                                     on-change="__onComboExchangeChange"></vaadin-combo-box>
                             </div>
                             <div>
-                                <paper-input 
+                                <kct-input-number 
                                     label="Amounts" 
+                                    mask="#.###,00" 
                                     value="{{ exchangeRecord.from_amounts }}" 
-                                    allowed-pattern="[0-9.]" 
                                     required 
                                     auto-validate 
                                     error-message="Amounts is required" 
-                                    on-change="__onInputExchangeChange"></paper-input>
+                                    on-change="__onInputExchangeChange"></kct-input-number>
                             </div>
                         </kct-column>
 
@@ -575,27 +573,27 @@
                                     on-change="__onComboExchangeChange"></vaadin-combo-box>
                             </div>
                             <div>
-                                <paper-input 
+                                <kct-input-number 
                                     label="Amounts" 
+                                    mask="#.###,00" 
                                     value="{{ exchangeRecord.to_amounts }}" 
-                                    allowed-pattern="[0-9.]" 
                                     required 
                                     auto-validate 
                                     error-message="Amounts is required" 
-                                    on-change="__onInputExchangeChange"></paper-input>
+                                    on-change="__onInputExchangeChange"></kct-input-number>
                             </div>
                         </kct-column>
 
                         <kct-column columns="2" gutter="1.5rem" spacer="0px">
                             <div></div>
                             <div>
-                                <paper-input 
+                                <kct-input-number 
                                     label="Exchange Rates" 
+                                    mask="#.###,000000" 
                                     value="{{ exchangeRecord.rates }}" 
-                                    allowed-pattern="[0-9.]" 
                                     required 
                                     auto-validate 
-                                    error-message="Rates is required"></paper-input>
+                                    error-message="Rates is required"></kct-input-number>
                             </div>
                         </kct-column>
 
@@ -674,24 +672,16 @@
                     expenseCurrencies: { type: Array, value: () => ([]) },
                     expenseCrops: { type: Array, value: () => ([]) },
                     offsetCurrencies: { type: Array, value: () => ([]) },
-                    expenseSummary: { type: Array, value: () => ({}) },
                     itemRecord: { type: Object },
                     exchangeRecord: { type: Object },
                     dynamicRecord: { type: Object, value: () => ({}) },
                     cropRecord: { type: Object },
 
                     masterItems: { type: Array, value: () => ([]) },
-                    masterAdvance: { type: Array, value: () => ([]) },
                     masterPurposes: { type: Array },
                     masterTypes: { type: Array },
                     masterCurrencies: { type: Array },
-                    masterPayments: {
-                        type: Array,
-                        value: [
-                            { id: '1', text: 'Cash' },
-                            { id: '2', text: 'Corporate Credit Card' }
-                        ]
-                    }
+                    masterPayments: { type: Array }
                 };
             }
             static get observers() {
@@ -741,10 +731,14 @@
                     this.set('masterCurrencies', res.data);
                 });
 
+                // load master payments
+                this.$.ajax.GET('/payments').then(res => {
+                    this.set('masterPayments', res.data);
+                });
+
                 this.set('expenseItems', []);
                 this.set('expenseExchanges', []);
                 this.set('expenseCrops', []);
-                this.set('expenseSummary', {});
 
                 this.__dirty = false;
 
@@ -834,23 +828,23 @@
             }
             __loadReferences() {
                 return Promise.all([
-                    loadAdvance.bind(this)(),
-                    loadTypes.bind(this)(),
-                    loadPurposes.bind(this)()
-                ]);
-
-                function loadAdvance() {
-                    return this.$.ajax.GET('/advance', {
+                    this.$['combo-advance'].load({
                         params: { 
                             status_code: ['IN', ['fa-approved', 'paid']],
                             is_open: 1
                         }
-                    }).then(res => {
-                        let advance = [{ id_adv: '0', subject_adv: 'None' }];
-                        Array.prototype.push.apply(advance, res.data);
-                        this.set('masterAdvance', advance);
-                    });
-                }
+                    }).then(() => {
+                        let combo = this.$['combo-advance'];
+                        if (combo.paging.page == 1) {
+                            let items = (combo.items || []).slice();
+                            items.unshift({ id_adv: '0', subject_adv: 'NONE' });
+                            combo.items = items;
+                        }
+                        return;
+                    }),
+                    loadTypes.bind(this)(),
+                    loadPurposes.bind(this)()
+                ]);
 
                 function loadTypes() {
                     return this.$.ajax.GET('/types').then(res => {
@@ -889,7 +883,6 @@
                     expense: this.expenseRecord.id_exp 
                 }).then(res => {
                     this.set('expenseItems', res.data);
-                    this.__loadSummary();
                 });
             }
             __loadExchanges() {
@@ -898,15 +891,13 @@
                     this.set('expenseExchanges', res.data);
                 });
             }
-            __loadSummary() {
-                this.set('expenseSummary', {});
-                this.$.ajax.GET('/expense/' + this.expenseRecord.id_exp + '/summary').then(res => {
-                    this.set('expenseSummary', res.data);
-                });
-            }
             __loadCrops() {
                 this.set('expenseCrops', []);
-                this.$.ajax.GET('/expense/crops', { expense: this.expenseRecord.id_exp }).then(res => {
+
+                this.$.ajax.GET('/expense/crops', { 
+                    expense: this.expenseRecord.id_exp,
+                    display: 'group'
+                }).then(res => {
                     this.set('expenseCrops', res.data);
                 });
             }
@@ -945,10 +936,14 @@
                                 files: [
                                     { name: this.attachment.name, file: this.attachment }
                                 ]
-                            }).then(() => {
+                            }).then((r) => {
+                                this.set('attachment', null);
+                                this.set('expenseRecord.attachment', r.data.attachment);
                                 def.resolve();
                             });
                         } else {
+                            this.set('expenseRecord.attachment', res.data.attachment);
+                            this.set('attachment', null);
                             def.resolve();
                         }
                     }
@@ -1039,7 +1034,7 @@
             }
             __onComboAdvanceChange(e) {
                 let ref = e.target.value;
-                let adv = this.masterAdvance.find(elem => elem.id_adv == ref);
+                let adv = e.target.getModelForValue(ref);
                 this.set('__expenseHidden', false);
 
                 // reset first
@@ -1081,7 +1076,7 @@
             }
             __onSendTap() {
                 let record = this.expenseRecord;
-                this.confirm('Confirm', `Are you sure you want to submit ${record.exp_no} ?`).then(b => {
+                this.confirm('Confirm', `Are you sure you want to submit this expense?`).then(b => {
                     if (b) {
                         this.$.ajax.POST('/expense/' + record.id_exp + '/submit').then(() => {
                             this.__dirty = true;
@@ -1168,7 +1163,9 @@
             }
             __onItemEditorSaveTap() {
                 
-                
+                this.set('__itemInvalid', true);
+                this.set('__fixedInvalid', true);
+
                 let data = this.itemRecord;
                 data.id_exp = this.expenseRecord.id_exp;
 
@@ -1183,6 +1180,10 @@
                 }
 
                 function done(res) {
+
+                    this.set('__itemInvalid', false);
+                    this.set('__fixedInvalid', false);
+
                     if (res.success) {
 
                         if (this.__expenseIsTravelling) {
@@ -1262,7 +1263,6 @@
                         this.$.ajax.DELETE('/expense/exchanges/' + e.model.item.exp_exchange_id).then(() => {
                             this.__loadExchanges();
                             this.__loadItems();
-                            this.__loadSummary();
                         });
                     }
                 });
@@ -1316,7 +1316,6 @@
                     if (res.success) {
                         this.__loadExchanges();
                         this.__loadItems();
-                        this.__loadSummary();
                     }
                 }
             }
@@ -1353,8 +1352,8 @@
                 let value = e.target.value;
                 if (value) {
                     let crop = e.target.getModelForValue(value);
-                    if (crop && ( ! crop.parent_id)) {
-                        this.alert('Warning', `You select parent item`);
+                    if (crop && (crop.parent_id == '0')) {
+                        this.alert('Warning', `Selection on parent item is not allowed`);
                         e.target.value = '';
                     }
                 }

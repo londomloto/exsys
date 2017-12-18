@@ -3,6 +3,17 @@ namespace App\Seeds\Models;
 
 class Seed extends \Micro\Model {
 
+    public function initialize() {
+        $this->hasOne(
+            'parent_id',
+            'App\Seeds\Models\Seed',
+            'seed_id',
+            array(
+                'alias' => 'Parent'
+            )
+        );
+    }
+
     public function getSource() {
         return 'master_seed';
     }

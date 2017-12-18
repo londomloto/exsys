@@ -1,11 +1,14 @@
 
-<link rel="import" href="../../../bower_components/paper-card/paper-card.html">
 <link rel="import" href="../../../bower_components/paper-fab/paper-fab.html">
 <link rel="import" href="../../elements/kct-view/kct-view.html">
 <link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../../elements/kct-layouts/kct-vbox.html">
 <link rel="import" href="../../elements/kct-layouts/kct-column.html">
 <link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
+<link rel="import" href="blocks/advance-header-block.html">
+<link rel="import" href="blocks/advance-summary-block.html">
+<link rel="import" href="blocks/advance-history-block.html">
+<link rel="import" href="blocks/advance-detail-block.html">
 
 <dom-module id="advance-history-page">
     <template>
@@ -14,142 +17,20 @@
                 height: 100%;
                 background-color: var(--paper-grey-100);
             }
-            [hidden] {
-                display: none;
-            }
         </style>
 
         <kct-ajax id="ajax"></kct-ajax>
 
         <kct-vbox>
-            <page-header-block icon="event" description="Advance History">
-                
-            </page-header-block>
+            <page-header-block icon="event" description="Advance History"></page-header-block>
 
             <div class="flex scroll-y padding">
 
-                <paper-card class="block">
-                    <div class="card-content">
-                        <h3 class="block-title">[[ record.advance.adv_no ]]</h3>
-                        <kct-column columns="3" gutter="1.5rem">
-                            <div>
-                                <div class="display-field">
-                                    <label>Subject: </label>
-                                    <div>[[ record.advance.subject_adv ]]</div>
-                                </div>
-                                <div class="display-field">
-                                    <label>Type: </label>
-                                    <div>[[ record.advance.type_name ]]</div>
-                                </div>
-                                <div class="display-field">
-                                    <label>Purpose: </label>
-                                    <div>[[ record.advance.purpose_name ]]</div>
-                                </div>
-                            </div>
-                            <div>
-                                <div class="display-field">
-                                    <label>Proposed By: </label>
-                                    <div>[[ record.advance.user_fullname ]]</div>
-                                </div>
-                                <div class="display-field">
-                                    <label>Start Date: </label>
-                                    <div>[[ record.advance.date_start_short ]]</div>
-                                </div>
-                                <div class="display-field">
-                                    <label>End Date: </label>
-                                    <div>[[ record.advance.date_end_short ]]</div>
-                                </div>
-                            </div>
-                            <div>
-                                <div class="display-field">
-                                    <label>Current Status: </label>
-                                    <div>[[ record.advance.status_name ]]</div>
-                                </div>
-                                <div class="display-field" hidden$="[[ !record.advance.has_attachment ]]">
-                                    <label>Attachment: </label>
-                                    <div><a href="javascript:void(0)" on-tap="__onDownloadTap">Download</a></div>
-                                </div>
-                            </div>
-                        </kct-column>
-                    </div>
-                </paper-card>
+                <advance-header-block record="[[ record ]]"></advance-header-block>
+                <advance-detail-block record="[[ record ]]"></advance-detail-block>
+                <advance-summary-block record="[[ record ]]"></advance-summary-block>
+                <advance-history-block record="[[ record ]]"></advance-history-block>
 
-                <paper-card  class="block">
-                    <div class="card-content">
-                        <h3 class="block-title">Advance Items</h3>
-
-                        <div class="table-responsive">
-                            <table class="table striped">
-                                <thead>
-                                    <th width="40" class="text-center">No.</th>
-                                    <th>Description</th>
-                                    <th width="100">Currency</th>
-                                    <th width="120" class="text-right">Amounts</th>
-                                </thead>
-                                <tbody>
-                                    <template is="dom-repeat" items="[[ record.items ]]">
-                                        <tr>
-                                            <td class="text-center">[[ __computeNo(index) ]]</td>
-                                            <td>[[ item.description ]]</td>
-                                            <td>[[ item.currency_code ]]</td>
-                                            <td class="text-right">[[ item.amounts_formatted ]]</td>
-                                        </tr>
-                                    </template>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        
-                    </div>
-                </paper-card>
-
-                <paper-card class="block">
-                    <div class="card-content">
-                        <h3 class="block-title">Advance Summary</h3>
-                        <div class="table-responsive">
-                            <table class="table bordered">
-                                <tbody>
-                                    <template is="dom-repeat" items="[[ record.summary ]]">
-                                        <tr>
-                                            <td>[[ item.summary_label ]]</td>
-                                            <td class="text-right">[[ item.summary_value_formatted ]]</td>
-                                        </tr>
-                                    </template>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </paper-card>
-
-                <paper-card class="block">
-                    <div class="card-content">
-                        <h3 class="block-title">Advance History</h3>
-                        <div class="table-responsive">
-                            <table class="table striped">
-                                <thead>
-                                    <th width="40" class="text-center">No.</th>
-                                    <th width="120">Date</th>
-                                    <th>History</th>
-                                    <th>User</th>
-                                    <th>Notes</th>
-                                </thead>
-                                <tbody>
-                                    <template is="dom-repeat" items="[[ record.history ]]">
-                                        <tr>
-                                            <td class="text-center">[[ __computeNo(index) ]]</td>
-                                            <td>[[ item.date_short ]]</td>
-                                            <td>[[ item.status_name ]]</td>
-                                            <td>[[ item.user_act_name ]]</td>
-                                            <td>[[ item.notes ]]</td>
-                                        </tr>
-                                    </template>
-                                </tbody>
-                            </table>
-                        </div>
-                        
-
-                    </div>
-                </paper-card>
             </div>
         </kct-vbox>
 
@@ -181,9 +62,6 @@
             }
             __computeNo(index) {
                 return index + 1;
-            }
-            __onDownloadTap(){
-                this.$.ajax.DOWNLOAD('/advance/' + this.record.advance.id_adv + '/download');
             }
             __onBackTap() {
                 this.set('route.path', '/advance');

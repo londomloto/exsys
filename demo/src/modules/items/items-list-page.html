@@ -89,7 +89,7 @@
                                     if (e.data) {
                                         let buttons = '';
                                         buttons += `<paper-button class="btn-amber" on-tap="__onItemEditTap"><iron-icon icon="image:edit"></iron-icon>&nbsp;Edit</paper-button>`;
-                                        if (e.data.parent_id) {
+                                        if ( ! e.data.is_root) {
                                             buttons += `<paper-button class="btn-cyan" on-tap="__onItemFormTap"><iron-icon icon="description"></iron-icon>&nbsp;Form</paper-button>`;
                                         }
                                         return buttons;
@@ -138,7 +138,7 @@
 
             __loadParents() {
                 return this.$.ajax.GET('/items?display=parent').then(res => {
-                    let parents = [{ item_id: '', item_name: 'No Parent' }];
+                    let parents = [{ item_id: '0', item_name: 'NONE' }];
                     Array.prototype.push.apply(parents, res.data);
                     this.set('__parents', parents);
                 });

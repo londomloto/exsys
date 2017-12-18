@@ -23,6 +23,13 @@ Router::group(array(
 ->post('/{id}/refund-returned', 'refundReturnedById');
 
 Router::group(array(
+    'prefix' => '/advance/items',
+    'handler' => 'App\Advance\Controllers\ItemsController',
+    'middleware' => 'auth'
+))
+->get('/{id}/history', 'historyById');
+
+Router::group(array(
     'prefix' => '/advance/refund',
     'handler' => 'App\Advance\Controllers\RefundController',
     'middleware' => 'auth'
@@ -55,6 +62,13 @@ Router::group(array(
 ->post('/{id}/fa-returned', 'faReturnedById');
 
 Router::group(array(
+    'prefix' => '/expense/items',
+    'handler' => 'App\Expense\Controllers\ItemsController',
+    'middleware' => 'auth'
+))
+->get('/{id}/history', 'historyById');
+
+Router::group(array(
     'prefix' => '/trips',
     'handler' => 'App\Trips\Controllers\TripsController',
     'middleware' => 'auth'
@@ -80,6 +94,13 @@ Router::group(array(
 ->post('/{id}/upload', 'uploadById')
 ->post('/{id}/download', 'downloadById')
 ->post('/{id}/reschedule', 'rescheduleById');
+
+Router::group(array(
+    'prefix' => '/trips/items-history',
+    'handler' => 'App\Trips\Controllers\ItemsHistoryController',
+    'middleware' => 'auth'
+))
+->post('/{id}/download', 'downloadById');
 
 Router::group(array(
     'prefix' => '/tasks',

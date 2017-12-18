@@ -76,54 +76,68 @@
                             <paper-input label="Subject" value="{{ record.subject_trip }}" required auto-validate error-message="Subject is required"></paper-input>
                                 
                             <kct-column columns="2" gutter="1.5rem" spacer="0px">
-                                <vaadin-date-picker label="Start Date" value="{{ record.date_start }}" required auto-validate error-message="Start date is required"></vaadin-date-picker>
-                                <vaadin-date-picker label="End Date" value="{{ record.date_end }}" required auto-validate error-message="End date is required"></vaadin-date-picker>
+                                <div>
+                                    <vaadin-date-picker label="Start Date" value="{{ record.date_start }}" required auto-validate error-message="Start date is required"></vaadin-date-picker>
+                                </div>
+                                <div>
+                                    <vaadin-date-picker label="End Date" value="{{ record.date_end }}" required auto-validate error-message="End date is required"></vaadin-date-picker>
+                                </div>
                             </kct-column>
-                                
-                            <vaadin-combo-box 
-                                id="combo-type"
-                                label="Type" 
-                                value="{{ record.type }}"
-                                items="[[ types ]]" 
-                                item-value-path="type_id" 
-                                item-label-path="type_name" 
-                                on-change="__onTypeChange" 
-                                required 
-                                auto-validate 
-                                error-message="Type is required"></vaadin-combo-box>
 
-                            <vaadin-combo-box
-                                id="combo-purpose" 
-                                label="Purpose" 
-                                value="{{ record.purpose }}" 
-                                items="[[ __purposes ]]" 
-                                item-value-path="type_id" 
-                                item-label-path="type_name" 
-                                hidden$="[[ !__comboPurposeRequired ]]" 
-                                required$="[[ __comboPurposeRequired ]]" 
-                                auto-validate 
-                                error-message="Purpose is required"></vaadin-combo-box>
+                            <kct-column  columns="2" gutter="1.5rem" spacer="0px">
+                                <div>
+                                    <vaadin-combo-box 
+                                        id="combo-type"
+                                        label="Type" 
+                                        value="{{ record.type }}"
+                                        items="[[ types ]]" 
+                                        item-value-path="type_id" 
+                                        item-label-path="type_name" 
+                                        on-change="__onTypeChange" 
+                                        required 
+                                        auto-validate 
+                                        error-message="Type is required"></vaadin-combo-box>
+                                </div>
+                                <div>
+                                    <vaadin-combo-box
+                                        id="combo-purpose" 
+                                        label="Purpose" 
+                                        value="{{ record.purpose }}" 
+                                        items="[[ __purposes ]]" 
+                                        item-value-path="type_id" 
+                                        item-label-path="type_name" 
+                                        hidden$="[[ !__comboPurposeRequired ]]" 
+                                        required$="[[ __comboPurposeRequired ]]" 
+                                        auto-validate 
+                                        error-message="Purpose is required"></vaadin-combo-box>
 
-                            <paper-input 
-                                id="text-purpose" 
-                                label="Purpose" 
-                                value="{{ record.other_purpose }}" 
-                                hidden$="[[ __comboPurposeRequired ]]" 
-                                required$="[[ !__comboPurposeRequired ]]" 
-                                auto-validate 
-                                error-message="Purpose is required"></paper-input>
+                                    <paper-input 
+                                        id="text-purpose" 
+                                        label="Purpose" 
+                                        value="{{ record.other_purpose }}" 
+                                        hidden$="[[ __comboPurposeRequired ]]" 
+                                        required$="[[ !__comboPurposeRequired ]]" 
+                                        auto-validate 
+                                        error-message="Purpose is required"></paper-input>
+                                </div>
+                            </kct-column>
 
-                            <vaadin-combo-box 
-                                label="Trip Type" 
-                                value="{{ record.trip }}" 
-                                items="[[ tripTypes ]]" 
-                                item-value-path="value" 
-                                item-label-path="label" 
-                                required 
-                                auto-validate 
-                                error-message="Trip type is required"></vaadin-combo-box>
-
-                            <paper-input label="Identity No. (Passport)" value="{{ record.identitiy_no }}"></paper-input>
+                            <kct-column columns="2" gutter="1.5rem" spacer="0px">
+                                <div>
+                                    <vaadin-combo-box 
+                                        label="Travelling Type" 
+                                        value="{{ record.travel_type }}" 
+                                        items="[[ masterTravel ]]" 
+                                        item-value-path="trv_id" 
+                                        item-label-path="trv_name" 
+                                        required 
+                                        auto-validate 
+                                        error-message="Travelling type is required"></vaadin-combo-box>
+                                </div>
+                                <div>
+                                    <paper-input label="Passport" value="{{ record.identity_no }}"></paper-input>
+                                </div>
+                            </kct-column>
 
                             <kct-file-input label="Attachment" value="{{ record.attachment }}" file="{{ attachment }}"></kct-file-input>
                             
@@ -163,7 +177,6 @@
                                         <th>Destination</th>
                                         <th>Transport</th>
                                         <th width="80">Visa</th>
-                                        <th>Request</th>
                                         <td width="120"></td>
                                     </tr>
                                 </thead>
@@ -176,7 +189,6 @@
                                             <td>[[ item.destination ]]</td>
                                             <td>[[ item.transport_name ]]</td>
                                             <td>[[ __computeVisa(item.visa) ]]</td>
-                                            <td>[[ item.special_request ]]</td>
                                             <td class="text-right">
                                                 <paper-button on-tap="__onItemEditTap" class="btn-xs btn-amber">Edit</paper-button>
                                                 <paper-button on-tap="__onItemDeleteTap" class="btn-xs btn-danger">Delete</paper-button>
@@ -333,15 +345,9 @@
                     purposes: { type: Array },
                     items: { type: Array, value: () => ([]) },
                     masterItems: { type: Array, value: () => ([]) },
+                    masterTravel: { type: Array },
                     advance: { type: Array, value: () => ([]) },
                     item: { type: Object },
-                    tripTypes: {
-                        type: Array,
-                        value: [
-                            { label: 'International', value: '1' },
-                            { label: 'Domestic', value: '2' }
-                        ]
-                    },
                     tripTransports: {
                         type: Array,
                         value: [
@@ -457,22 +463,25 @@
             }
             __loadReferences() {
                 return Promise.all([
+                    loadTravel.bind(this)(),
                     loadTypes.bind(this)(),
                     loadPurposes.bind(this)()
                 ]);
 
+                function loadTravel() {
+                    return this.$.ajax.GET('/travel').then(res => {
+                        this.set('masterTravel', res.data);
+                    });
+                }
+
                 function loadTypes() {
-                    return this.$.ajax.GET('/types', {
-                        display: 'travelling'
-                    }).then(res => {
+                    return this.$.ajax.GET('/types', { display: 'travelling'}).then(res => {
                         this.set('types', res.data);
                     });
                 }
 
                 function loadPurposes() {
-                    return this.$.ajax.GET('/types/purposes', {
-                        display: 'travelling'
-                    }).then(res => {
+                    return this.$.ajax.GET('/types/purposes', { display: 'travelling' }).then(res => {
                         this.set('purposes', res.data);
                         this.set('__purposes', res.data);
                     });

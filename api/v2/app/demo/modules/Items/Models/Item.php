@@ -3,6 +3,8 @@ namespace App\Items\Models;
 
 class Item extends \Micro\Model {
 
+    const ROOT_VALUE = 0;
+
     public function initialize() {
         $this->hasMany(
             'item_id',
@@ -27,13 +29,10 @@ class Item extends \Micro\Model {
         return 'item_table';
     }
 
-    public function isParent() {
-        return is_null($this->parent_id);
-    }
-
     public function toArray($columns = NULL) {
         $data = parent::toArray($columns);
-
+        $data['is_root'] = $this->parent_id == self::ROOT_VALUE;
+        
         if ($this->parent) {
             $data['item_parent_name'] = $this->parent->item_name;
         }
@@ -43,30 +42,65 @@ class Item extends \Micro\Model {
         return $data;
     }
 
-    public static function combo() {
-        $items = self::get()->filterable()->execute()->filter(function($elem){ return $elem; });
-        $combo = array();
-        self::__createGrid($items, NULL, $combo, $level = 0);
+    public function bubble($handler) {
+        $handler($this);
+        $parent = self::findFirst($this->parent_id);
+
+        if ($parent) {
+            $parent->bubble($handler);
+        }
+    }
+
+    public static function tree() {
+        $found = array();
+
+        $items = self::get()->filterable()->execute()->filter(function($elem) use (&$found) { 
+            $found[$elem->item_id] = TRUE;
+            return $elem; 
+        });
+
+        foreach($items as $elem) {
+            if ($elem->parent_id != self::ROOT_VALUE && ! isset($found[$elem->parent_id])) {
+                $elem->bubble(function($e) use ($elem, &$found, &$items){
+                    if ($e->item_id != $elem->item_id) {
+                        $found[$e->item_id] = TRUE;
+                        $items[] = $e;
+                    }
+                });
+            }
+        }
+
+        $tree = array();
+        self::__createTree($items, self::ROOT_VALUE, $tree, $level = 0);
 
         return array(
             'success' => TRUE,
-            'data' => $combo,
-            'total' => count($combo)
+            'data' => $tree,
+            'total' => count($tree)
         );
     }
 
-    private static function __createGrid($stack, $parentId, &$combo, $level = 0) {
+    private static function __createTree($stack, $parentId, &$tree, $level = 0) {
         foreach($stack as $row) {
             if ($row->parent_id == $parentId) {
                 $data = $row->toArray();
                 $data['item_level'] = $level;
                 $data['item_pad'] = ($level * 24) . 'px';
-                $combo[] = $data;
+                $tree[] = $data;
 
-                if ($row->isParent()) {
-                    self::__createGrid($stack, $row->item_id, $combo, ($level + 1));
-                }    
+                self::__createTree($stack, $row->item_id, $tree, ($level + 1));
             }
         }
     }
+
+    private static function __isParent($node, $stack) {
+        foreach($stack as $elem) {
+            if ($elem->parent_id == $node->item_id) {
+                return TRUE;
+            }
+        }
+
+        return FALSE;
+    }
+
 }

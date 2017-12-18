@@ -7,6 +7,17 @@ Router::get('/', function(){
     );
 });
 
+Router::get('/test/ldap', function(){
+
+    $conn = ldap_connect('ldap://192.168.100.249');
+    ldap_set_option($conn, LDAP_OPT_PROTOCOL_VERSION, 3);
+    ldap_set_option($conn, LDAP_OPT_REFERRALS, 0);
+
+    $bind = ldap_bind($conn, 'asepjaelani', '6911121394');
+    var_dump($bind);
+
+});
+
 Router::get('/test/phpinfo', function(){
     phpinfo();
 });

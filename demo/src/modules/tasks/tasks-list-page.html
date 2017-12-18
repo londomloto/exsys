@@ -1,6 +1,7 @@
 <link rel="import" href="../../elements/kct-view/kct-view.html">
 <link rel="import" href="../../elements/kct-grid/kct-grid.html">
 <link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../elements/kct-checkbox/kct-checkbox.html">
 
 <dom-module id="tasks-list-page">
     <template>
@@ -22,6 +23,7 @@
             title="Todo List" 
             accent="--paper-purple--500" 
             description="User Todo List" 
+            on-beforeload="__onGridBeforeLoad" 
             pagination>
             <template preserve-content>
                 <style>
@@ -61,6 +63,9 @@
                     }
                 </style>
             </template>
+
+            <kct-checkbox slot="primary-toolbar" value="{{ displayArchived }}" on-change="__onDisplayChange">Display archived tasks</kct-checkbox>
+
         </kct-grid>
 
     </template>
@@ -72,6 +77,7 @@
 
             static get properties() {
                 return {
+                    displayArchived: { type: String, value: '0' },
                     columns: {
                         type: Array,
                         value: () => ([
@@ -83,7 +89,7 @@
                                 dataIndex: 't_read',
                                 renderer: (e) => {
                                     if (e.data) {
-                                        return `<paper-icon-button on-tap="__onViewTap" title="Click to open task" icon="${e.data.t_icon}" style="background-color: ${e.data.t_accent}"></paper-icon-button>`;
+                                        return `<paper-icon-button on-tap="__onViewTap" title="Click to open task" icon="${e.data.t_icon}" style="background-color: ${e.data.t_accent}; color: ${e.data.t_color}"></paper-icon-button>`;
                                     }
                                     return '';
                                 } 
@@ -94,13 +100,18 @@
                                 dataIndex: 't_code',
                                 renderer: (e) => {
                                     if (e.data) {
-                                        return `
-                                            <div class="cell-verb">
-                                                <div class="verb">${e.data.t_verb}</div>
-                                                <div class="code">${e.data.t_code}</div>
-                                                <div class="text">${e.data.t_text}</div>
-                                            </div>
-                                        `;
+                                        let content = `<div class="cell-verb">`;
+
+                                        if (e.data.t_drop == 1) {
+                                            content += `<div class="verb"><del>${e.data.t_verb}</del></div>`;    
+                                        } else {
+                                            content += `<div class="verb">${e.data.t_verb}</div>`;
+                                        }
+                                        content += `<div class="code">${e.data.t_code}</div>`;
+                                        content += `<div class="text">${e.data.t_text}</div>`;
+                                        content += `</div>`;
+
+                                        return content;
                                     }
                                     return '';
                                 }
@@ -157,15 +168,21 @@
                 if ( ! task) return;
                 
                 task.t_read = 1;
-                task.t_icon = 'drafts';
-                task.t_accent = 'var(--paper-grey-400)';
+
+                if (task.t_drop == '0') {
+                    task.t_icon = 'drafts';
+                    task.t_accent = 'var(--paper-blue-grey-300)';
+                }
 
                 this.mask('Opening...');
 
                 this.$.ajax.PUT('/tasks/' + task.t_id, task).then(() => {
                     this.$.grid.refresh(node);
                     this.unmask();
-                    this.set('route.path', `/tasks/${task.t_type}/${task.t_link}`);    
+
+                    // this.set('route.data.task', task);
+                    // this.set('route.path', `/tasks/${task.t_type}/${task.t_link}`);
+                    this.set('route.path', `/tasks/view/${task.t_id}`);
                 });
             }
 
@@ -173,8 +190,16 @@
                 this.__open(e.data, e.node);
             }
 
+            __onGridBeforeLoad(e) {
+                e.detail.options.display = this.displayArchived == '1' ? 'task' : 'todo';
+            }
+
             __onGridRowClick(e) {
                 this.__open(e.detail.data, e.detail.node);
+            }
+
+            __onDisplayChange() {
+                this.$.grid.load();
             }
         }
 

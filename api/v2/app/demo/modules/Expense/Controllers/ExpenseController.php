@@ -44,7 +44,7 @@ class ExpenseController extends \Micro\Controller {
         $data['expense'] = $expense->toArray();
         $data['items'] = $expense->getGroupedItems();
         $data['summary'] = $expense->getSummary();
-        $data['crops'] = $expense->crops->filter(function($elem){ return $elem->toArray(); });
+        $data['crops'] = $expense->getGroupedCrops();
         $data['exchanges'] = $expense->exchanges->filter(function($elem){ return $elem->toArray(); });
         $data['history'] = $expense->getHistory(array('order' => 'exp_history_id ASC'))->filter(function($elem){
             return $elem->toArray();
@@ -210,32 +210,18 @@ class ExpenseController extends \Micro\Controller {
 
         if ($expense) {
             $status = Status::val('fa-received');
-
-            // create history
-            $history = new History();
-
-            $history->id_exp = $expense->id_exp;
-            $history->status_id = $status;
-            $history->user_act = $user['su_id'];
-            $history->date = date('Y-m-d H:i:s');
-            $history->notes = $post['notes'];
-
-            $history->save();
-
-            // delete tasks
-            \App\Tasks\Models\Task::find(array(
-                't_type = :type: AND t_link = :link:',
-                'bind' => array(
-                    'type' => 'expense-receive',
-                    'link' => $expense->id_exp
-                )
-            ))->delete();
-
             $expense->received_by = $user['su_id'];
             $expense->received_date = date('Y-m-d H:i:s');
             $expense->status = $status;
 
             if ($expense->save()) {
+                // delete task
+                Task::dispose(Task::TYPE_EXPENSE_RECEIVE, $expense);
+
+                // create history
+                History::log($expense->category, $expense, $post['notes']);
+
+                // submit to fa
                 $expense->faSubmit('approval-request');
             }
         }
@@ -281,6 +267,7 @@ class ExpenseController extends \Micro\Controller {
             if ($expense->advance) {
                 $summary = $expense->getSummary();
                 
+                // nanti status dapet dari AX... (demo only)
                 $outstanding = array_filter($summary['remains'], function($elem){
                     return $elem['remains_value'] > 0;
                 });
@@ -308,7 +295,7 @@ class ExpenseController extends \Micro\Controller {
 
         if ($data) {
             // dispose tasks
-            Task::dispose('expense-hr', $user['su_id'], $data);
+            Task::dispose(Task::TYPE_EXPENSE_HR, $data);
 
             $status = Status::val('hr-approved');
             $notes = isset($post['notes']) ? $post['notes'] : '-';
@@ -374,7 +361,7 @@ class ExpenseController extends \Micro\Controller {
 
         if ($data) {
             // dispose tasks
-            Task::dispose('expense-hr', $user['su_id'], $data);
+            Task::dispose(Task::TYPE_EXPENSE_HR, $data);
 
             // update status
             $status = Status::val('reject');
@@ -414,7 +401,7 @@ class ExpenseController extends \Micro\Controller {
             $history->user_act = $user['su_id'];
             $history->date = date('Y-m-d H:i:s');
             $history->notes = $post['notes'];
-
+            
             $history->save();
 
             // update status
@@ -434,7 +421,7 @@ class ExpenseController extends \Micro\Controller {
 
         if ($data) {
             // dispose tasks
-            Task::dispose('expense-hr', $user['su_id'], $data);
+            Task::dispose(Task::TYPE_EXPENSE_HR, $data);
 
             // update status
             $status = Status::val('change-request');

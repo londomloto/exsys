@@ -1,0 +1,57 @@
+<link rel="import" href="../../../../bower_components/paper-card/paper-card.html">
+
+<dom-module id="expense-exchange-block">
+    <template>
+        <style include="theme-helper"></style>
+
+        <paper-card class="block">
+            <div class="card-content">
+                <h3 class="block-title">Currencies Exchange</h3>
+                <div class="table-responsive">
+                    <table class="table striped">
+                        <thead>
+                            <tr>
+                                <th width="40" class="text-center">No.</th>
+                                <th width="100">Date</th>
+                                <th>Remarks</th>
+                                <th width="150" class="text-right">From Amounts</th>
+                                <th width="150" class="text-right">To Amounts</th>
+                                <th width="100" class="text-right">Rates</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template is="dom-repeat" items="[[ record.exchanges ]]">
+                                <tr>
+                                    <td class="text-center">[[ __computeNo(index) ]]</td>
+                                    <td>[[ item.exchange_date_short ]]</td>
+                                    <td>[[ item.remarks ]]</td>
+                                    <td class="text-right">[[ item.from_display ]]</td>
+                                    <td class="text-right">[[ item.to_display ]]</td>
+                                    <td class="text-right">[[ item.rates_formatted ]]</td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </paper-card>
+    </template>
+    <script>
+        class ExpenseExchangeBlock extends Polymer.Element {
+            static get is() {
+                return 'expense-exchange-block';
+            }
+
+            static get properties() {
+                return {
+                    record: { type: Object }
+                };
+            }
+            __computeNo(index) {
+                return index + 1;
+            }
+        }
+
+        customElements.define(ExpenseExchangeBlock.is, ExpenseExchangeBlock);
+    </script>
+</dom-module>

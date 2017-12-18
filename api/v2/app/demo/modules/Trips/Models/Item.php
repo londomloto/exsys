@@ -10,6 +10,7 @@ class Item extends \Micro\Model {
     const STATUS_REJECT = 4;
     const STATUS_CANCELED = 5;
     const STATUS_EMPTY = 6;
+    const STATUS_REVISION = 7;
     
     public function initialize() {
         $this->belongsTo(
@@ -52,18 +53,30 @@ class Item extends \Micro\Model {
     }
 
     public function isIssuable() {
-        return  ! empty($this->transport_operator) && ($this->status == self::STATUS_REQUEST || $this->status == self::STATUS_RESCHEDULING);
+        $statuses = array(
+            self::STATUS_REQUEST,
+            self::STATUS_RESCHEDULING
+        );
+        return  ! empty($this->transport_operator) && in_array($this->status, $statuses);
     }
 
     public function isReschedulable() {
-        return ! empty($this->transport_operator) && ($this->status == self::STATUS_ISSUED || $this->status == self::STATUS_RESCHEDULED);
+        $statuses = array(
+            self::STATUS_ISSUED,
+            self::STATUS_RESCHEDULED,
+            self::STATUS_REVISION
+        );
+
+        return ! empty($this->transport_operator) && in_array($this->status, $statuses);
     }
 
     public function isIssued() {
         return ! in_array($this->status, array( 
             self::STATUS_REQUEST, 
             self::STATUS_REJECT,
-            self::STATUS_EMPTY
+            self::STATUS_EMPTY,
+            self::STATUS_RESCHEDULING,
+            self::STATUS_REVISION
         ));
     }
 
@@ -91,11 +104,16 @@ class Item extends \Micro\Model {
         $data['is_issued'] = $this->isIssued();
         $data['is_issuable'] = $this->isIssuable();
         $data['is_reschedulable'] = $this->isReschedulable();
+        $data['is_downloadable'] = $data['has_attachment'] && $data['is_issued'];
         
         return $data;
     }
 
     public static function getStatusName($status) {
+        if (is_null($status)) {
+            return 'Draft';
+        }
+        
         switch($status) {
             case self::STATUS_REQUEST:
                 return 'Request';
@@ -111,8 +129,10 @@ class Item extends \Micro\Model {
                 return 'Reject';
             case self::STATUS_EMPTY:
                 return 'No Ticket';
+            case self::STATUS_REVISION:
+                return 'Need revision';
             default:
-                return '-';
+                return 'Draft';
         }
     }
 

@@ -1,0 +1,147 @@
+<link rel="import" href="../../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../elements/kct-message/kct-prompt.html">
+<link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
+<link rel="import" href="../advance/blocks/advance-header-block.html">
+<link rel="import" href="../advance/blocks/advance-detail-block.html">
+<link rel="import" href="../advance/blocks/advance-history-block.html">
+<link rel="import" href="../advance/blocks/advance-summary-block.html">
+
+<dom-module id="advance-task">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+            .action-buttons paper-button {
+                min-width: 90px;
+            }
+            [hidden] {
+                display: none;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        
+        <kct-vbox>
+            <page-header-block icon="done" title="Todo List" description="Advance Task View"></page-header-block>
+            <div class="flex scroll-y padding">
+                <paper-card class="block" hidden$="[[ __actionHidden ]]">
+                    <div class="card-content">
+                        <div class="action-buttons text-right">
+                            <paper-button on-tap="__onApproveTap" class="btn-primary">Approve</paper-button>
+                            <paper-button on-tap="__onRejectTap" class="btn-red">Reject</paper-button>
+                            <paper-button on-tap="__onReturnedTap" class="btn-amber">Change</paper-button>    
+                        </div>
+                    </div>
+                </paper-card> 
+
+                <advance-header-block record="[[ record ]]"></advance-header-block>
+                <advance-detail-block record="[[ record ]]"></advance-detail-block>
+                <advance-summary-block record="[[ record ]]"></advance-summary-block>
+                <advance-history-block record="[[ record ]]"></advance-history-block>
+
+            </div>
+        </kct-vbox>
+
+        <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to list" on-tap="__onBackTap"></paper-fab>
+        </div>
+
+        <kct-prompt id="task-prompt" title="[[ quest ]]" message="Additional notes (remarks)"></kct-prompt>
+
+    </template>
+    <script>
+        class AdvanceTask extends KctView {
+            static get is() {
+                return 'advance-task';
+            }
+            static get properties() {
+                return {
+                    task: { type: Object },
+                    record: { type: Object },
+                    quest: { type: String, value: 'Approval' }
+                }
+            }
+            static get observers() {
+                return [
+                    '__taskChanged(task.*)'
+                ];
+            }
+            constructor() {
+                super();
+                this.__actionHidden = true;
+            }
+            __taskChanged(changed) {
+                if (this.task.t_type != 'advance') return;
+
+                this.set('__actionHidden', this.task.t_drop == 1);
+
+                this.$.ajax.GET('/advance/' + this.task.t_link + '/view').then(res => {
+                    this.set('record', res.data);
+                });
+            }
+            __computeNo(index) {
+                return index + 1;
+            }
+            __goBack(reload = false) {
+                this.set('route.path', '/tasks' + (reload ? '?reload=yes' : ''));
+            }
+            __onRejectTap() {
+                if ( ! this.record && ! this.record.advance) {
+                    return;
+                }
+
+                this.set('quest', 'Reject');
+
+                this.$['task-prompt'].open().then(r => {
+                    if (r.action == 'submit') {
+                        let notes = r.value || '';
+                        this.$.ajax.POST('/advance/' + this.record.advance.id_adv + '/reject', { notes: notes }).then(() => {
+                            this.__goBack(true);
+                        });
+                    }
+                });
+            }
+            __onApproveTap() {
+                if ( ! this.record && ! this.record.advance) {
+                    return;
+                }
+
+                this.set('quest', 'Approve');
+
+                this.$['task-prompt'].open().then(r => {
+                    if (r.action == 'submit') {
+                        let notes = r.value || '';
+                        this.$.ajax.POST('/advance/' + this.record.advance.id_adv + '/approve', { notes: notes }).then(() => {
+                            this.__goBack(true);
+                        });
+                    }
+                });
+            }
+            __onReturnedTap() {
+                if ( ! this.record && ! this.record.advance) {
+                    return;
+                }
+
+                this.set('quest', 'Change Request');
+
+                this.$['task-prompt'].open().then(r => {
+                    if (r.action == 'submit') {
+                        let notes = r.value || '';
+                        this.$.ajax.POST('/advance/' + this.record.advance.id_adv + '/returned', { notes: notes }).then(() => {
+                            this.__goBack(true);
+                        });
+                    }
+                });
+            }
+            __onBackTap() {
+                this.__goBack();
+            }
+        }
+        customElements.define(AdvanceTask.is, AdvanceTask);
+    </script>
+</dom-module>

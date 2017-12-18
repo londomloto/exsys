@@ -2,10 +2,12 @@
 namespace App\Expense\Models;
 
 use App\Expense\Models\History,
+    App\Expense\Models\Item,
     App\Users\Models\User,
     App\Statuses\Models\Status,
     App\Currencies\Models\Currency,
     App\Finance\Models\Account,
+    App\Tasks\Models\Task,
     Phalcon\Mvc\Model\Relation;
 
 class Expense extends \Micro\Model {
@@ -128,14 +130,41 @@ class Expense extends \Micro\Model {
         }
     }
 
+    public function hasAttachment() {
+        $attachment = $this->getAttachment();
+        if ( ! empty($attachment)) {
+            return file_exists($attachment);
+        }
+    }
+
+    public function getAttachment() {
+        if ( ! empty($this->attachment)) {
+            return APPPATH.'public/resources/attachments/'.$this->attachment;
+        }
+        return '';
+    }
+
+    public function isEditable() {
+        $statuses = array(
+            Status::val('draft'),
+            Status::val('change-request')
+        );
+        return in_array($this->status, $statuses);
+    }
+
+    public function isRemovable() {
+        $statuses = array(
+            Status::val('draft')
+        );
+        return in_array($this->status, $statuses);
+    }
+
     public function toArray($columns = NULL) {
         $data = parent::toArray($columns);
-        $data['editable'] = FALSE;
         
-        if ($data['status'] == Status::val('draft') || $data['status'] == Status::val('change-request')) {
-            $data['editable'] = TRUE;
-        }
 
+        $data['is_editable'] = $this->isEditable();
+        $data['is_removable'] = $this->isRemovable();
         $data['status_name'] = '';
         $data['type_name'] = '';
         $data['purpose_name'] = '';
@@ -148,6 +177,7 @@ class Expense extends \Micro\Model {
         $data['date_end_short'] = date('d/m/Y', $time_end);
         $data['period'] = date('F Y', $time_start);
         $data['has_items'] = $this->items->count() > 0 ? TRUE : FALSE;
+        $data['has_attachment'] = $this->hasAttachment();
         $data['amounts_formatted'] = number_format($data['amounts'], 2, ',', '.');
         $data['is_travelling'] = TRUE;
         $data['is_promo'] = FALSE;
@@ -192,8 +222,9 @@ class Expense extends \Micro\Model {
 
 
     public function getGroupedItems() {
-        $items = $this->items->filter(function($elem){
-            return $elem->toArray();
+        $items = $this->items->filter(function($e){
+            $item = $e->toArray();
+            return $item;
         });
 
         usort($items, function($a, $b){
@@ -226,6 +257,40 @@ class Expense extends \Micro\Model {
         return $groups;
     }
 
+    public function getGroupedCrops() {
+        $crops = $this->crops->filter(function($elem){
+            return $elem->toArray();
+        });
+
+        usort($crops, function($a, $b){
+            $va = empty($a['seed_parent_id']) ? $a['exp_crop_id'] : $a['seed_parent_id'];
+            $vb = empty($b['seed_parent_id']) ? $b['exp_crop_id'] : $b['seed_parent_id'];
+
+            if ($va == $vb) return 0;
+            return $va < $vb ? -1 : 1;
+        });
+
+        $groups = array();
+
+        foreach($crops as $idx => $crop) {
+            $group = $crop['seed_parent_id'];
+            
+            $crop['crop_seq'] = ($idx + 1);
+
+            if ( ! isset($groups[$group])) {
+                $groups[$group] = array();
+                $groups[$group]['group_id'] = $crop['seed_parent_id'];
+                $groups[$group]['group_name'] = $crop['seed_parent_name'];
+                $groups[$group]['group_items'] = array($crop);
+            } else {
+                $groups[$group]['group_items'][] = $crop;
+            }
+        }
+
+        $groups = array_values($groups);
+        return $groups;
+    }
+
     public function updateAmounts() {
         // compute amounts from items
         $amounts = 0;
@@ -240,43 +305,28 @@ class Expense extends \Micro\Model {
     }
 
     public function submit() {
-        $user = \Micro\App::getDefault()->auth->user();
+        $auth = \Micro\App::getDefault()->auth->user();
 
-        // create history
-        $history = new History();
-        $history->id_exp = $this->id_exp;
-        $history->status_id = Status::val('submitted');
-        $history->user_act = $user['su_id'];
-        $history->date = date('Y-m-d H:i:s');
+        $status = Status::val('submitted');
+        $this->status = $status;
 
-        if ($history->save()) {
-            $this->status = $history->status_id;
-            $this->save();
+        if ($this->save()) {
+            // create history
+            History::log($this->category, $this);
 
-            $user = User::get($user['su_id'])->data;
-
-            // entry task
+            $user = User::get($auth['su_id'])->data;
             $superiors = $user->getSuperiors($this->amounts);
 
             foreach($superiors as $super) {
-                $task = new \App\Tasks\Models\Task();
-                
-                $task->t_type = $this->category;
-                $task->t_link = $this->id_exp;
-                $task->t_code = $this->exp_no;
-                $task->t_user = $super['user_id'];
-                $task->t_date = date('Y-m-d H:i:s');
-                $task->t_read = 0;
-
-                $task->save();
+                Task::log($this->category, $super['user_id'], $this);
             }
 
             if($this->advance) {
                 $this->advance->is_open = 0;
                 $this->advance->save();
             }
-
         }
+
     }
 
     public function hrSubmit() {
@@ -284,7 +334,6 @@ class Expense extends \Micro\Model {
     }
 
     public function faSubmit($action) {
-        $user = \Micro\App::getDefault()->auth->user();
         $type = NULL;
 
         // broadcast tasks to fa subscriber
@@ -302,92 +351,39 @@ class Expense extends \Micro\Model {
                 
                 $history->save();
 
-                $type = 'expense-receive';
+                $type = Task::TYPE_EXPENSE_RECEIVE;
                 $subscribers = User::findInRoles(array('fa-receiver'));
                 break;
             case 'approval-request':
-                $type = 'expense-finance';
+                $type = Task::TYPE_EXPENSE_FINANCE;
                 $subscribers = User::findInRoles(array('fa-approver'));
                 break;
         }
         
         foreach($subscribers as $sub) {
-            $task = new \App\Tasks\Models\Task();
-                
-            $task->t_type = $type;
-            $task->t_link = $this->id_exp;
-            $task->t_code = $this->exp_no;
-            $task->t_user = $sub->su_id;
-            $task->t_date = date('Y-m-d H:i:s');
-            $task->t_read = 0;
-
-            $task->save();
+            Task::log($type, $sub->su_id, $this);
         }
     }
 
     public function reject($post = array()) {
-        $user = \Micro\App::getDefault()->auth->user();
-
-        \App\Tasks\Models\Task::find(array(
-            't_type = :type: AND t_link = :link:',
-            'bind' => array(
-                'type' => $this->category,
-                'link' => $this->id_exp
-            )
-        ))->delete();
-
-        $status = Status::val('reject');
-
-        // tambah history
-        $history = new History();
-        $history->id_exp = $this->id_exp;
-        $history->status_id = $status;
-        $history->user_act = $user['su_id'];
-        $history->date = date('Y-m-d H:i:s');
-        $history->notes = $post['notes'];
-
-        $history->save();
-
         // update status
+        $status = Status::val('reject');
         $this->status = $status;
-        $this->save();
+
+        if ($this->save()) {
+            // dispose tasks
+            Task::dispose($this->category, $this);
+
+            // create history
+            History::log($this->category, $this, $post['notes']);
+        }
+
     }
 
     public function approve($post = array()) {
         $user = \Micro\App::getDefault()->auth->user();
 
-        // delete lower tasks 
-        if ($user['su_grade_type'] == 'verificator') {
-            \App\Tasks\Models\Task::find(array(
-                't_type = :type: AND t_link = :link: AND t_user = :user:',
-                'bind' => array(
-                    'type' => $this->category,
-                    'link' => $this->id_exp,
-                    'user' => $user['su_id']
-                )
-            ))->delete();
-
-        } else if ($user['su_grade_type'] == 'approver') {
-            
-            $tasks = \App\Tasks\Models\Task::get()
-                ->where('t_type = :type: AND t_link = :link: AND grade.grade_limit <= :amounts:', array(
-                    'type' => $this->category,
-                    'link' => $this->id_exp,
-                    'amounts' => (int) $user['su_grade_limit']
-                ))
-                ->join('App\Users\Models\User', 'user.su_id = App\Tasks\Models\Task.t_user', 'user')
-                ->join('App\Grades\Models\Grade', 'grade.grade_id = user.su_grade_id', 'grade')
-                ->execute();
-
-            foreach($tasks as $task) {
-                $task->delete();
-            }
-        }
-
-        // tambah history
-        $history = new History();
-        $history->id_exp = $this->id_exp;
-
+        // update status
         $status = NULL;
         $notes = isset($post['notes']) ? $post['notes'] : '-';
 
@@ -401,71 +397,87 @@ class Expense extends \Micro\Model {
             }
         }
 
-        $history->status_id = $status;
-        $history->user_act = $user['su_id'];
-        $history->date = date('Y-m-d H:i:s');
-        $history->notes = $notes;
-        $history->save();
-
         // update status
         $this->status = $status;
 
         if ($this->save()) {
-            if ($status == Status::val('final-approved')) {
-                $cnb = \App\Expense\Models\Item::findFirst('cnb = 1');
 
-                if ($cnb) {
+            // delete tasks
+            if ($user['su_grade_type'] == 'verificator') {
+                $tasks = Task::find(array(
+                    't_type = :type: AND t_link = :link: AND t_user = :user:',
+                    'bind' => array(
+                        'type' => $this->category,
+                        'link' => $this->id_exp,
+                        'user' => $user['su_id']
+                    )
+                ));
+
+                foreach($tasks as $task) {
+                    $task->t_done = 1;
+                    $task->t_drop = 1;
+                    $task->save();
+                }
+
+            } else if ($user['su_grade_type'] == 'approver') {
+                
+                $tasks = Task::get()
+                    ->where('t_type = :type: AND t_link = :link: AND grade.grade_limit <= :amounts:', array(
+                        'type' => $this->category,
+                        'link' => $this->id_exp,
+                        'amounts' => (int) $user['su_grade_limit']
+                    ))
+                    ->join('App\Users\Models\User', 'user.su_id = App\Tasks\Models\Task.t_user', 'user')
+                    ->join('App\Grades\Models\Grade', 'grade.grade_id = user.su_grade_id', 'grade')
+                    ->execute();
+
+                foreach($tasks as $task) {
+                    if ($task->t_user == $user['su_id']) {
+                        $task->t_done = 1;
+                    }
+                    $task->t_drop = 1;
+                    $task->save();
+                }
+            }
+
+            // create history
+            History::log($this->category, $this, $notes);
+
+            if ($status == Status::val('final-approved')) {
+                
+                $cost = Item::findFirst(array(
+                    'cnb = 1 AND id_exp = :expense:',
+                    'bind' => array(
+                        'expense' => $this->id_exp
+                    )
+                ));
+
+                if ($cost) {
                     // hrd task
                     $subscribers = User::findInRoles(array('human-resource'));
-
                     foreach($subscribers as $sub) {
-                        $task = new \App\Tasks\Models\Task();
-                            
-                        $task->t_type = 'expense-hr';
-                        $task->t_link = $this->id_exp;
-                        $task->t_code = $this->exp_no;
-                        $task->t_user = $sub->su_id;
-                        $task->t_date = date('Y-m-d H:i:s');
-                        $task->t_read = 0;
-
-                        $task->save();
+                        Task::log(Task::TYPE_EXPENSE_HR, $sub->su_id, $this);
                     }
-
                 } else {
                     $this->faSubmit('receive-request');    
                 }
-                
             }
         }
-        
     }
 
     public function returned($post = array()) {
-        $user = \Micro\App::getDefault()->auth->user();
-
-        \App\Tasks\Models\Task::find(array(
-            't_type = :type: AND t_link = :link:',
-            'bind' => array(
-                'type' => $this->category,
-                'link' => $this->id_exp
-            )
-        ))->delete();
-
-        $status = Status::val('change-request');
-
-        // tambah history
-        $history = new History();
-        $history->id_exp = $this->id_exp;
-        $history->status_id = $status;
-        $history->user_act = $user['su_id'];
-        $history->date = date('Y-m-d H:i:s');
-        $history->notes = $post['notes'];
-
-        $history->save();
-
         // update status
+        $status = Status::val('change-request');
         $this->status = $status;
-        $this->save();
+
+        if ($this->save()) {
+            // dispose tasks
+            Task::dispose($this->category, $this);
+
+            // create history
+            History::log($this->category, $this, $post['notes']);
+        }
+
     }
 
     public function getCurrencies() {
@@ -496,7 +508,7 @@ class Expense extends \Micro\Model {
 
                 //     $result[$code] = $curr;
                 // }
-
+                
                 // to
                 $code = $row->to->currency_code;
 

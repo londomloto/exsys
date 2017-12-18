@@ -66,10 +66,25 @@ class Item extends \Micro\Model {
                 'alias' => 'Expense'
             )
         );
+
+        $this->hasOne(
+            'payment_type',
+            'App\Payments\Models\Payment',
+            'pym_id',
+            array(
+                'alias' => 'Payment'
+            )
+        );
     }
 
     public function getSource() {
         return 'expense_item';
+    }
+
+    public function beforeSave() {
+        if (isset($this->item_date) && $this->item_date == '') {
+            $this->item_date = NULL;
+        }
     }
 
     public function toArray($columns = NULL) {
@@ -79,11 +94,14 @@ class Item extends \Micro\Model {
         $data['currency_name'] = '';
         $data['currency_code'] = '';
         $data['item_name'] = $this->description;
-        $data['item_parent_id'] = NULL;
+        $data['item_parent_id'] = 0;
         $data['item_parent_name'] = NULL;
-        $data['payment_type_name'] = $this->payment_type == 1 ? 'Cash' : 'Credit Card';
         $data['item_date_short'] = date('d/m/Y', strtotime($this->item_date));
         $data['is_cnb'] = $this->cnb == 1 ? TRUE : FALSE;
+        
+        if ($this->payment) {
+            $data['payment_type_name'] = $this->payment->pym_name;
+        }
 
         if ($this->masterItem) {
             $data['item_name'] = $this->masterItem->item_name;
@@ -93,6 +111,7 @@ class Item extends \Micro\Model {
             }
         }
 
+
         if ($this->currency) {
             $data['currency_code'] = $this->currency->currency_code;
             $data['currency_name'] = $this->currency->currency_name;
@@ -101,31 +120,32 @@ class Item extends \Micro\Model {
         $data['currency_rate_displayed'] = number_format($data['currency_offset_rate'], 6, ',', '.');
 
         $forms = ItemForm::get()
+            ->alias('a')
             ->columns(array(
-                'App\Items\Models\ItemForm.item_form_id',
-                'App\Items\Models\ItemForm.item_form_editor',
-                'App\Items\Models\ItemForm.item_form_type',
-                'App\Items\Models\ItemForm.item_form_label',
-                'App\Items\Models\ItemForm.index',
-                'App\Items\Models\ItemForm.item_id',
-                'App\Items\Models\ItemForm.option',
-                'App\Items\Models\ItemForm.mandatory',
-                'a.item_form_value'
+                'a.item_form_id',
+                'a.item_form_editor',
+                'a.item_form_type',
+                'a.item_form_label',
+                'a.index',
+                'a.item_id',
+                'a.option',
+                'a.mandatory',
+                'b.item_form_value'
             ))
             ->join(
                 'App\Expense\Models\ItemDetail', 
-                'a.item_form_id = App\Items\Models\ItemForm.item_form_id AND a.exp_item_id = '.$this->exp_item_id, 
-                'a', 
+                'b.item_form_id = a.item_form_id AND b.exp_item_id = '.$this->exp_item_id, 
+                'b', 
                 'left'
             )
             ->join(
                 'App\Expense\Models\Item',
-                'b.exp_item_id = a.exp_item_id AND b.id_exp = ' . $this->id_exp,
-                'b',
+                'c.exp_item_id = b.exp_item_id AND c.id_exp = ' . $this->id_exp,
+                'c',
                 'left'
             )
-            ->where('App\Items\Models\ItemForm.item_id = :item_id:', array('item_id' => $this->item_id))
-            ->orderBy('App\Items\Models\ItemForm.index ASC')
+            ->where('a.item_id = :item_id:', array('item_id' => $this->item_id))
+            ->orderBy('a.index ASC')
             ->execute();
 
         $data['item_forms'] = $forms->toArray();

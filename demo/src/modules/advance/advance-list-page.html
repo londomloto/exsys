@@ -20,8 +20,8 @@
             page-size="25" 
             columns="[[ columns ]]" 
             title="DATASHEET" 
-            description="List of Expense" 
-            selection-model="cell" 
+            description="List of my advance request"
+            selection-model="row" 
             pagination>
 
                 <template preserve-content>
@@ -90,18 +90,20 @@
                                 type: 'action',
                                 renderer: (e) => {
                                     if (e.data) {
-                                        let status = e.data.status_code;
                                         let buttons = `<kct-grid-action on-tap="__onViewTap" icon="search" title="View record" rounded></kct-grid-action>`;
 
-                                        if (status == 'draft' || status == 'change-request') {
-                                            buttons += `
-                                                <kct-grid-action on-tap="__onEditTap" icon="image:edit" accent="amber" title="Edit record" rounded></kct-grid-action>
-                                                <kct-grid-action on-tap="__onDeleteTap" icon="clear" accent="red" title="Delete record" rounded></kct-grid-action>
-                                            `;
-                                            if (e.data.has_items) {
-                                                buttons += `<kct-grid-action on-tap="__onSubmitTap" title="Submit record" icon="send" accent="cyan" rounded></kct-grid-action>`;
-                                            }
+                                        if (e.data.is_editable) {
+                                            buttons += `<kct-grid-action on-tap="__onEditTap" icon="image:edit" accent="amber" title="Edit record" rounded></kct-grid-action>`;
                                         }
+
+                                        if (e.data.is_removable) {
+                                            buttons += `<kct-grid-action on-tap="__onDeleteTap" icon="clear" accent="red" title="Delete record" rounded></kct-grid-action>`;
+                                        }
+
+                                        if (e.data.is_editable && e.data.has_items) {
+                                            buttons += `<kct-grid-action on-tap="__onSubmitTap" title="Submit record" icon="send" accent="cyan" rounded></kct-grid-action>`;
+                                        }
+
                                         return buttons;
                                     }
                                     return '';

@@ -98,13 +98,39 @@ class AuthProvider extends \Micro\Component {
     }
 
     public function login($email, $password, $remember = FALSE) {
+
+        // $ldap = $this->ldap->parse($email);
+
+        /*// identify ldap login
+        $suff = $this->ldap->getAccountSuffix();
+        $ldap = FALSE;
+
+        if (strpos($email, '@') === FALSE) {
+            $ldap = $email;
+        } else if ( ! empty($suff)) {
+            $index = strpos($email, '@'.$suff);
+            if ($index !== FALSE) {
+                $ldap = substr($email, 0, $index);
+            }
+        }*/
+
+        /*if ($ldap) {
+            $auth = $this->ldap->login($ldap, $password);
+            if ($auth) {
+                $email = $auth->mail;
+            } else {
+                $this->_error = 'User not found!';
+                return FALSE;
+            }
+        }*/
+
         $user = $this->_findUserByEmail($email);
 
         if ( ! $user) {
             $this->_error = 'User not found!';
             return FALSE;
         }
-
+        
         if ( ! $user->su_active) {
             $this->_error = 'User currently blocked';
             return FALSE;

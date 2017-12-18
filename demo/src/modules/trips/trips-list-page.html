@@ -19,7 +19,7 @@
             page-size="25" 
             columns="[[ columns ]]" 
             title="DATASHEET" 
-            description="List of Trips" 
+            description="List of trip requests" 
             selection-model="cell" 
             pagination>
 
@@ -65,7 +65,7 @@
                             { 
                                 text: 'Status', 
                                 dataIndex: 'status_name', 
-                                width: 150,
+                                width: 180,
                                 renderer: (e) => {
                                     if (e.data) {
                                         return `<iron-icon icon="image:lens" style="color: ${e.data.status_color}"></iron-icon>&nbsp;<span>${e.data.status_name}</span>`;
@@ -76,21 +76,22 @@
                             { 
                                 text: 'Action',
                                 type: 'action',
-                                width: 300,
                                 renderer: (e) => {
                                     if (e.data) {
-                                        let status = e.data.status;
                                         let buttons = `<kct-grid-action on-tap="__onViewTap" icon="search" title="View record" rounded></kct-grid-action>`;
 
-                                        if (status == 1 || status == 10) {
-                                            buttons += `
-                                                <kct-grid-action on-tap="__onEditTap" icon="image:edit" accent="amber" title="Edit record" rounded></kct-grid-action>
-                                                <kct-grid-action on-tap="__onDeleteTap" icon="clear" accent="red" title="Delete record" rounded></kct-grid-action>
-                                            `;
-                                            if (e.data.has_items) {
-                                                buttons += `<kct-grid-action on-tap="__onSubmitTap" title="Submit record" icon="send" accent="cyan" rounded></kct-grid-action>`;
-                                            }
+                                        if (e.data.is_editable) {
+                                            buttons += `<kct-grid-action on-tap="__onEditTap" icon="image:edit" accent="amber" title="Edit record" rounded></kct-grid-action>`;
                                         }
+
+                                        if (e.data.is_removable) {
+                                            buttons += `<kct-grid-action on-tap="__onDeleteTap" icon="clear" accent="red" title="Delete record" rounded></kct-grid-action>`;
+                                        }
+
+                                        if (e.data.is_editable && e.data.has_items) {
+                                            buttons += `<kct-grid-action on-tap="__onSubmitTap" title="Submit record" icon="send" accent="cyan" rounded></kct-grid-action>`;
+                                        }
+
                                         return buttons;
                                     }
                                     return '';

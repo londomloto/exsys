@@ -55,8 +55,8 @@
     "vaadin-material-theme": "vaadin/vaadin-material-theme#^0.3.0",
     "web-animations-js": "^2.3.1",
     "shadydom": "webcomponents/shadydom#v1.0.0",
-    "socket.io": "^2.0.4",
-    "DOMPurify": "dompurify#^1.0.2"
+    "DOMPurify": "dompurify#^1.0.2",
+    "socket.io-client": "^2.0.4"
   },
   "resolutions": {
     "polymer": "^2.0.0",

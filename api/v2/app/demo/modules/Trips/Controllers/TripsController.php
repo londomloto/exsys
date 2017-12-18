@@ -139,8 +139,11 @@ class TripsController extends \Micro\Controller {
         $trip = Trip::get($id)->data;
         $post = $this->request->getJson();
 
+        $params = $this->request->getParams();
+        $action = isset($params['action']) ? $params['action'] : NULL;
+
         if ($trip) {
-            $trip->reject($post);
+            $trip->reject($post, $action);
         }
 
         return array(
@@ -152,8 +155,11 @@ class TripsController extends \Micro\Controller {
         $trip = Trip::get($id)->data;
         $post = $this->request->getJson();
 
+        $params = $this->request->getParams();
+        $action = isset($params['action']) ? $params['action'] : NULL;
+
         if ($trip) {
-            $trip->approve($post);
+            $trip->approve($post, $action);
         }
 
         return array(
@@ -165,8 +171,11 @@ class TripsController extends \Micro\Controller {
         $trip = Trip::get($id)->data;
         $post = $this->request->getJson();
 
+        $params = $this->request->getParams();
+        $action = isset($params['action']) ? $params['action'] : NULL;
+
         if ($trip) {
-            $trip->returned($post);
+            $trip->returned($post, $action);
         }
 
         return array(
@@ -186,11 +195,11 @@ class TripsController extends \Micro\Controller {
         );
     }
 
-    public function acceptRescheduleByIdAction($id) {
+    public function rejectTicketByIdAction($id) {
         $trip = Trip::get($id)->data;
-
+        
         if ($trip) {
-            $trip->acceptReschedule();
+            $trip->rejectTicket();
         }
 
         return array(
@@ -198,11 +207,11 @@ class TripsController extends \Micro\Controller {
         );
     }
 
-    public function rejectTicketByIdAction($id) {
+    public function acceptRescheduleByIdAction($id) {
         $trip = Trip::get($id)->data;
-        
+
         if ($trip) {
-            $trip->rejectTicket();
+            $trip->acceptReschedule();
         }
 
         return array(

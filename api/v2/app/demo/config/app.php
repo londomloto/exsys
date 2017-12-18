@@ -26,8 +26,9 @@ return array(
         'auth' => 'Micro\Auth\AuthProvider',
         'role' => 'Micro\Role\RoleProvider',
         'file' => 'Micro\File\FileProvider',
-        'bpmn' => 'Micro\Bpmn\BpmnProvider',
-        'dx'   => 'Micro\Dx\DxProvider'
+        // 'bpmn' => 'Micro\Bpmn\BpmnProvider',
+        'ldap' => 'Micro\Ldap\LdapProvider',
+        // 'dx'   => 'Micro\Dx\DxProvider'
     ),
 
     'middleware' => array(

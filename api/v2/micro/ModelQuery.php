@@ -7,24 +7,30 @@ class ModelQuery {
 
     private $__di;
     private $__builder;
-    private $__template;
+    private $__model;
+    private $__alias;
     private $__limit;
     private $__start;
     private $__fields;
 
-    public function __construct(\Phalcon\Mvc\Model $template, \Phalcon\DiInterface $di = NULL) {
+    public function __construct(\Phalcon\Mvc\Model $model, \Phalcon\DiInterface $di = NULL) {
+        $class = get_class($model);
+
         $this->__builder = new QueryBuilder(array(
-            'models' => array(get_class($template))
+            'models' => array($class)
         ));
 
-        $this->__builder->setDI($di);
-        
-        $this->__template = $template;
         $this->__di = $di;
+        $this->__builder->setDI($di);
+        $this->__model = $model;
         $this->__fields = new \stdClass();
 
-        foreach($template->getModelsMetaData()->getAttributes($template) as $name) {
-            $this->__fields->{$name} = TRUE;
+        // populate valid fields
+        foreach($model->getModelsMetaData()->getAttributes($model) as $name) {
+            $this->__fields->{$name} = array(
+                'model' => $class,
+                'field' => $name
+            );
         }
     }
 
@@ -39,6 +45,24 @@ class ModelQuery {
 
     public function getBuilder() {
         return $this->__builder;
+    }
+
+    public function alias($alias) {
+        $class = get_class($this->__model);
+
+        $this->__builder->from(NULL);
+        $this->__builder->addFrom($class, $alias);
+
+        $this->__alias = $alias;
+
+        // update valid fields
+        foreach($this->__fields as $key => &$val) {
+            if ($val['model'] == $class) {
+                $val['field'] = $alias.'.'.$key;
+            }
+        }
+
+        return $this;
     }
 
     public function limit($limit, $start = NULL) {
@@ -59,11 +83,14 @@ class ModelQuery {
     public function join($model, $conditions = NULL, $alias = NULL, $type = 'left') {
         $this->__builder->join($model, $conditions, $alias, $type);
 
-        $template = new $model();
+        $instance = new $model();
 
-        foreach($template->getModelsMetaData()->getAttributes($template) as $name) {
+        foreach($instance->getModelsMetaData()->getAttributes($instance) as $name) {
             if ( ! isset($this->__fields->{$name})) {
-                $this->__fields->{$name} = TRUE;
+                $this->__fields->{$name} = array(
+                    'model' => $model,
+                    'field' => ( ! empty($alias) ? $alias.'.' : '').$name
+                );
             }
         }
 
@@ -77,8 +104,12 @@ class ModelQuery {
         if ( ! empty($sort)) {
             $sort = json_decode($sort);
             foreach($sort as $item) {
-                if (isset($this->__fields->{$item->property})) {
-                    $this->__builder->orderBy($item->property . ' ' . $item->direction);    
+                $name = $item->property;
+                $sort = $item->direction;
+                $maps = isset($this->__fields->{$name}) ? $this->__fields->{$name} : FALSE;
+
+                if ($maps) {
+                    $this->__builder->orderBy($maps['field'] . ' ' . $sort);
                 }
             }
         }
@@ -96,15 +127,17 @@ class ModelQuery {
             $fields = json_decode($fields);
             $where = array();
 
-            foreach($fields as $name) {
-                if (isset($this->__fields->{$name})) {
-                    $where[] = $name . ' LIKE :q: ';
+            foreach($fields as $field) {
+                $attr = isset($this->__fields->{$field}) ? $this->__fields->{$field} : FALSE;
+                if ($attr) {
+                    $where[] = 'UPPER('.$attr['field'].') LIKE :q:';
                 }
             }
 
             if ( ! empty($where)) {
-                $this->__builder->where('(' . implode(' OR ', $where) . ')', array('q' => '%'.$query.'%'));    
+                $this->__builder->where('(' . implode(' OR ', $where) . ')', array('q' => '%'.strtoupper($query).'%'));    
             }
+            
         }
 
         // params
@@ -113,7 +146,8 @@ class ModelQuery {
         if ( ! empty($params)) {
             $params = json_decode($params);
             foreach($params as $key => $val) {
-                if (isset($this->__fields->{$key})) {
+                $attr = isset($this->__fields->{$key}) ? $this->__fields->{$key} : FALSE;
+                if ($attr) {
                     $bind = array();
                     $oper = '=';
                     
@@ -128,18 +162,17 @@ class ModelQuery {
                             case '>':
                             case '>=':
                                 $bind['param_'.$key] = $val[1];
-                                $this->__builder->where("$key $oper :param_${key}:", $bind);
+                                $this->__builder->where($attr['field']." $oper :param_${key}:", $bind);
                                 break;
                             case 'not in':
                                 $bind['param_'.$key] = implode(',', $val[1]);
-                                $this->__builder->where("$key $oper (:param_${key}:)", $bind);
+                                $this->__builder->where($attr['field']." $oper (:param_${key}:)", $bind);
                                 break;
                         }
                     } else {
                         $bind['param_'.$key] = $val;
-                        $this->__builder->where("$key $oper :param_${key}:", $bind);
+                        $this->__builder->where($attr['field']." $oper :param_${key}:", $bind);
                     }
-                    
                 }
             }
         }
@@ -154,10 +187,10 @@ class ModelQuery {
         $columns = $this->__builder->getColumns();
 
         $manager = \Phalcon\DI::getDefault()->get('modelsManager');
-        $database = $manager->getReadConnection($this->__template);
+        $database = $manager->getReadConnection($this->__model);
         $result = $database->query($query['sql'], $query['bind'], $query['bindTypes']);
         
-        $dataset = new ModelDataset(NULL, $this->__template, $result);
+        $dataset = new ModelDataset(NULL, $this->__model, $result);
         $dataset->setColumns($columns);
 
         return $dataset;
@@ -166,8 +199,14 @@ class ModelQuery {
     public function paginate($fetchRequest = TRUE) {
         if ($fetchRequest && $this->__di) {
             $request = $this->__di->getRequest();
-            $this->__limit = $request->getQuery('limit');
-            $this->__start = $request->getQuery('start');
+
+            $limit = $request->getQuery('limit');
+            $start = $request->getQuery('start');
+
+            if ($limit != '') {
+                $this->__limit = $limit;
+                $this->__start = $start;
+            }
         }
 
         $columns = $this->__builder->getColumns();

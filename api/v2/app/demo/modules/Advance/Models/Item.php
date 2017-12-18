@@ -21,6 +21,24 @@ class Item extends \Micro\Model {
                 'alias' => 'Advance'
             )
         );
+
+        $this->hasOne(
+            'created_by',
+            'App\Users\Models\User',
+            'su_id',
+            array(
+                'alias' => 'Creator'
+            )
+        );
+
+        $this->hasOne(
+            'updated_by',
+            'App\Users\Models\User',
+            'su_id',
+            array(
+                'alias' => 'Updater'
+            )
+        );
     }
 
     public function getSource() {
@@ -36,6 +54,14 @@ class Item extends \Micro\Model {
         if ($this->currency) {
             $data['currency_code'] = $this->currency->currency_code;
             $data['currency_name'] = $this->currency->currency_name;
+        }
+
+        $data['log'] = '';
+
+        if (empty($this->updated_date)) {
+            $data['log'] = 'Created by '.($this->creator ? $this->creator->su_fullname : 'NULL').' at '.date('F d, Y H:i', strtotime($this->created_date));
+        } else {
+            $data['log'] = 'Updated by '.($this->updater ? $this->updater->su_fullname : 'NULL').' at '.date('F d, Y H:i', strtotime($this->updated_date));
         }
 
         return $data;

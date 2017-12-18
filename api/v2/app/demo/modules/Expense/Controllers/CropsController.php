@@ -1,19 +1,41 @@
 <?php
 namespace App\Expense\Controllers;
 
-use App\Expense\Models\Crop;
+use App\Expense\Models\Crop,
+    App\Expense\Models\Expense;
 
 class CropsController extends \Micro\Controller {
 
     public function findAction() {
         $params = $this->request->getParams();
-        $query = Crop::get();
+        $display = isset($params['display']) ? $params['display'] : FALSE;
 
-        if (isset($params['expense'])) {
-            $query->where('id_exp = :expense:', array('expense' => $params['expense']));
+        switch($display) {
+            case 'group':
+
+                if (isset($params['expense'])) {
+                    $expense = Expense::get($params['expense'])->data;
+
+                    return array(
+                        'success' => TRUE,
+                        'data' => $expense->getGroupedCrops()
+                    );
+                } else {
+                    return array(
+                        'success' => TRUE,
+                        'data' => array()
+                    );
+                }
+
+            default:
+                $query = Crop::get();
+
+                if (isset($params['expense'])) {
+                    $query->where('id_exp = :expense:', array('expense' => $params['expense']));
+                }
+
+                return $query->paginate();
         }
-
-        return $query->paginate();
     }
 
     public function createAction() {

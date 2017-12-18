@@ -1,4 +1,5 @@
 <link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
 <link rel="import" href="../../elements/kct-pages/kct-pages.html">
 
 <dom-module id="tasks-view-page">
@@ -14,19 +15,22 @@
             }
         </style>
 
+        <kct-ajax id="ajax"></kct-ajax>
+
         <kct-pages id="pages" selected="{{ page }}" attr-for-selected="name" lazy-load>
-            <advance-task-view name="advance" route="{{ route }}" state="[[ state ]]" import="advance-task-view.html"></advance-task-view>
-            <trip-task-view name="trip" route="{{ route }}" state="[[ state ]]" import="trip-task-view.html"></trip-task-view>
-            <expense-task-view name="expense" route="{{ route }}" state="[[ state ]]" import="expense-task-view.html"></expense-task-view>
-            <opex-task-view name="opex" route="{{ route }}" state="[[ state ]]" import="opex-task-view.html"></opex-task-view>
-            <advance-receive-view name="advance-receive" route="{{ route }}" state="[[ state ]]" import="advance-receive-view.html"></advance-receive-view>
-            <advance-finance-view name="advance-finance" route="{{ route }}" state="[[ state ]]" import="advance-finance-view.html"></advance-finance-view>
-            <expense-receive-view name="expense-receive" route="{{ route }}" state="[[ state ]]" import="expense-receive-view.html"></expense-receive-view>
-            <expense-finance-view name="expense-finance" route="{{ route }}" state="[[ state ]]" import="expense-finance-view.html"></expense-finance-view>
-            <trip-ticket-request name="trip-ticket-request" route="{{ route }}" state="[[ state ]]" import="trip-ticket-request.html"></trip-ticket-request>
-            <trip-ticket-reschedule name="trip-ticket-reschedule" route="{{ route }}" state="[[ state ]]" import="trip-ticket-reschedule.html"></trip-ticket-reschedule>
-            <advance-refund-view name="advance-refund" route="{{ route }}" state="[[ state ]]" import="advance-refund-view.html"></advance-refund-view>
-            <expense-hr-view name="expense-hr" route="{{ route }}" state="[[ state ]]" import="expense-hr-view.html"></expense-hr-view>
+            <advance-task name="advance" task="[[ task ]]" route="{{ route }}" state="[[ state ]]" import="advance-task.html"></advance-task>
+            <trip-task name="trip" task="[[ task ]]"  route="{{ route }}" state="[[ state ]]" import="trip-task.html"></trip-task>
+            <trip-reschedule-task name="trip-reschedule" task="[[ task ]]"  route="{{ route }}" state="[[ state ]]" import="trip-reschedule-task.html"></trip-reschedule-task>
+            <expense-task name="expense" task="[[ task ]]" route="{{ route }}" state="[[ state ]]" import="expense-task.html"></expense-task>
+            <opex-task name="opex" task="[[ task ]]"  route="{{ route }}" state="[[ state ]]" import="opex-task.html"></opex-task>
+            <advance-receive-task name="advance-receive" task="[[ task ]]"  route="{{ route }}" state="[[ state ]]" import="advance-receive-task.html"></advance-receive-task>
+            <advance-finance-task name="advance-finance" task="[[ task ]]"  route="{{ route }}" state="[[ state ]]" import="advance-finance-task.html"></advance-finance-task>
+            <expense-receive-task name="expense-receive" task="[[ task ]]"  route="{{ route }}" state="[[ state ]]" import="expense-receive-task.html"></expense-receive-task>
+            <expense-finance-task name="expense-finance" task="[[ task ]]"  route="{{ route }}" state="[[ state ]]" import="expense-finance-task.html"></expense-finance-task>
+            <ticket-request-task name="ticket-request" task="[[ task ]]"  route="{{ route }}" state="[[ state ]]" import="ticket-request-task.html"></ticket-request-task>
+            <ticket-reschedule-task name="ticket-reschedule" task="[[ task ]]"  route="{{ route }}" state="[[ state ]]" import="ticket-reschedule-task.html"></ticket-reschedule-task>
+            <advance-refund-task name="advance-refund" task="[[ task ]]"  route="{{ route }}" state="[[ state ]]" import="advance-refund-task.html"></advance-refund-task>
+            <expense-hr-task name="expense-hr" task="[[ task ]]"  route="{{ route }}" state="[[ state ]]" import="expense-hr-task.html"></expense-hr-task>
         </kct-pages>
     </template>
     <script>
@@ -37,14 +41,26 @@
 
             static get properties() {
                 return {
-                    page: { type: String }
+                    page: { type: String },
+                    task: { type: Object }
                 }
             }
 
-            handleRouteParams(view) {
-                if (view) {
-                    this.set('page', view);
-                }
+            handleRouteParams(action, id) {
+                if (action != 'view') return;
+
+                this.$.ajax.GET('/tasks/' + id).then(res => {
+                    let task = res.data;
+
+                    if (task) {
+                        let page = task.t_type;
+
+                        this.set('task', task);    
+                        this.set('page', page);
+                    } else {
+                        this.set('route.path', '/tasks');
+                    }
+                });
             }
         }
 

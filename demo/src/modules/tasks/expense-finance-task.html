@@ -1,0 +1,682 @@
+<link rel="import" href="../../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../bower_components/paper-spinner/paper-spinner-lite.html">
+<link rel="import" href="../../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../../bower_components/vaadin-combo-box/vaadin-combo-box.html">
+<link rel="import" href="../../../bower_components/vaadin-material-theme/vaadin-date-picker.html">
+<link rel="import" href="../../../bower_components/vaadin-date-picker/vaadin-date-picker.html">
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../elements/kct-message/kct-prompt.html">
+<link rel="import" href="../../elements/kct-form/kct-form-validator.html">
+<link rel="import" href="../../elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../elements/kct-input/kct-input-number.html">
+<link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
+<link rel="import" href="../../helpers/node-helper.html">
+<link rel="import" href="../expense/blocks/expense-header-block.html">
+<link rel="import" href="../expense/blocks/expense-crop-block.html">
+<link rel="import" href="../expense/blocks/expense-exchange-block.html">
+<link rel="import" href="../expense/blocks/expense-summary-block.html">
+<link rel="import" href="../expense/blocks/expense-history-block.html">
+
+<dom-module id="expense-finance-task">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+            .action-buttons paper-button {
+                min-width: 90px;
+            }
+            tr.group-row,
+            tr.separator {
+                border-bottom: 1px solid #d0d0d0;
+            }
+
+            tr.separator td {
+                padding: 0;
+            }
+
+            .form-row td {
+                padding-top: 0;
+                padding-bottom: 0;
+                font-size: 13px;
+            }
+            .item-form .label {
+                text-decoration: underline;
+                color: var(--paper-grey-500);
+            }
+            [hidden] { display: none; }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        
+        <kct-vbox>
+            <page-header-block icon="done" title="Todo List" description="[[ task.t_verb ]]"></page-header-block>
+            <div class="flex scroll-y padding">
+                <paper-card class="block">
+                    <div class="card-content">
+                        <div class="action-buttons text-right">
+                            <paper-button on-tap="__onApproveTap" class="btn-green">Approve</paper-button>
+                            <paper-button on-tap="__onRejectTap" class="btn-red">Reject</paper-button>
+                            <paper-button on-tap="__onReturnedTap" class="btn-amber">Change</paper-button>    
+                        </div>
+                    </div>
+                </paper-card>
+
+                <expense-header-block record="[[ record ]]"></expense-header-block>
+                <expense-crop-block record="[[ record ]]" hidden$="[[ !record.expense.is_promo ]]"></expense-crop-block>
+                <expense-exchange-block record="[[ record ]]"></expense-exchange-block>
+                
+                <paper-card  class="block">
+                    <div class="card-content">
+                        <h3 class="block-title">Expense Items</h3>
+
+                        <div class="table-responsive">
+                            <table class="table" hidden$="[[ !record.expense.is_travelling ]]">
+                                <thead>
+                                    <th width="40" class="text-center">No.</th>
+                                    <th>Description</th>
+                                    <th width="100">Payment</th>
+                                    <th width="100">Currency</th>
+                                    <th width="120" class="text-right">Rates</th>
+                                    <th width="120" class="text-right">Amounts</th>
+                                    <th width="120"></th>
+                                </thead>
+                                <tbody>
+                                    <template is="dom-repeat" items="[[ record.items ]]" as="group">
+                                        <tr class="group-row">
+                                            <td colspan="7"><iron-icon icon="label-outline"></iron-icon>&nbsp; [[ group.group_name ]]</td>
+                                        </tr>
+                                        <template is="dom-repeat" items="[[ group.group_items ]]">
+                                            <tr>
+                                                <td class="text-center">[[ item.item_seq ]]</td>
+                                                <td>[[ item.ref_item_name ]]</td>
+                                                <td>[[ item.ref_payment_type_name ]]</td>
+                                                <td>[[ item.ref_currency_code ]]</td>
+                                                <td class="text-right">[[ item.currency_rate_displayed ]]</td>
+                                                <td class="text-right">[[ item.amounts_formatted ]]</td>
+                                                <td class="text-right">
+                                                    <paper-button on-tap="__onItemLogsTap" class="btn-xs btn-muted">Logs</paper-button>
+                                                    <paper-button on-tap="__onItemEditTap" class="btn-xs btn-amber">Edit</paper-button>
+                                                </td>
+                                            </tr>
+                                            <tr class="form-row">
+                                                <td></td>
+                                                <td colspan="5">
+                                                    <kct-column columns="4">
+                                                        <template is="dom-repeat" items="[[ item.item_forms ]]" as="form">
+                                                            <div class="item-form">
+                                                                <div class="label">[[ form.item_form_label ]]</div>
+                                                                <div class="value">[[ form.item_form_display ]]</div>
+                                                            </div>
+                                                        </template> 
+                                                    </kct-column>
+                                                </td>
+                                                <td></td>
+                                            </tr>
+                                            <tr class="separator">
+                                                <td colspan="7"></td>
+                                            </tr>
+                                        </template>
+                                    </template>
+                                </tbody>
+                            </table>
+
+                            <table class="table striped" hidden$="[[ record.expense.is_travelling ]]">
+                                <thead>
+                                    <tr>
+                                        <th width="40" class="text-center">No.</th>
+                                        <th width="100">Date</th>
+                                        <th>Description</th>
+                                        <th width="100">Payment</th>
+                                        <th width="100">Currency</th>
+                                        <th width="120" class="text-right">Rates</th>
+                                        <th width="120" class="text-right">Amounts</th>
+                                        <th width="60"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template is="dom-repeat" items="[[ record.items ]]" as="group">
+                                        <template is="dom-repeat" items="[[ group.group_items ]]">
+                                            <tr>
+                                                <td class="text-center">[[ item.item_seq ]]</td>
+                                                <td>[[ item.item_date_short ]]</td>
+                                                <td>[[ item.ref_item_name ]]</td>
+                                                <td>[[ item.ref_payment_type_name ]]</td>
+                                                <td>[[ item.ref_currency_code ]]</td>
+                                                <td class="text-right">[[ item.currency_rate_displayed ]]</td>
+                                                <td class="text-right">[[ item.amounts_formatted ]]</td>
+                                                <td class="text-right">
+                                                    <paper-button on-tap="__onItemEditTap" class="btn-xs btn-amber">Edit</paper-button>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </template>
+                                    
+                                </tbody>
+                            </table>
+
+                        </div>
+
+                        
+                    </div>
+                </paper-card>
+
+                <expense-summary-block record="[[ record ]]"></expense-summary-block>
+                <expense-history-block record="[[ record ]]"></expense-history-block>
+
+            </div>
+        </kct-vbox>
+
+        <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to list" on-tap="__onBackTap"></paper-fab>
+        </div>
+
+        <kct-prompt id="task-prompt" title="[[ quest ]]" message="Additional notes (remarks)"></kct-prompt>
+
+        <kct-dialog id="dynamic-item-editor" title="Item Editor" width="500" height="100%" scrollable>
+            <template preserve-content>
+                <style include="theme-helper">
+                    #master-item {
+                        --vaadin-combo-box-item: {
+                            padding: 7px 16px;
+                        };
+                    }
+                </style>
+
+                <div slot="dialog-body">
+                    <kct-form-validator id="dynamic-item-validator" invalid="{{ __itemInvalid }}" auto-validate manual-collect>
+                        <vaadin-combo-box 
+                            id="master-item" 
+                            label="Expense Item" 
+                            value="{{ itemRecord.item_id }}"
+                            items="[[ masterItems ]]" 
+                            item-value-path="item_id" 
+                            item-label-path="item_name" 
+                            on-change="__onMasterItemChange" 
+                            required 
+                            auto-validate 
+                            error-message="Expense item is required">
+                            <template>
+                                <style>
+                                    
+                                    .item {
+                                        font-size: 15px;
+                                    }
+                                    .elbow {
+                                        display: inline-block;
+                                        border-top: 1px solid #ccc;
+                                        height: 1px;
+                                        position: relative;
+                                        top: -4px;
+                                    }
+                                    .item.level-1 .elbow {
+                                        margin-right: 10px;
+                                    }
+                                </style>
+                                <div class$="item level-[[ item.item_level ]]">
+                                    <span class="elbow" style="width: [[ item.item_pad ]]"></span>[[ item.item_name ]]
+                                </div>
+                            </template>        
+                        </vaadin-combo-box>
+
+                        <div id="indicator" class="text-center m-t" hidden$="[[ !__stampingForm ]]">
+                            <paper-spinner-lite active></paper-spinner-lite>
+                        </div>
+
+                        <div id="dynamic-wrapper"></div>
+
+                        <vaadin-combo-box 
+                            label="Currency" 
+                            value="{{ itemRecord.currency_id }}" 
+                            items="[[ expenseCurrencies ]]" 
+                            item-value-path="currency_id" 
+                            item-label-path="currency_name" 
+                            on-change="__onCurrencyChange" 
+                            required auto-validate error-message="Currency is required"></vaadin-combo-box>
+
+                        <kct-input-number 
+                            label="Amounts" 
+                            mask="#.###,00" 
+                            value="{{ itemRecord.amounts }}" 
+                            required auto-validate error-message="Amounts is required"></kct-input-number>
+
+                        <vaadin-combo-box 
+                            label="Payment Type" 
+                            value="{{ itemRecord.payment_type }}" 
+                            items="[[ masterPayments ]]" 
+                            item-value-path="pym_id" 
+                            item-label-path="pym_name" 
+                            required auto-validate error-message="Payment type is required"></vaadin-combo-box>
+                    </kct-form-validator>
+                    
+                </div>
+
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onItemEditorSaveTap" disabled$="[[ __itemInvalid ]]">Save</paper-button>
+                    <paper-button on-tap="__onItemEditorCancelTap">Cancel</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+        <kct-dialog id="fixed-item-editor" title="Item Editor" width="500" height="100%" on-ready="__onEditoReady" scrollable>
+            <template preserve-content>
+                <style include="theme-helper">
+                    #master-item {
+                        --vaadin-combo-box-item: {
+                            padding: 7px 16px;
+                        };
+                    }
+                </style>
+
+                <div slot="dialog-body">
+                    <kct-form-validator id="fixed-item-validator" invalid="{{ __fixedInvalid }}" auto-validate>
+                        <paper-input label="Description" value="{{ itemRecord.description }}" required auto-validate error-message="Description is required"></paper-input>
+                        <vaadin-date-picker label="Date" value="{{ itemRecord.item_date }}" required auto-validate error-message="Date is required"></vaadin-date-picker>
+                        
+                        <kct-column columns="2" gutter="1.5rem" spacer="0px">
+                            <div>
+                                <vaadin-combo-box 
+                                    label="Currency" 
+                                    value="{{ itemRecord.currency_id }}" 
+                                    items="[[ expenseCurrencies ]]" 
+                                    item-value-path="currency_id" 
+                                    item-label-path="currency_name" 
+                                    on-change="__onCurrencyChange" 
+                                    required auto-validate error-message="Currency is required"></vaadin-combo-box>
+                            </div>
+                            <div>
+                                <kct-input-number 
+                                    label="Exchange Rates" 
+                                    mask="#.###,000000" 
+                                    value="{{ itemRecord.currency_offset_rate }}" 
+                                    required auto-validate error-message="Amounts is required"></kct-input-number>
+                            </div>
+                        </kct-column>
+
+                        <kct-input-number 
+                            label="Amounts" 
+                            mask="#.###,00" 
+                            value="{{ itemRecord.amounts }}" 
+                            required auto-validate error-message="Amounts is required"></kct-input-number>
+
+                        <vaadin-combo-box 
+                            label="Payment Type" 
+                            value="{{ itemRecord.payment_type }}" 
+                            items="[[ masterPayments ]]" 
+                            item-value-path="pym_id" 
+                            item-label-path="pym_name" 
+                            required auto-validate error-message="Payment type is required"></vaadin-combo-box> 
+
+                    </kct-form-validator>
+                </div>
+
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onItemEditorSaveTap" disabled$="[[ __fixedInvalid ]]">Save</paper-button>
+                    <paper-button on-tap="__onItemEditorCancelTap">Cancel</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+        <kct-dialog id="logs-viewer" title="Item History" width="400" height="100%" scrollable>
+            <template preserve-content>
+                <style include="theme-helper">
+                    .dialog-header, .dialog-body { background-color: var(--paper-grey-100);  }
+                    paper-card { display: block; margin-bottom: 15px;  }
+                </style>
+                <div slot="dialog-body">
+                    <template is="dom-repeat" items="[[ itemHistory ]]">
+                        <paper-card>
+                            <div class="card-content">
+                                <div class="display-field">
+                                    <label>Description</label>
+                                    <div>[[ item.item_name ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Payment</label>
+                                    <div>[[ item.payment_type_name ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Currency</label>
+                                    <div>[[ item.currency_code ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Rates</label>
+                                    <div>[[ item.currency_rate_displayed ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Amounts</label>
+                                    <div>[[ item.amounts_formatted ]]</div>
+                                </div>
+                                <template is="dom-repeat" items="[[ item.item_forms ]]">
+                                    <div class="display-field">
+                                        <label>[[ item.item_form_label ]]</label>
+                                        <div>[[ item.item_form_display ]]</div>
+                                    </div>
+                                </template>
+                                <div class="m-t"></div>
+                            </div>
+                        </paper-card>
+                    </template>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onLogsViewerCloseTap">Close</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class ExpenseFinanceTask extends KctView {
+            static get is() {
+                return 'expense-finance-task';
+            }
+            static get properties() {
+                return {
+                    task: { type: Object },
+                    record: { type: Object },
+                    itemRecord: { type: Object },
+                    itemHistory: { type: Array },
+                    dynamicRecord: { type: Object },
+                    quest: { type: String, value: 'Approval' },
+                    expenseCurrencies: { type: Array },
+                    masterItems: { type: Array, value: () => ([]) },
+                    masterPayments: { type: Array }
+                }
+            }
+            static get observers() {
+                return [
+                    '__taskChanged(task.*)'
+                ];
+            }
+            constructor() {
+                super();
+                this.__stampingForm = false;
+            }
+            __taskChanged() {
+                if (this.task.t_type != 'expense-finance') return;
+
+                // load master items
+                this.$.ajax.GET('/items?display=combo').then(res => {
+                    this.set('masterItems', res.data);
+                });
+
+                // load master payments
+                this.$.ajax.GET('/payments').then(res => {
+                    this.set('masterPayments', res.data);
+                });
+
+                this.$.ajax.GET('/expense/' + this.task.t_link + '/view').then(res => {
+                    this.set('record', res.data);
+                });
+            }
+            __reload() {
+                let id = this.record.expense.id_exp;
+                this.set('record', {});
+                this.$.ajax.GET('/expense/' + id + '/view').then(res => {
+                    this.set('record', res.data);
+                });
+            }
+            __computeNo(index) {
+                return index + 1;
+            }
+            __goBack(reload = false) {
+                this.set('route.path', '/tasks' + (reload ? '?reload=yes' : ''));
+            }
+            __loadEditorReferences() {
+                return Promise.all([
+                    loadCurrencies.bind(this)()
+                ]);
+
+                function loadCurrencies() {
+                    return this.$.ajax.GET('/expense/' + this.record.expense.id_exp + '/currencies').then(res => {
+                        this.set('expenseCurrencies', res.data);
+                    });
+                }
+            }
+            __buildForm(forms) {
+                let html = '';
+                let data = {};
+                let combo = {};
+                let hasDatePicker = false;
+
+                this.set('__itemInvalid', false);
+                this.set('dynamicRecord', {});
+
+                forms.forEach(f => {
+                    let name = `field_${f.item_form_id}`,
+                        label = f.item_form_label,
+                        value = `dynamicRecord.${name}`,
+                        required = f.mandatory == '1' ? true : false;
+
+                    let validation = '';
+
+                    if (required) {
+                        validation = `required auto-validate error-message="${label} is required"`;
+                    }
+
+                    switch(f.item_form_editor) {
+                        case 'datepicker':
+                            hasDatePicker = true;
+                            html += `<vaadin-date-picker label="${label}" value="{{ ${value} }}" ${validation}></vaadin-date-picker>`;
+                            break;
+
+                        case 'dropdown':
+                            
+                            let options = [];
+
+                            try {
+                                options = JSON.parse(f.option || '[]');
+                            } catch(e){}
+
+                            combo[name] = options;
+
+                            html += `
+                                <vaadin-combo-box 
+                                    id="${name}" 
+                                    label="${label}" 
+                                    value="{{ ${value} }}" 
+                                    item-value-path="value" 
+                                    item-label-path="text" ${validation}></vaadin-combo-box>
+                            `;
+                            break;
+
+                        default:
+                            html += `
+                                <paper-input label="${label}" value="{{ ${value} }}" ${validation}></paper-input>
+                            `;
+                            break;
+                    }
+
+                    if (f.item_form_value !== undefined) {
+                        data[name] = f.item_form_value;
+                    }
+                });
+
+                let template = document.createElement('template');
+                template.innerHTML = html;
+
+                let instance = this._stampTemplate(template);
+                this.$['dynamic-wrapper'].appendChild(instance);
+
+                // fixup combo items
+                for(let id in combo) {
+                    instance.$[id].items = combo[id];
+                }
+
+                this.set('dynamicRecord', data);
+
+                if (hasDatePicker) {
+                    this.$['dynamic-wrapper'].querySelectorAll('vaadin-date-picker').forEach(picker => {
+                        NodeHelper.formatDatePicker(picker);
+                    });
+                }
+
+                this.$['dynamic-item-validator'].collect().then(() => {
+                    this.$['dynamic-item-validator'].validate();
+                });
+                
+            }
+            __onMasterItemChange(e) {
+                
+                let id = e.target.value;
+                if ( ! id) return;
+                
+                this.$['dynamic-wrapper'].innerHTML = '';
+                this.set('__stampingForm', true);
+
+                this.$.ajax.GET('/items/' + id).then(res => {
+                    if (res.data) {
+                        this.$['dynamic-wrapper'].innerHTML = '';
+                        this.__buildForm(res.data.item_forms);
+                        this.set('__stampingForm', false);
+                    }
+                });
+            }
+            __onRejectTap() {
+                if ( ! this.record && ! this.record.expense) {
+                    return;
+                }
+
+                this.set('quest', 'Reject');
+
+                this.$['task-prompt'].open().then(r => {
+                    if (r.action == 'submit') {
+                        let notes = r.value || '';
+                        this.$.ajax.POST('/expense/' + this.record.expense.id_exp + '/fa-reject', { notes: notes }).then(() => {
+                            this.__goBack(true);
+                        });
+                    }
+                });
+            }
+            __onApproveTap() {
+                if ( ! this.record && ! this.record.expense) {
+                    return;
+                }
+                
+                this.set('quest', 'Approve');
+
+                this.$['task-prompt'].open().then(r => {
+                    if (r.action == 'submit') {
+                        let notes = r.value || '';
+                        this.$.ajax.POST('/expense/' + this.record.expense.id_exp + '/fa-approve', { notes: notes }).then(() => {
+                            this.__goBack(true);
+                        });
+                    }
+                });
+            }
+            __onReturnedTap() {
+                if ( ! this.record && ! this.record.expense) {
+                    return;
+                }
+
+                this.set('quest', 'Change Request');
+
+                this.$['task-prompt'].open().then(r => {
+                    if (r.action == 'submit') {
+                        let notes = r.value || '';
+                        this.$.ajax.POST('/expense/' + this.record.expense.id_exp + '/fa-returned', { notes: notes }).then(() => {
+                            this.__goBack(true);
+                        });
+                    }
+                });
+            }
+            __onEditoReady(e) {
+                e.target.shadowRoot.querySelectorAll('vaadin-date-picker').forEach(picker => {
+                    NodeHelper.formatDatePicker(picker);
+                });
+            }
+            __onItemEditTap(e) {
+                this.mask('Opening...');
+
+                this.__loadEditorReferences().then(() => {
+                    this.unmask();
+
+                    let item = Object.assign({}, e.model.item);
+
+                    this.set('itemRecord', item);
+
+                    if (this.record.expense.is_travelling) {
+                        this.$['dynamic-wrapper'].innerHTML = '';
+                        this.__buildForm(item.item_forms);
+                        this.$['dynamic-item-editor'].open();
+                    } else {
+                        this.$['fixed-item-editor'].open();
+                        this.$['fixed-item-validator'].validate();
+                    }
+                });
+            }
+            __onItemEditorSaveTap() {
+                if (this.record.expense.is_travelling) {
+                    this.$['dynamic-item-editor'].close();       
+                } else {
+                    this.$['fixed-item-editor'].close();
+                }
+                
+                let data = this.itemRecord;
+                data.id_exp = this.record.expense.id_exp;
+
+                if (this.record.expense.is_travelling) {
+                    data.dynamic = this.dynamicRecord;    
+                }
+                
+                if (data.exp_item_id) {
+                    this.$.ajax.PUT('/expense/items/' + data.exp_item_id + '?action=revision', data).then(done.bind(this));
+                } else {
+                    this.$.ajax.POST('/expense/items', data).then(done.bind(this));
+                }
+
+                function done(res) {
+                    if (res.success) {
+                        this.__reload();
+                    }
+                }
+            }
+            __onItemEditorCancelTap() {
+                if (this.record.expense.is_travelling) {
+                    this.$['dynamic-item-editor'].close();  
+                } else {
+                    this.$['fixed-item-editor'].close();
+                }
+            }
+            __onCurrencyChange(e) {
+                let value = e.target.value;
+                
+                this.set('itemRecord.currency_rate', 0);
+                this.set('itemRecord.currency_rate_exchanged', 1);
+                this.set('itemRecord.currency_offset_id', null);
+                this.set('itemRecord.currency_offset_rate', 1);
+
+                if (value) {
+                    let currency = (this.expenseCurrencies || []).find(c => c.currency_id == value);
+                    if (currency) {
+                        this.set('itemRecord.currency_rate', currency.currency_rate);
+                        this.set('itemRecord.currency_rate_exchanged', currency.currency_rate_exchanged);
+                        this.set('itemRecord.currency_offset_id', currency.currency_offset_id);
+                        this.set('itemRecord.currency_offset_rate', currency.currency_offset_rate);
+                    }
+                }
+            }
+            __onItemLogsTap(e) {
+                this.mask('Opening...');
+                this.$.ajax.GET('/expense/items/' + e.model.item.exp_item_id + '/history').then(res => {
+                    this.unmask();
+                    this.set('itemHistory', res.data);
+                    this.$['logs-viewer'].open();
+                });
+                
+            }
+            __onLogsViewerCloseTap() {
+                this.$['logs-viewer'].close();
+            }
+            __onBackTap() {
+                this.__goBack();
+            }
+        }
+        customElements.define(ExpenseFinanceTask.is, ExpenseFinanceTask);
+    </script>
+</dom-module>

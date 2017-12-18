@@ -76,7 +76,11 @@
                 this.$.input.click();
             }
             __valueChanged(value) {
-                this.set('__hideClear', !(!!value));
+                let hasValue = !!value;
+                this.set('__hideClear', !hasValue);
+                if ( ! hasValue) {
+                    this.set('file', null);
+                }
             }
             __onBrowseTap() {
                 this.browse();

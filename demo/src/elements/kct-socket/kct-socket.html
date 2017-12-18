@@ -1,0 +1,102 @@
+<link rel="import" href="../../../vendors/socket-io/socket-io.html">
+
+<dom-module id="kct-socket">
+    <template>
+                
+    </template>
+    <script>
+
+        {
+            class SocketManager {
+
+                get host() {
+                    return '127.0.0.1'
+                }
+
+                get port() {
+                    return 8080;
+                }
+
+                get connected() {
+                    return this.__connected;
+                }
+
+                constructor() {
+                    this.__connected = false;
+                    this.__socket = null;
+                    this.__subscribers = [];
+                }
+
+                add(subscriber) {
+                    this.__subscribers.push(subscriber);
+                }
+
+                remove(subscriber) {
+                    let index = this.__subscribers.indexOf(subscriber);
+
+                    if (index !== -1) {
+                        this.__subscribers.splice(index, 1);
+                    }
+                }
+
+                connect() {
+                    if (this.__connected) return;
+
+                    let host = this.host,
+                        port = this.port;
+
+                    
+                    this.__socket = io.connect('http://' + host + ':' + port);
+
+                    this.__socket.on('connect', this.__onSocketConnected.bind(this));
+                    this.__socket.on('message', this.__onSocketMessage.bind(this));
+                }
+
+                __onSocketConnected() {
+                    this.__connected = true;
+                }
+
+                __onSocketMessage(data) {
+
+                }
+
+            }
+
+            const manager = new SocketManager();
+            
+            class KctSocket extends Polymer.Element {
+                static get is() {
+                    return 'kct-socket';
+                }
+
+                static get properties() {
+                    return {
+                        channel: { type: String }
+                    }
+                }
+
+                connectedCallback() {
+                    super.connectedCallback();
+                    manager.add(this);
+                    manager.connect();
+                }
+
+                disconnectedCallback() {
+                    manager.remove(this);
+                    super.disconnectedCallback();
+                }
+
+                emit(data) {
+
+                }
+
+                broadcast(data) {
+
+                }
+            }
+
+            customElements.define(KctSocket.is, KctSocket);
+        }
+
+    </script>
+</dom-module>

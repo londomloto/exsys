@@ -1,0 +1,138 @@
+<link rel="import" href="../../../../bower_components/paper-card/paper-card.html">
+
+<dom-module id="expense-detail-block">
+    <template>
+        <style include="theme-helper">
+            tr.group-row,
+            tr.separator {
+                border-bottom: 1px solid #d0d0d0;
+            }
+            tr.separator td {
+                padding: 0;
+            }
+            td iron-icon {
+                --iron-icon-width: 18px;
+                --iron-icon-height: 18px;
+            }
+            .form-row td {
+                padding-top: 0;
+                padding-bottom: 0;
+                font-size: 13px;
+            }
+            .item-form .label {
+                text-decoration: underline;
+                color: var(--paper-grey-500);
+            }
+            [hidden] { display: none;  }
+        </style>
+
+        <paper-card  class="block">
+            <div class="card-content">
+                <h3 class="block-title">Expense Items</h3>
+
+                <div class="table-responsive">
+                    <table class="table" hidden$="[[ !record.expense.is_travelling ]]">
+                        <thead>
+                            <th width="40" class="text-center">No.</th>
+                            <th>Description</th>
+                            <th width="60" class="text-center">C & B</th>
+                            <th width="100">Payment</th>
+                            <th width="100">Currency</th>
+                            <th width="120" class="text-right">Rates</th>
+                            <th width="120" class="text-right">Amounts</th>
+                        </thead>
+                        <tbody>
+                            <template is="dom-repeat" items="[[ record.items ]]" as="group">
+                                <tr class="group-row">
+                                    <td colspan="7"><iron-icon icon="label-outline"></iron-icon>&nbsp; [[ group.group_name ]]</td>
+                                </tr>
+                                <template is="dom-repeat" items="[[ group.group_items ]]">
+                                    <tr>
+                                        <td class="text-center">[[ item.item_seq ]]</td>
+                                        <td>[[ item.item_name ]]</td>
+                                        <td class="text-center">
+                                            <iron-icon icon="done" hidden$="[[ !item.is_cnb ]]"></iron-icon>
+                                        </td>
+                                        <td>[[ item.payment_type_name ]]</td>
+                                        <td>[[ item.currency_name ]]</td>
+                                        <td class="text-right">[[ item.currency_rate_displayed ]]</td>
+                                        <td class="text-right">[[ item.amounts_formatted ]]</td>
+                                    </tr>
+                                    <tr class="form-row">
+                                        <td></td>
+                                        <td colspan="5">
+                                            <kct-column columns="4">
+                                                <template is="dom-repeat" items="[[ item.item_forms ]]" as="form">
+                                                    <div class="item-form">
+                                                        <div class="label">[[ form.item_form_label ]]</div>
+                                                        <div class="value">[[ form.item_form_display ]]</div>
+                                                    </div>
+                                                </template> 
+                                            </kct-column>
+                                        </td>
+                                        <td></td>
+                                    </tr>
+                                    <tr class="separator">
+                                        <td colspan="7"></td>
+                                    </tr>
+                                </template>
+                            </template>
+                        </tbody>
+                    </table>
+
+                    <table class="table striped" hidden$="[[ record.expense.is_travelling ]]">
+                        <thead>
+                            <tr>
+                                <th width="40" class="text-center">No.</th>
+                                <th width="100">Date</th>
+                                <th>Description</th>
+                                <th width="100">Payment</th>
+                                <th width="100">Currency</th>
+                                <th width="100" class="text-right">Rates</th>
+                                <th width="120" class="text-right">Amounts</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template is="dom-repeat" items="[[ record.items ]]" as="group">
+                                <template is="dom-repeat" items="[[ group.group_items ]]">
+                                    <tr>
+                                        <td class="text-center">[[ item.item_seq ]]</td>
+                                        <td>[[ item.item_date_short ]]</td>
+                                        <td>[[ item.item_name ]]</td>
+                                        <td>[[ item.payment_type_name ]]</td>
+                                        <td>[[ item.currency_code ]]</td>
+                                        <td class="text-right">[[ item.currency_rate_displayed ]]</td>
+                                        <td class="text-right">[[ item.amounts_formatted ]]</td>
+                                    </tr>
+                                </template>
+                            </template>
+                            
+                        </tbody>
+                    </table>
+
+                </div>
+
+                
+            </div>
+        </paper-card>
+
+    </template>
+    <script>
+        class ExpenseDetailBlock extends Polymer.Element {
+            static get is() {
+                return 'expense-detail-block';
+            }
+
+            static get properties() {
+                return {
+                    record: { type: Object }
+                };
+            }
+            __computeNo(index) {
+                return index + 1;
+            }
+        }
+
+        customElements.define(ExpenseDetailBlock.is, ExpenseDetailBlock);
+    </script>
+</dom-module>

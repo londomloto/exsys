@@ -1,0 +1,163 @@
+<link rel="import" href="../../../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../elements/kct-ajax/kct-ajax.html">
+
+<dom-module id="expense-header-block">
+    <template>
+        <style include="theme-helper">
+            [hidden] { display: none; }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <paper-card class="block">
+            <div class="card-content">
+                <h3 class="block-title">[[ record.expense.exp_no ]]</h3>
+                <kct-column columns="3" gutter="1.5rem" spacer="0px" hidden$="[[ __travellingHidden ]]">
+                    <div>
+                        <div class="display-field">
+                            <label>Subject: </label>
+                            <div>[[ record.expense.subject_exp ]]</div>
+                        </div>
+                        <div class="display-field">
+                            <label>Type: </label>
+                            <div>[[ record.expense.type_name ]]</div>
+                        </div>
+                        <div class="display-field">
+                            <label>Purpose: </label>
+                            <div>[[ record.expense.purpose_name ]]</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="display-field">
+                            <label>Proposed By: </label>
+                            <div>[[ record.expense.user_fullname ]]</div>
+                        </div>
+                        <div class="display-field">
+                            <label>Start Date: </label>
+                            <div>[[ record.expense.date_start_short ]]</div>
+                        </div>
+                        <div class="display-field">
+                            <label>End Date: </label>
+                            <div>[[ record.expense.date_end_short ]]</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="display-field" hidden$="[[ !record.expense.adv_no ]]">
+                            <label>Advance: </label>
+                            <div><a href="#" on-click="__onAdvanceTap">[[ record.expense.adv_no ]]</a></div>
+                        </div>
+                        <div class="display-field">
+                            <label>Status: </label>
+                            <div>[[ record.expense.status_name ]]</div>
+                        </div>
+                        <div class="display-field" hidden$="[[ !record.expense.has_attachment ]]">
+                            <label>Attachment: </label>
+                            <div><a href="javascript:void(0)" on-tap="__onDownloadTap">Download</a></div>
+                        </div>
+                    </div>
+                </kct-column>
+                
+                <kct-column columns="3" gutter="1.5rem" spacer="0px" hidden$="[[ __promoHidden ]]">
+                    <div>
+                        <div class="display-field">
+                            <label>Subject: </label>
+                            <div>[[ record.expense.subject_exp ]]</div>
+                        </div>
+                        <div class="display-field">
+                            <label>Type: </label>
+                            <div>[[ record.expense.type_name ]]</div>
+                        </div>
+                        <div class="display-field">
+                            <label>Purpose: </label>
+                            <div>[[ record.expense.purpose_name ]]</div>
+                        </div>
+                        <div class="display-field" hidden$="[[ record.expense.is_travelling ]]">
+                            <label>Location: </label>
+                            <div>[[ record.expense.location ]]</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="display-field" hidden$="[[ record.expense.is_travelling ]]">
+                            <label>Participants: </label>
+                            <div>[[ record.expense.participant ]]</div>
+                        </div>
+                        <div class="display-field" hidden$="[[ record.expense.is_travelling ]]">
+                            <label>Activity: </label>
+                            <div>[[ record.expense.activity ]]</div>
+                        </div>
+                        <div class="display-field">
+                            <label>Proposed By: </label>
+                            <div>[[ record.expense.user_fullname ]]</div>
+                        </div>
+                        <div class="display-field">
+                            <label>Status: </label>
+                            <div>[[ record.expense.status_name ]]</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="display-field">
+                            <label>Start Date: </label>
+                            <div>[[ record.expense.date_start_short ]]</div>
+                        </div>
+                        <div class="display-field">
+                            <label>End Date: </label>
+                            <div>[[ record.expense.date_end_short ]]</div>
+                        </div>
+                        <div class="display-field" hidden$="[[ !record.expense.adv_no ]]">
+                            <label>Advance: </label>
+                            <div><a href="#" on-click="__onAdvanceTap">[[ record.expense.adv_no ]]</a></div>
+                        </div>
+                        <div class="display-field" hidden$="[[ !record.expense.has_attachment ]]">
+                            <label>Attachment: </label>
+                            <div><a href="javascript:void(0)" on-tap="__onDownloadTap">Download</a></div>
+                        </div>
+                    </div>
+                </kct-column>
+
+            </div>
+        </paper-card>
+    </template>
+    <script>
+        class ExpenseHeaderBlock extends Polymer.Element {
+            static get is() {
+                return 'expense-header-block';
+            }
+
+            static get properties() {
+                return {
+                    record: { type: Object }
+                };
+            }
+
+            static get observers() {
+                return [
+                    '__computeBlockHidden(record.expense.*)'
+                ];
+            }
+
+            constructor() {
+                super();
+                this.__travellingHidden = true;
+                this.__promoHidden = true;
+            }
+
+            __computeBlockHidden() {
+                if (this.record.expense) {
+                    this.set('__travellingHidden', this.record.expense.is_promo);
+                    this.set('__promoHidden', this.record.expense.is_travelling);
+                }
+            }
+
+            __onAdvanceTap(e) {
+                e.preventDefault();
+                this.set('route.path', '/advance/advance/view/' + this.record.expense.adv_ref);
+            }
+
+            __onDownloadTap(){
+                this.$.ajax.DOWNLOAD('/expense/' + this.record.expense.id_exp + '/download');
+            }
+        }
+
+        customElements.define(ExpenseHeaderBlock.is, ExpenseHeaderBlock);
+    </script>
+</dom-module>

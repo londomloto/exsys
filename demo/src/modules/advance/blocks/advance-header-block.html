@@ -1,0 +1,79 @@
+<link rel="import" href="../../../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../elements/kct-ajax/kct-ajax.html">
+
+<dom-module id="advance-header-block">
+    <template>
+        <style include="theme-helper">
+            [hidden] {
+                display: none;
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+
+        <paper-card class="block">
+            <div class="card-content">
+                <h3 class="block-title">[[ record.advance.adv_no ]]</h3>
+                <kct-column columns="3" gutter="1.5rem" spacer="0px">
+                    <div>
+                        <div class="display-field">
+                            <label>Subject: </label>
+                            <div>[[ record.advance.subject_adv ]]</div>
+                        </div>
+                        <div class="display-field">
+                            <label>Type: </label>
+                            <div>[[ record.advance.type_name ]]</div>
+                        </div>
+                        <div class="display-field">
+                            <label>Purpose: </label>
+                            <div>[[ record.advance.purpose_name ]]</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="display-field">
+                            <label>Proposed By: </label>
+                            <div>[[ record.advance.user_fullname ]]</div>
+                        </div>
+                        <div class="display-field">
+                            <label>Start Date: </label>
+                            <div>[[ record.advance.date_start_short ]]</div>
+                        </div>
+                        <div class="display-field">
+                            <label>End Date: </label>
+                            <div>[[ record.advance.date_end_short ]]</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="display-field">
+                            <label>Current Status: </label>
+                            <div>[[ record.advance.status_name ]]</div>
+                        </div>
+                        <div class="display-field" hidden$="[[ !record.advance.has_attachment ]]">
+                            <label>Attachment: </label>
+                            <div><a href="javascript:void(0)" on-tap="__onDownloadTap">Download</a></div>
+                        </div>
+                    </div>
+                </kct-column>
+            </div>
+        </paper-card>
+    </template>
+    <script>
+        class AdvanceHeaderBlock extends Polymer.Element {
+            static get is() {
+                return 'advance-header-block';
+            }
+
+            static get properties() {
+                return {
+                    record: { type: Object }
+                };
+            }
+
+            __onDownloadTap(){
+                this.$.ajax.DOWNLOAD('/advance/' + this.record.advance.id_adv + '/download');
+            }
+        }
+
+        customElements.define(AdvanceHeaderBlock.is, AdvanceHeaderBlock);
+    </script>
+</dom-module>

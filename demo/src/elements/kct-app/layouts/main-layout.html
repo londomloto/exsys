@@ -340,8 +340,8 @@
             }
 
             disconnectedCallback() {
-                super.disconnectedCallback();
                 this.$.workspace.removeEventListener('iron-resize', this.__workspaceResizeHandler);
+                super.disconnectedCallback();
             }
 
             _layoutActive() {

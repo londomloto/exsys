@@ -2,8 +2,10 @@
 namespace App\Expense\Controllers;
 
 use App\Expense\Models\Item,
+    App\Expense\Models\ItemHistory,
     App\Expense\Models\Expense,
     App\Expense\Models\ItemDetail,
+    App\Expense\Models\ItemDetailHistory,
     App\Currencies\Models\Currency,
     App\Costs\Models\Cost;
 
@@ -67,7 +69,10 @@ class ItemsController extends \Micro\Controller {
 
     public function createAction() {
         $params = $this->request->getParams();
+        $user = $this->auth->user();    
         $post = $this->request->getJson();
+        $post['created_by'] = $user['su_id'];
+        $post['created_date'] = date('Y-m-d H:i:s');
         
         unset($post['cnb']);
 
@@ -76,7 +81,7 @@ class ItemsController extends \Micro\Controller {
             $post['item_id'] = NULL;
         } else {
             if (isset($params['cnb'])) {
-                $user = $this->auth->user();    
+                
                 $cost = Cost::validateGrade($post['item_id'], $user['su_id'], $post['currency_id'], $post['amounts']);
                 
                 $post['cnb'] = 0;
@@ -97,7 +102,6 @@ class ItemsController extends \Micro\Controller {
         }
 
         $data = new Item();
-
         $expense = Expense::get($post['id_exp'])->data;
         
         if ($expense && $expense->category == 'opex') {
@@ -137,8 +141,12 @@ class ItemsController extends \Micro\Controller {
 
     public function updateAction($id) {
         $params = $this->request->getParams();
+        $user = $this->auth->user();    
         $post = $this->request->getJson();
+        $post['updated_by'] = $user['su_id'];
+        $post['updated_date'] = date('Y-m-d H:i:s');
         
+        // fixup cnb
         unset($post['cnb']);
         
         // fixup $post
@@ -146,7 +154,6 @@ class ItemsController extends \Micro\Controller {
             $post['item_id'] = NULL;
         } else {
             if (isset($params['cnb'])) {
-                $user = $this->auth->user();    
                 $cost = Cost::validateGrade($post['item_id'], $user['su_id'], $post['currency_id'], $post['amounts']);
 
                 $post['cnb'] = 0;
@@ -179,7 +186,30 @@ class ItemsController extends \Micro\Controller {
                 }
             }
 
+            $action = isset($params['action']) ? $params['action'] : '';
+
+            if ($action == 'revision') {
+                $copyItem = $query->data->toArray();
+                $copyItem['history_date'] = date('Y-m-d H:i:s');
+                $copyForm = array();
+
+                foreach($query->data->values as $form) {
+                    $copyForm[] = $form->toArray();
+                }
+            }
+            
             if ($query->data->save($post)) {
+
+                if ($action == 'revision') {
+                    $histItem = new ItemHistory();
+                    $histItem->save($copyItem);
+
+                    foreach($copyForm as $form) {
+                        $form['item_history_id'] = $histItem->history_id;
+                        $histForm = new ItemDetailHistory();
+                        $histForm->save($form);
+                    }
+                }
 
                 if ($query->data->expense) {
                     $query->data->expense->updateAmounts();
@@ -210,6 +240,8 @@ class ItemsController extends \Micro\Controller {
                         $detail->save();
                     }
                 }
+            } else {
+                // print_r($query->data->getMessages());
             }
         }
 
@@ -229,6 +261,17 @@ class ItemsController extends \Micro\Controller {
         }
 
         return array('success' => TRUE);
+    }
+
+    public function historyByIdAction($id) {
+        $result = ItemHistory::get()
+            ->where('exp_item_id = :id:', array(
+                'id' => $id
+            ))
+            ->orderBy('history_id DESC')
+            ->paginate();
+
+        return $result;
     }
 
 }

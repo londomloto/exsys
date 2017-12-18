@@ -170,26 +170,23 @@
                                 <thead>
                                     <tr>
                                         <th width="40" class="text-center">No.</th>
-                                        <th width="40" class="text-center">File</th>
                                         <th width="120">Return Date</th>
                                         <th>Remarks</th>
                                         <th width="120">Currency</th>
                                         <th width="120" class="text-right">Amounts</th>
-                                        <td width="150" hidden$="[[ !__editable ]]"></td>
+                                        <td width="200" hidden$="[[ !__editable ]]"></td>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <template is="dom-repeat" items="[[ refundItems ]]">
                                         <tr>
                                             <td class="text-center">[[ __computeNo(index) ]]</td>
-                                            <td class="text-center action">
-                                                <paper-icon-button hidden$="[[ !item.has_attachment ]]" on-tap="__onItemDownloadTap" icon="file-download" title="Download attachment"></paper-icon-button>
-                                            </td>
                                             <td>[[ item.date_formatted ]]</td>
                                             <td>[[ item.remarks ]]</td>
                                             <td>[[ item.currency_code ]]</td>
                                             <td class="text-right">[[ item.amounts_formatted ]]</td>
                                             <td class="text-right" hidden$="[[ !__editable ]]">
+                                                <paper-button on-tap="__onItemFileTap" class="btn-xs btn-muted" hidden$="[[ !item.has_attachment ]]">File</paper-button>
                                                 <paper-button on-tap="__onItemEditTap" class="btn-xs btn-amber">Edit</paper-button>
                                                 <paper-button on-tap="__onItemDeleteTap" class="btn-xs btn-danger">Delete</paper-button>
                                             </td>
@@ -391,7 +388,7 @@
                 });
             }
 
-            __onItemDownloadTap(e) {
+            __onItemFileTap(e) {
                 this.$.ajax.DOWNLOAD('/advance/refund/' + e.model.item.refund_id + '/download');
             }
 

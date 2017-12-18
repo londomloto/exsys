@@ -73,7 +73,9 @@
                 }
             }
 
-            __onButtonTap() {
+            __onButtonTap(e) {
+                // e.stopPropagation();
+
                 let event = new CustomEvent('tap', {
                     composed: true,
                     bubble: true

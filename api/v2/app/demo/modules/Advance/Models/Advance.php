@@ -116,6 +116,21 @@ class Advance extends \Micro\Model {
         $this->purpose = $this->purpose == '' ? NULL : $this->purpose;
     }
 
+    public function isEditable() {
+        $statuses = array(
+            Status::val('draft'),
+            Status::val('change-request')
+        );
+        return in_array($this->status, $statuses);
+    }
+
+    public function isRemovable() {
+        $statuses = array(
+            Status::val('draft')
+        );
+        return in_array($this->status, $statuses);
+    }
+
     public function hasAttachment() {
         $attachment = $this->getAttachment();
         if ( ! empty($attachment)) {
@@ -133,6 +148,8 @@ class Advance extends \Micro\Model {
     public function toArray($columns = NULL) {
         $data = parent::toArray($columns);
 
+        $data['is_editable'] = $this->isEditable();
+        $data['is_removable'] = $this->isRemovable();
         $data['status_name'] = '';
         $data['type_name'] = '';
         $data['purpose_name'] = '';
@@ -191,7 +208,7 @@ class Advance extends \Micro\Model {
         $this->save();
     }
 
-    public function submit() {
+    public function submit($showInTask = TRUE) {
         $auth = \Micro\App::getDefault()->auth->user();
         $user = User::get($auth['su_id'])->data;
 
@@ -202,42 +219,27 @@ class Advance extends \Micro\Model {
         // log history
         History::log('advance', $this);
         
-        // assign next task
+        // assign task
         $superiors = $user->getSuperiors($this->amounts);
 
         foreach($superiors as $super) {
-            Task::log('advance', $super['user_id'], $this);
+            Task::log(Task::TYPE_ADVANCE, $super['user_id'], $this, $showInTask);
         }
     }
 
     public function reject($post = array()) {
         $user = \Micro\App::getDefault()->auth->user();
 
-        // delete tasks
-        \App\Tasks\Models\Task::find(array(
-            't_type = :type: AND t_link = :link:',
-            'bind' => array(
-                'type' => 'advance',
-                'link' => $this->id_adv
-            )
-        ))->delete();
-
-        $status = Status::val('reject');
-
-        // tambah history
-        $history = new History();
-        $history->category = 'advance';
-        $history->id_adv = $this->id_adv;
-        $history->status_id = $status;
-        $history->user_act = $user['su_id'];
-        $history->date = date('Y-m-d H:i:s');
-        $history->notes = $post['notes'];
-
-        $history->save();
+        // dispose tasks
+        Task::dispose(Task::TYPE_ADVANCE, $this);
 
         // update status
+        $status = Status::val('reject');
         $this->status = $status;
         $this->save();
+
+        // log history
+        History::log('advance', $this, $post['notes']);
     }
 
     public function approve($post = array()) {
@@ -245,18 +247,25 @@ class Advance extends \Micro\Model {
 
         // delete lower tasks 
         if ($user['su_grade_type'] == 'verificator') {
-            \App\Tasks\Models\Task::find(array(
+            $tasks = Task::find(array(
                 't_type = :type: AND t_link = :link: AND t_user = :user:',
                 'bind' => array(
-                    'type' => 'advance',
+                    'type' => Task::TYPE_ADVANCE,
                     'link' => $this->id_adv,
                     'user' => $user['su_id']
                 )
-            ))->delete();
+            ));
+
+            foreach($tasks as $task) {
+                $task->t_done = 1;
+                $task->t_drop = 1;
+                $task->save();
+            }
+
         } else if ($user['su_grade_type'] == 'approver') {
             $tasks = \App\Tasks\Models\Task::get()
                 ->where('t_type = :type: AND t_link = :link: AND grade.grade_limit <= :amounts:', array(
-                    'type' => 'advance',
+                    'type' => Task::TYPE_ADVANCE,
                     'link' => $this->id_adv,
                     'amounts' => (int) $user['su_grade_limit']
                 ))
@@ -265,14 +274,13 @@ class Advance extends \Micro\Model {
                 ->execute();
 
             foreach($tasks as $task) {
-                $task->delete();
+                if ($task->t_user == $user['su_id']) {
+                    $task->t_done = 1;    
+                }
+                $task->t_drop = 1;
+                $task->save();
             }
         }
-
-        // tambah history
-        $history = new History();
-        $history->category = 'advance';
-        $history->id_adv = $this->id_adv;
 
         $status = NULL;
 
@@ -286,50 +294,33 @@ class Advance extends \Micro\Model {
             }
         }
 
-        $history->status_id = $status;
-        $history->user_act = $user['su_id'];
-        $history->date = date('Y-m-d H:i:s');
-        $history->notes = $post['notes'];
-
-        $history->save();
-
         // update status
         $this->status = $status;
-        $this->save();
 
-        if ($status == Status::val('final-approved')) {
-            $this->faSubmit('approval-request');
+        if ($this->save()) {
+            // tambah history
+            History::log('advance', $this, $post['notes']);
+
+            if ($status == Status::val('final-approved')) {
+                $this->faSubmit('approval-request');
+            }
         }
     }
 
     public function returned($post = array()) {
         $user = \Micro\App::getDefault()->auth->user();
 
-        // delete tasks
-        \App\Tasks\Models\Task::find(array(
-            't_type = :type: AND t_link = :link:',
-            'bind' => array(
-                'type' => 'advance',
-                'link' => $this->id_adv
-            )
-        ))->delete();
-
-        $status = Status::val('change-request');
-
-        // tambah history
-        $history = new History();
-        $history->category = 'advance';
-        $history->id_adv = $this->id_adv;
-        $history->status_id = $status;
-        $history->user_act = $user['su_id'];
-        $history->date = date('Y-m-d H:i:s');
-        $history->notes = $post['notes'];
-
-        $history->save();
+        // dispose tasks
+        Task::dispose(Task::TYPE_ADVANCE, $this);
 
         // update status
+        $status = Status::val('change-request');
         $this->status = $status;
         $this->save();
+
+        // create history
+        History::log('advance', $this, $post['notes']);
+
     }
 
     public function faSubmit($action) {
@@ -361,16 +352,7 @@ class Advance extends \Micro\Model {
         }
 
         foreach($subscribers as $sub) {
-            $task = new \App\Tasks\Models\Task();
-                
-            $task->t_type = $type;
-            $task->t_link = $this->id_adv;
-            $task->t_code = $this->adv_no;
-            $task->t_user = $sub->su_id;
-            $task->t_date = date('Y-m-d H:i:s');
-            $task->t_read = 0;
-
-            $task->save();
+            Task::log($type, $sub->su_id, $this);
         }
     }
 

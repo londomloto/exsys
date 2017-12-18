@@ -1,0 +1,103 @@
+<link rel="import" href="../../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../elements/kct-message/kct-prompt.html">
+<link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
+<link rel="import" href="../expense/blocks/expense-header-block.html">
+<link rel="import" href="../expense/blocks/expense-crop-block.html">
+<link rel="import" href="../expense/blocks/expense-exchange-block.html">
+<link rel="import" href="../expense/blocks/expense-detail-block.html">
+<link rel="import" href="../expense/blocks/expense-summary-block.html">
+<link rel="import" href="../expense/blocks/expense-history-block.html">
+
+<dom-module id="expense-receive-task">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+            .action-buttons paper-button {
+                min-width: 90px;
+            }
+            [hidden] { display: none; }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        
+        <kct-vbox>
+            <page-header-block icon="done" title="Todo List" description="Expense receive task"></page-header-block>
+            <div class="flex scroll-y padding">
+                <paper-card class="block">
+                    <div class="card-content">
+                        <div class="action-buttons text-right">
+                            <paper-button on-tap="__onReceiveTap" class="btn-cyan">Receive Document</paper-button>
+                        </div>
+                    </div>
+                </paper-card>
+
+                <expense-header-block record="[[ record ]]"></expense-header-block>
+                <expense-crop-block record="[[ record ]]" hidden$="[[ !record.expense.is_promo ]]"></expense-crop-block>
+                <expense-exchange-block record="[[ record ]]"></expense-exchange-block>
+                <expense-detail-block record="[[ record ]]"></expense-detail-block>
+                <expense-summary-block record="[[ record ]]"></expense-summary-block>
+                <expense-history-block record="[[ record ]]"></expense-history-block>
+                
+            </div>
+        </kct-vbox>
+
+        <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to list" on-tap="__onBackTap"></paper-fab>
+        </div>
+
+        <kct-prompt id="task-prompt" title="[[ quest ]]" message="Additional notes (remarks)"></kct-prompt>
+
+    </template>
+    <script>
+        class ExpenseReceiveTask extends KctView {
+            static get is() {
+                return 'expense-receive-task';
+            }
+            static get properties() {
+                return {
+                    task: { type: Object },
+                    record: { type: Object },
+                    quest: { type: String, value: 'Approval' }
+                }
+            }
+            static get observers() {
+                return [
+                    '__taskChanged(task.*)'
+                ];
+            }
+            __taskChanged() {
+                if (this.task.t_type != 'expense-receive') return;
+                this.$.ajax.GET('/expense/' + this.task.t_link + '/view').then(res => {
+                    this.set('record', res.data);
+                });
+            }
+            __onReceiveTap() {
+                if ( ! this.record && ! this.record.expense) {
+                    return;
+                }
+                
+                this.set('quest', 'Receive');
+
+                this.$['task-prompt'].open().then(r => {
+                    if (r.action == 'submit') {
+                        let notes = r.value || '';
+                        this.$.ajax.POST('/expense/' + this.record.expense.id_exp + '/fa-receive', { notes: notes }).then(() => {
+                            this.set('route.path', '/tasks?reload=yes');
+                        });
+                    }
+                });
+            }
+            __onBackTap() {
+                this.set('route.path', '/tasks');
+            }
+        }
+        customElements.define(ExpenseReceiveTask.is, ExpenseReceiveTask);
+    </script>
+</dom-module>

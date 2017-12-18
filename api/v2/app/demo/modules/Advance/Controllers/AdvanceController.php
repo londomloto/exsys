@@ -5,7 +5,8 @@ use App\Advance\Models\Advance,
     App\Advance\Models\History,
     App\System\Models\Autonumber,
     App\Users\Models\User,
-    App\Statuses\Models\Status;
+    App\Statuses\Models\Status,
+    App\Tasks\Models\Task;
 
 class AdvanceController extends \Micro\Controller {
 
@@ -19,18 +20,23 @@ class AdvanceController extends \Micro\Controller {
             case 'trip':
                 break;
             default:
-                return Advance::get()
-                    ->join('App\Statuses\Models\Status', 'a.status_id = status', 'a', 'left')
-                    ->join('App\Types\Models\Type', 'b.type_id = type', 'b', 'left')
+                return Advance::get()   
+                    ->alias('a')
+                    ->join('App\Statuses\Models\Status', 'b.status_id = a.status', 'b', 'left')
+                    ->join('App\Types\Models\Type', 'c.type_id = a.type', 'c', 'left')
                     ->sortable()
                     ->filterable()
-                    ->andWhere(
-                        "id_user = :user: AND (b.type_code <> :type: OR (b.type_code = 'travelling' AND a.status_code NOT IN ('draft')))", 
-                        array(
-                            'user' => $user['su_id'],
-                            'type' => 'travelling'
-                        )
-                    )
+                    ->andWhere('a.id_user = :user: AND c.type_code <> :type:', array(
+                        'user' => $user['su_id'],
+                        'type' => 'travelling'
+                    ))
+                    // ->andWhere(
+                    //     "id_user = :user: AND (b.type_code <> :type: OR (b.type_code = 'travelling' AND a.status_code NOT IN ('draft')))", 
+                    //     array(
+                    //         'user' => $user['su_id'],
+                    //         'type' => 'travelling'
+                    //     )
+                    // )
                     ->paginate();
         }
     }
@@ -141,6 +147,7 @@ class AdvanceController extends \Micro\Controller {
     public function updateAction($id) {
         $post = $this->request->getJson();
         unset($post['date']);
+
         $query = Advance::get($id);
 
         if ($query->data) {
@@ -418,40 +425,23 @@ class AdvanceController extends \Micro\Controller {
 
     public function faApproveByIdAction($id) {
         $advance = Advance::get($id)->data;
-        $user = $this->auth->user();
         $post = $this->request->getJson();
 
         if ($advance) {
             
             // delete tasks
-            \App\Tasks\Models\Task::find(array(
-                't_type = :type: AND t_link = :link:',
-                'bind' => array(
-                    'type' => 'advance-finance',
-                    'link' => $advance->id_adv
-                )
-            ))->delete();
-
-            // tambah history
-            $history = new History();
-            $history->category = 'advance';
-            $history->id_adv = $advance->id_adv;
+            Task::dispose(Task::TYPE_ADVANCE_FINANCE, $advance, TRUE);
 
             $status = Status::val('fa-approved');
             $notes = isset($post['notes']) ? $post['notes'] : '-';
-
-            $history->status_id = $status;
-            $history->user_act = $user['su_id'];
-            $history->date = date('Y-m-d H:i:s');
-            $history->notes = $notes;
-            $history->save();
 
             // update status
             $advance->status = $status;
             $advance->is_open = 1;
             $advance->save();
 
-            
+            // tambah history
+            History::log('advance', $advance, $notes);
         }
 
         return array(
@@ -462,35 +452,21 @@ class AdvanceController extends \Micro\Controller {
     public function faRejectByIdAction($id) {
         $advance = Advance::get($id)->data;
         $post = $this->request->getJson();
-        $user = $this->auth->user();
 
         if ($advance) {
             $notes = isset($post['notes']) ? $post['notes'] : '-';
             $status = Status::val('reject');
 
             // delete tasks
-            \App\Tasks\Models\Task::find(array(
-                't_type = :type: AND t_link = :link:',
-                'bind' => array(
-                    'type' => 'advance-finance',
-                    'link' => $advance->id_adv
-                )
-            ))->delete();
-
-            // create history
-            $history = new History();
-            $history->category = 'advance';
-            $history->status_id = $status;
-            $history->id_adv = $advance->id_adv;
-            $history->date = date('Y-m-d H:i:s');
-            $history->user_act = $user['su_id'];
-            $history->notes = $notes;
-            $history->save();
+            Task::dispose(Task::TYPE_ADVANCE_FINANCE, $advance, TRUE);
 
             // update advance
             $advance->status = $status;
             $advance->is_open = 0;
             $advance->save();
+
+            // create history
+            History::log('advance', $advance, $notes);
         }
 
         return array(
@@ -501,37 +477,23 @@ class AdvanceController extends \Micro\Controller {
     public function faReturnedByIdAction($id) {
         $advance = Advance::get($id)->data;
         $post = $this->request->getJson();
-        $user = $this->auth->user();
-
+        
         if ($advance) {
             $notes = isset($post['notes']) ? $post['notes'] : '-';
             $status = Status::val('change-request');
 
             // delete tasks
-            \App\Tasks\Models\Task::find(array(
-                't_type = :type: AND t_link = :link:',
-                'bind' => array(
-                    'type' => 'advance-finance',
-                    'link' => $advance->id_adv
-                )
-            ))->delete();
-            
-            // create history
-            $history = new History();
-            $history->category = 'advance';
-            $history->status_id = $status;
-            $history->id_adv = $advance->id_adv;
-            $history->date = date('Y-m-d H:i:s');
-            $history->user_act = $user['su_id'];
-            $history->notes = $notes;
-            $history->save();
+            Task::dispose(Task::TYPE_ADVANCE_FINANCE, $advance, TRUE);
             
             // update advance
             $advance->status = $status;
             $advance->is_open = 0;
             $advance->save();
+            
+            // create history
+            History::log('advance', $advance, $notes);
         }
-
+        
         return array(
             'success' => TRUE
         );

@@ -14,7 +14,7 @@
             kct-pages { height: 100%; }
         </style>
         
-        <kct-config id="config" config="{{ config }}"></kct-config>
+        <kct-config id="config" name="[[ name ]]" config="{{ config }}"></kct-config>
         <kct-ajax id="ajax" config="[[ config ]]"></kct-ajax>
         <kct-router id="router" config="[[ config ]]" routes="[[ routes ]]" route="{{ route }}" state="{{ state }}" fallback="/home" on-authenticate="__onAuthenticate"></kct-router>
         
@@ -47,7 +47,7 @@
 
             static get properties() {
                 return {
-                    debug: { type: String },
+                    name: { type: String },
                     routes: {
                         type: Object,
                         notify: true,
@@ -70,7 +70,7 @@
                                 module: 'settings',
                                 page: 'settings-page'
                             },
-                            '/tasks/:view/:params': {
+                            '/tasks/:action/:params': {
                                 module: 'tasks',
                                 page: 'tasks-page'
                             }

@@ -44,7 +44,8 @@
                                 cancel: false,
                                 fallback: '',
                                 params: [],
-                                query: {}
+                                query: {},
+                                data: {}
                             });
                         }
                     },
@@ -289,7 +290,7 @@
                             this.set('route.cancel', false);
                             return;
                         }
-
+                        
                         // dispatch route
                         this.__resolveBase().then((base) => {
 
@@ -298,7 +299,7 @@
                             path = base + path.replace(base, '');
                             
                             if (this.address.path != path) {
-                                this.set('route.addr', path);    
+                                this.set('route.addr', path);
                             }
 
                             path = path.replace(/\/$/, '') + '/';

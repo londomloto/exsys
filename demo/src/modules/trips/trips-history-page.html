@@ -62,7 +62,7 @@
                                             <td class="text-right">
                                                 <paper-button on-tap="__onItemHistoryTap" class="btn-xs btn-muted" hidden$="[[ !item.has_history ]]" title="View history">Logs</paper-button>
                                                 <paper-button on-tap="__onViewTicketTap" class="btn-xs btn-muted" hidden$="[[ !item.is_issued ]]" title="View ticket">View</paper-button>
-                                                <paper-button on-tap="__onItemDownloadTap" class="btn-xs btn-muted" hidden$="[[ !item.has_attachment ]]" title="Download attachment">File</paper-button>
+                                                <paper-button on-tap="__onItemDownloadTap" class="btn-xs btn-muted" hidden$="[[ !item.is_downloadable ]]" title="Download attachment">File</paper-button>
                                                 <paper-button on-tap="__onRescheduleTap" class="btn-xs btn-cyan" hidden$="[[ !item.is_reschedulable ]]" title="Request for rescheduling">Reschedule</paper-button>
                                             </td>
                                         </tr>
@@ -134,7 +134,7 @@
                 </div>
 
                 <div slot="dialog-footer">
-                    <paper-button on-tap="__onItemEditorSaveTap" disabled$="[[ __itemInvalid ]]">Save</paper-button>
+                    <paper-button on-tap="__onItemEditorSubmitTap" disabled$="[[ __itemInvalid ]]">Submit</paper-button>
                     <paper-button on-tap="__onItemEditorCancelTap">Cancel</paper-button>
                 </div>
             </template>
@@ -164,8 +164,8 @@
             static get properties() {
                 return {
                     record: { type: Object },
-                    itemView: { type: Object },
                     itemEdit: { type: Object },
+                    itemView: { type: Object },
                     itemHist: { type: Array },
                     tripTransports: {
                         type: Array,
@@ -221,10 +221,15 @@
                     NodeHelper.formatDatePicker(picker);
                 });
             }
-            __onItemEditorSaveTap() {
-                this.$['item-editor'].close();
-                this.$.ajax.POST('/trips/items/' + this.itemEdit.trip_item_id + '/reschedule').then(res => {
-                    this.__loadRecord();
+            __onItemEditorSubmitTap() {
+                this.confirm('Confirm', 'Are you sure want to reschedule this trip?').then(y => {
+                    if (y) {
+                        let data = this.itemEdit;
+                        this.$['item-editor'].close();
+                        this.$.ajax.POST('/trips/items/' + data.trip_item_id + '/reschedule', data).then(res => {
+                            this.__loadRecord();
+                        });
+                    }
                 });
             }
             __onItemEditorCancelTap() {

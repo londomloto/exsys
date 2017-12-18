@@ -1,0 +1,49 @@
+<link rel="import" href="../../../../bower_components/paper-card/paper-card.html">
+
+<dom-module id="expense-summary-block">
+    <template>
+        <style include="theme-helper"></style>
+
+        <paper-card class="block">
+            <div class="card-content">
+                <h3 class="block-title">Expense Summary</h3>
+                <div class="table-responsive">
+                    <table class="table bordered">
+                        <tbody>
+                            <template is="dom-repeat" items="[[ record.summary.expense ]]">
+                                <tr>
+                                    <td>[[ item.expense_label ]]</td>
+                                    <td class="text-right">[[ item.expense_value_formatted ]]</td>
+                                </tr>
+                            </template>
+                            <template is="dom-repeat" items="[[ record.summary.remains ]]">
+                                <tr>
+                                    <td>[[ item.remains_label ]]</td>
+                                    <td class="text-right">[[ item.remains_value_formatted ]]</td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </paper-card>
+    </template>
+    <script>
+        class ExpenseSummaryBlock extends Polymer.Element {
+            static get is() {
+                return 'expense-summary-block';
+            }
+
+            static get properties() {
+                return {
+                    record: { type: Object }
+                };
+            }
+            __computeNo(index) {
+                return index + 1;
+            }
+        }
+
+        customElements.define(ExpenseSummaryBlock.is, ExpenseSummaryBlock);
+    </script>
+</dom-module>

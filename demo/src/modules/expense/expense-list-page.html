@@ -20,7 +20,7 @@
             page-size="25" 
             columns="[[ columns ]]" 
             title="DATASHEET" 
-            description="List of Expense" 
+            description="List of non-operational expense" 
             selection-model="cell" 
             pagination>
 
@@ -29,7 +29,7 @@
                     </style>
                 </template>
 
-            <paper-button class="btn-primary" slot="primary-toolbar" on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Expense Request</paper-button>
+            <paper-button class="btn-primary" slot="primary-toolbar" on-tap="__onAddTap"><iron-icon icon="add"></iron-icon>&nbsp;Expense</paper-button>
 
         </kct-grid>
 
@@ -82,24 +82,27 @@
                                     type: 'action',
                                     renderer: (e) => {
                                         if (e.data) {
-                                            let status = e.data.status;
                                             let buttons = `<kct-grid-action on-tap="__onViewTap" icon="search" title="View record" rounded></kct-grid-action>`;
 
-                                            if (e.data.editable) {
-                                                buttons += `
-                                                    <kct-grid-action on-tap="__onEditTap" icon="image:edit" accent="amber" title="Edit record" rounded></kct-grid-action>
-                                                    <kct-grid-action on-tap="__onDeleteTap" icon="clear" accent="red" title="Delete record" rounded></kct-grid-action>
-                                                `;
-                                                if (e.data.has_items) {
-                                                    buttons += `<kct-grid-action on-tap="__onSubmitTap" title="Submit record" icon="send" accent="cyan" rounded></kct-grid-action>`;
-                                                }
+                                            if (e.data.is_editable) {
+                                                buttons += `<kct-grid-action on-tap="__onEditTap" icon="image:edit" accent="amber" title="Edit record" rounded></kct-grid-action>`;
+                                            }
+
+                                            if (e.data.is_removable) {
+                                                buttons += `<kct-grid-action on-tap="__onDeleteTap" icon="clear" accent="red" title="Delete record" rounded></kct-grid-action>`;
+                                            }
+
+                                            if (e.data.is_editable && e.data.has_items) {
+                                                buttons += `<kct-grid-action on-tap="__onSubmitTap" title="Submit record" icon="send" accent="cyan" rounded></kct-grid-action>`;
                                             }
 
                                             if (e.data.status_code == 'fa-approved') {
                                                 buttons += `<kct-grid-action on-tap="__onJournalTap" title="View journal" icon="print" accent="cyan" rounded></kct-grid-action>`;
                                             }
+
                                             return buttons;
                                         }
+                                        
                                         return '';
                                     }
                                 }

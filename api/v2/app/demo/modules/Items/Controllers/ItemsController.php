@@ -12,9 +12,9 @@ class ItemsController extends \Micro\Controller {
         switch($display) {
             case 'combo':
             case 'grid':
-                return Item::combo();
+                return Item::tree();
             case 'parent':
-                return Item::get()->where('parent_id IS NULL')->filterable()->sortable()->paginate();
+                return Item::get()->where('parent_id = 0')->filterable()->sortable()->paginate();
             default:
                 return Item::get()->filterable()->sortable()->paginate();
         }
@@ -40,7 +40,7 @@ class ItemsController extends \Micro\Controller {
         $post = $this->request->getJson();
 
         if (empty($post['parent_id'])) {
-            $post['parent_id'] = NULL;
+            $post['parent_id'] = 0;
         }
 
         if ($query->data) {

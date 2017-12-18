@@ -26,7 +26,11 @@ class ItemsController extends \Micro\Controller {
     }
 
     public function createAction() {
+        $user = $this->auth->user();
         $post = $this->request->getJson();
+        $post['created_by'] = $user['su_id'];
+        $post['created_date'] = date('Y-m-d H:i:s');
+
         $data = new Item();
         if ($data->save($post)) {
             return Item::get($data->trip_item_id);
@@ -35,7 +39,10 @@ class ItemsController extends \Micro\Controller {
     }
 
     public function updateAction($id) {
+        $user = $this->auth->user();
         $post = $this->request->getJson();
+        $post['updated_by'] = $user['su_id'];
+        $post['updated_date'] = date('Y-m-d H:i:s');
 
         // fixup time
         if (isset($post['transport_departure_time'])) {
@@ -70,7 +77,7 @@ class ItemsController extends \Micro\Controller {
             if ($this->request->hasFiles()) {
                 foreach($this->request->getFiles() as $file) {
                     $type = $file->getExtension();
-                    $name = 'ticket_'.$query->data->trip_item_id.'.'.$type;
+                    $name = 'ticket_'.$query->data->trip_item_id.'_'.date('ymdhis').'.'.$type;
                     $path = APPPATH.'public/resources/attachments/'.$name;
 
                     if (@$file->moveTo($path)) {
@@ -94,50 +101,59 @@ class ItemsController extends \Micro\Controller {
         }
     }
 
+    public function downloadHistoryById($id) {
+        
+    }
+
     public function rescheduleByIdAction($id) {
         $query = Item::get($id);
         $post = $this->request->getJson();
+        $post['status'] = Item::STATUS_RESCHEDULING;
 
         if ($query->data) {
-            // save to history
-            $data = $query->data->toArray();
-            $data['status'] = Item::STATUS_RESCHEDULING;
-            $data['history_date'] = date('Y-m-d H:i:s');
-            $hist = new ItemHistory();
-            $hist->save($data);
+            if ($query->data->status != Item::STATUS_REVISION) {
+                // save to history
+                $data = $query->data->toArray();
+                $data['history_date'] = date('Y-m-d H:i:s');
+                $hist = new ItemHistory();
+                $hist->save($data);    
+            }
 
             $item = $query->data;
-            $item->status = Item::STATUS_RESCHEDULING;
             $item->save($post);
 
             // create ticketing tasks
             if ($item->trip) {
 
                 // update trip ticket status
-                $item->trip->status = Status::val('rescheduling');
+                $item->trip->status = Status::val('reschedule-request');
                 $item->trip->ticket_status = Trip::STATUS_TICKET_RESCHEDULING;
                 $item->trip->save();
 
                 // add trip history
                 \App\Trips\Models\History::log('trip', $item->trip, 'Request for ticket rescheduling');
 
-                $subscribers = User::findInRoles(array('ticketing'));
+                $auth = $this->auth->user();
+                $user = User::get($auth['su_id'])->data;
+                $subscribers = $user->getSuperiors($item->trip->getAmounts());
 
                 foreach($subscribers as $sub) {
                     $task = Task::findFirst(array(
-                        't_type = :type: AND t_link = :link: AND t_user = :user:',
+                        't_type = :type: AND t_link = :link: AND t_user = :user: AND t_drop = 0',
                         'bind' => array(
-                            'type' => 'trip-ticket-reschedule',
+                            // 'type' => 'trip-ticket-reschedule',
+                            'type' => Task::TYPE_TRIP_RESCHEDULE,
                             'link' => $item->trip->id_trip,
-                            'user' => $sub->su_id
+                            'user' => $sub['user_id']
                         )
                     ));
 
                     if ( ! $task) {
-                        Task::log('trip-ticket-reschedule', $sub->su_id, $item->trip);
+                        // Task::log('trip-ticket-reschedule', $sub['user_id'], $item->trip);
+                        Task::log(Task::TYPE_TRIP_RESCHEDULE, $sub['user_id'], $item->trip);
                     }
-
                 }
+
             }
             
         }

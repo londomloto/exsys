@@ -1,0 +1,234 @@
+<link rel="import" href="../../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../elements/kct-view/kct-view.html">
+<link rel="import" href="../../elements/kct-ajax/kct-ajax.html">
+<link rel="import" href="../../elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../elements/kct-layouts/kct-vbox.html">
+<link rel="import" href="../../elements/kct-layouts/kct-column.html">
+<link rel="import" href="../../elements/kct-message/kct-prompt.html">
+<link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
+
+<dom-module id="advance-receive-task">
+    <template>
+        <style include="theme-helper">
+            :host {
+                height: 100%;
+            }
+            .action-buttons paper-button {
+                min-width: 90px;
+            }
+            tr.group-row,
+            tr.separator {
+                border-bottom: 1px solid #d0d0d0;
+            }
+
+            tr.separator td {
+                padding: 0;
+            }
+
+            .form-row td {
+                padding-top: 0;
+                padding-bottom: 0;
+                font-size: 13px;
+            }
+            .item-form .label {
+                text-decoration: underline;
+                color: var(--paper-grey-500);
+            }
+        </style>
+
+        <kct-ajax id="ajax"></kct-ajax>
+        
+        <kct-vbox>
+            <page-header-block icon="done" title="Todo List" description="Advance Receive View"></page-header-block>
+            <div class="flex scroll-y padding">
+                <paper-card class="block">
+                    <div class="card-content">
+                        <div class="action-buttons text-right">
+                            <paper-button on-tap="__onReceiveTap" class="btn-cyan">Receive Document</paper-button>
+                        </div>
+                    </div>
+                </paper-card>
+                <paper-card class="block">
+                    <div class="card-content">
+                        <h3 class="block-title">[[ record.advance.adv_no ]]</h3>
+                        <kct-column columns="3" gutter="1.5rem">
+                            <div>
+                                <div class="display-field">
+                                    <label>Subject: </label>
+                                    <div>[[ record.advance.subject_adv ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Type: </label>
+                                    <div>[[ record.advance.type_name ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Purpose: </label>
+                                    <div>[[ record.advance.purpose_name ]]</div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="display-field">
+                                    <label>Proposed By: </label>
+                                    <div>[[ record.advance.user_fullname ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Start Date: </label>
+                                    <div>[[ record.advance.date_start_short ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>End Date: </label>
+                                    <div>[[ record.advance.date_end_short ]]</div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="display-field">
+                                    <label>Status: </label>
+                                    <div>[[ record.advance.status_name ]]</div>
+                                </div>
+                            </div>
+                        </kct-column>
+                    </div>
+                </paper-card>
+                <paper-card class="block">
+                    <div class="card-content">
+                        <h3 class="block-title">Advance Items</h3>
+
+                        <div class="table-responsive">
+                            <table class="table striped">
+                                <thead>
+                                    <th width="50">No.</th>
+                                    <th>Description</th>
+                                    <th width="100" class="text-center">Currency</th>
+                                    <th class="text-right">Amounts</th>
+                                </thead>
+                                <tbody>
+                                    <template is="dom-repeat" items="[[ record.items ]]">
+                                        <tr>
+                                            <td>[[ __computeNo(index) ]]</td>
+                                            <td>[[ item.description ]]</td>
+                                            <td class="text-center">[[ item.currency_code ]]</td>
+                                            <td class="text-right">[[ item.amounts_formatted ]]</td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        
+                    </div>
+                </paper-card>
+
+                <paper-card class="block">
+                    <div class="card-content">
+                        <h3 class="block-title">Advance Summary</h3>
+                        <div class="table-responsive">
+                            <table class="table bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Description</th>
+                                        <th width="120" class="text-right">Amounts</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template is="dom-repeat" items="[[ record.summary ]]">
+                                        <tr>
+                                            <td>[[ item.summary_label ]]</td>
+                                            <td class="text-right">[[ item.summary_value_formatted ]]</td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </paper-card>
+                <paper-card class="block">
+                    <div class="card-content">
+
+                        <h3 class="block-title">Advance History</h3>
+
+                        <div class="table-responsive">
+                            <table  class="table striped">
+                                <thead>
+                                    <th width="50">No.</th>
+                                    <th width="120">Date</th>
+                                    <th>History</th>
+                                    <th>User</th>
+                                    <th>Notes</th>
+                                </thead>
+                                <tbody>
+                                    <template is="dom-repeat" items="[[ record.history ]]">
+                                        <tr>
+                                            <td>[[ __computeNo(index) ]]</td>
+                                            <td>[[ item.date_short ]]</td>
+                                            <td>[[ item.status_name ]]</td>
+                                            <td>[[ item.user_act_name ]]</td>
+                                            <td>[[ item.notes ]]</td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+
+                    </div>
+                </paper-card>
+            </div>
+        </kct-vbox>
+
+        <div class="page-actions">
+            <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to list" on-tap="__onBackTap"></paper-fab>
+        </div>
+
+        <kct-prompt id="task-prompt" title="[[ actionTitle ]]" message="Additional notes (remarks)"></kct-prompt>
+
+    </template>
+    <script>
+        class AdvanceReceiveTask extends KctView {
+            static get is() {
+                return 'advance-receive-task';
+            }
+            static get properties() {
+                return {
+                    record: { type: Object },
+                    actionTitle: { type: String, value: 'Approval' }
+                }
+            }
+            handleRouteParams(view, id) {
+                if (view != 'advance-receive-task') return;
+
+                this.$.ajax.GET('/advance/' + id + '/view').then(res => {
+                    this.set('record', res.data);
+                });
+            }
+            handleResizing(width, height) {
+                
+            }
+            __computeNo(index) {
+                return index + 1;
+            }
+            __computeVisa(visa) {
+                return visa == '1' ? 'Yes' : '-';
+            }
+            __onReceiveTap() {
+                if ( ! this.record && ! this.record.advance) {
+                    return;
+                }
+                
+                this.set('actionTitle', 'Receive');
+
+                this.$['task-prompt'].open().then(r => {
+                    if (r.action == 'submit') {
+                        let notes = r.value || '';
+                        this.$.ajax.POST('/advance/' + this.record.advance.id_adv + '/fa-receive', { notes: notes }).then(() => {
+                            this.set('route.path', '/tasks?reload=yes');
+                        });
+                    }
+                });
+            }
+            __onBackTap() {
+                this.set('route.path', '/tasks');
+            }
+        }
+        customElements.define(AdvanceReceiveTask.is, AdvanceReceiveTask);
+    </script>
+</dom-module>

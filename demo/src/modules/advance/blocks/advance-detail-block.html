@@ -1,0 +1,120 @@
+<link rel="import" href="../../../../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../../../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../../elements/kct-dialog/kct-dialog.html">
+<link rel="import" href="../../../elements/kct-ajax/kct-ajax.html">
+
+
+<dom-module id="advance-detail-block">
+    <template>
+        <style include="theme-helper">
+            th[hidden] {
+                display: none;
+            }
+        </style>
+        <kct-ajax id="ajax"></kct-ajax>
+        <paper-card  class="block">
+            <div class="card-content">
+                <h3 class="block-title">Advance Items</h3>
+
+                <div class="table-responsive">
+                    <table class="table striped">
+                        <thead>
+                            <th width="40" class="text-center">No.</th>
+                            <th>Description</th>
+                            <th width="100">Currency</th>
+                            <th width="120" class="text-right">Amounts</th>
+                            <th width="60"></th>
+                        </thead>
+                        <tbody>
+                            <template is="dom-repeat" items="[[ record.items ]]">
+                                <tr>
+                                    <td class="text-center">[[ __computeNo(index) ]]</td>
+                                    <td>[[ item.description ]]</td>
+                                    <td>[[ item.currency_code ]]</td>
+                                    <td class="text-right">[[ item.amounts_formatted ]]</td>
+                                    <td class="text-right">
+                                        <paper-button on-tap="__onItemLogsTap" class="btn-xs btn-muted">Logs</paper-button>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </paper-card>
+
+        <kct-dialog id="item-history" title="Item History" width="400" height="100%" scrollable>
+            <template preserve-content>
+                <style include="theme-helper">
+                    .dialog-body,
+                    .dialog-header {
+                        background-color: var(--paper-grey-100);
+                    }
+                    paper-card {
+                        display: block;
+                        margin-bottom: 15px;
+                    }
+                    .display-time {
+                        font-size: 11px;
+                        color: var(--paper-grey-500);
+                    }
+                </style>
+                <div slot="dialog-body">
+                    <template is="dom-repeat" items="[[ itemHistory ]]">
+                        <paper-card>
+                            <div class="card-content">
+                                <div class="display-time m-b">[[ item.log ]]</div>
+                                <div class="display-field">
+                                    <label>Description</label>
+                                    <div>[[ item.description ]]</div>
+                                </div>
+                                <div class="display-field">
+                                    <label>Currency</label>
+                                    <div>[[ item.currency_code ]]</div>
+                                </div>
+                                <div class="display-field m-b">
+                                    <label>Amounts</label>
+                                    <div>[[ item.amounts_formatted ]]</div>
+                                </div>
+                            </div>
+                        </paper-card>
+                    </template>
+                </div>
+                <div slot="dialog-footer">
+                    <paper-button on-tap="__onItemHistoryCloseTap">Close</paper-button>
+                </div>
+            </template>
+        </kct-dialog>
+
+    </template>
+    <script>
+        class AdvanceDetailBlock extends Polymer.Element {
+            static get is() {
+                return 'advance-detail-block';
+            }
+
+            static get properties() {
+                return {
+                    record: { type: Object }
+                };
+            }
+
+            __computeNo(index) {
+                return index + 1;
+            }
+
+            __onItemLogsTap(e) {
+                this.$.ajax.GET('/advance/items/' + e.model.item.advance_item_id + '/history').then(res => {
+                    this.set('itemHistory', res.data);
+                    this.$['item-history'].open();
+                });
+            }
+            __onItemHistoryCloseTap() {
+                this.$['item-history'].close();
+            }
+        }
+
+        customElements.define(AdvanceDetailBlock.is, AdvanceDetailBlock);
+    </script>
+</dom-module>

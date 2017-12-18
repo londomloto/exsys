@@ -181,6 +181,13 @@
                 top: -1px;
             }
 
+            .grid-toolbar ::slotted(kct-checkbox) {
+                font-size: 13px;
+                --paper-checkbox-size: 16px;
+                --paper-checkbox-margin: 5px 8px;
+                --paper-checkbox-label-spacing: 2px;
+            }
+
             .grid-toolbar paper-menu-button,
             .grid-statusbar paper-menu-button {
                 padding: 0;
@@ -341,7 +348,7 @@
             }
             .grid-info .grid-info-text h2 {
                 font-weight: 400;
-                font-size: 14px;
+                font-size: 13px;
                 margin: 0;
             }
             .grid-info .grid-info-icon { 
@@ -866,15 +873,14 @@
 
                                         let options = {};
 
-                                        for (let key in this.params) {
-                                            let val = this.params[key];
-                                            
-                                            if (typeof val == 'object' || typeof val == 'array') {
-                                                options[key] = JSON.stringify(val);
-                                            } else {
-                                                options[key] = val;
-                                            }
-                                            
+                                        if (this.params) {
+                                            Object.keys(this.params).forEach(k => {
+                                                let v = this.params[k];
+                                                if (typeof v == 'object') {
+                                                    v = JSON.stringify(v);
+                                                }
+                                                options[k] = v;
+                                            });
                                         }
 
                                         options.start = loader.startRow;
@@ -895,6 +901,8 @@
 
                                         this.set('params', options);
 
+                                        this.dispatchEvent(new CustomEvent('beforeload', { detail: { options: options }}));
+
                                         ajax.GET(this.url, options).then(
                                             (res) => {
                                                 if (res.success) {
@@ -902,6 +910,8 @@
                                                         last = res.total || 0;
 
                                                     loader.successCallback(data, last);
+
+                                                    this.dispatchEvent(new CustomEvent('load'));
                                                 }
                                                 d.resolve();
                                             },
@@ -1064,7 +1074,7 @@
                     }
 
                     let e = args.event, path = e.path;
-
+                    
                     if (path && path.length) {
                         // we only aware on <a/>, <paper-icon-button/> and <paper-button/>
                         let button = path[0],

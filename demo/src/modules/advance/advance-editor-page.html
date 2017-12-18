@@ -14,6 +14,7 @@
 <link rel="import" href="../../elements/kct-layouts/kct-hbox.html">
 <link rel="import" href="../../elements/kct-layouts/kct-column.html">
 <link rel="import" href="../../elements/kct-form/kct-form-validator.html">
+<link rel="import" href="../../elements/kct-input/kct-input-number.html">
 <link rel="import" href="../../elements/kct-app/blocks/page-header-block.html">
 <link rel="import" href="../../helpers/date-helper.html">
 <link rel="import" href="../../helpers/node-helper.html">
@@ -38,7 +39,7 @@
         <kct-vbox>
             
             <page-header-block title="EDITOR" description="Advance Request" icon="description" hidden$="[[ dialogMode ]]">
-                <paper-button hidden$="[[ ! record.id_adv ]]"  disabled$="[[ __formInvalid ]]" class="btn-primary" on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Update</paper-button>
+                <paper-button hidden$="[[ __advanceIsPhantom ]]"  disabled$="[[ __formInvalid ]]" class="btn-primary" on-tap="__onSaveTap"><iron-icon icon="done"></iron-icon>&nbsp;Update</paper-button>
                 <paper-button hidden$="[[ __advanceIsEmpty ]]"  disabled$="[[ __formInvalid ]]" class="btn-cyan" on-tap="__onSubmitTap"><iron-icon icon="send"></iron-icon>&nbsp;Submit</paper-button>
             </page-header-block>
 
@@ -52,41 +53,50 @@
                             <paper-input label="Subject" value="{{ record.subject_adv }}" required auto-validate error-message="Subject is required"></paper-input>    
 
                             <kct-column columns="2" gutter="1.5rem" spacer="0px">
-                                <vaadin-date-picker id="date-start" label="Start Date" value="{{ record.date_start }}" required auto-validate error-message="Start date is required"></vaadin-date-picker>
-                                <vaadin-date-picker id="date-end" label="End Date" value="{{ record.date_end }}" required auto-validate error-message="End date is required"></vaadin-date-picker>
+                                <div>
+                                    <vaadin-date-picker id="date-start" label="Start Date" value="{{ record.date_start }}" required auto-validate error-message="Start date is required"></vaadin-date-picker>
+                                </div>
+                                <div>
+                                    <vaadin-date-picker id="date-end" label="End Date" value="{{ record.date_end }}" required auto-validate error-message="End date is required"></vaadin-date-picker>
+                                </div>
                             </kct-column>
 
-                            <vaadin-combo-box 
-                                label="Type" 
-                                value="{{ record.type }}"
-                                items="[[ types ]]" 
-                                item-value-path="type_id" 
-                                item-label-path="type_name" 
-                                on-change="__onComboTypeChange" 
-                                required 
-                                auto-validate 
-                                error-message="Type is required"></vaadin-combo-box>
+                            <kct-column columns="2" gutter="1.5rem" spacer="0px">
+                                <div>
+                                    <vaadin-combo-box 
+                                        label="Type" 
+                                        value="{{ record.type }}"
+                                        items="[[ types ]]" 
+                                        item-value-path="type_id" 
+                                        item-label-path="type_name" 
+                                        on-change="__onComboTypeChange" 
+                                        required 
+                                        auto-validate 
+                                        error-message="Type is required"></vaadin-combo-box>
+                                </div>
+                                <div>
+                                    <vaadin-combo-box 
+                                        id="combo-purpose" 
+                                        label="Purpose" 
+                                        value="{{ record.purpose }}" 
+                                        items="[[ __purposes ]]" 
+                                        item-value-path="type_id" 
+                                        item-label-path="type_name" 
+                                        hidden$="[[ !__comboPurposeRequired ]]" 
+                                        required$="[[ __comboPurposeRequired ]]" 
+                                        auto-validate 
+                                        error-message="Purpose is required"></vaadin-combo-box>
 
-                            <vaadin-combo-box 
-                                id="combo-purpose" 
-                                label="Purpose" 
-                                value="{{ record.purpose }}" 
-                                items="[[ __purposes ]]" 
-                                item-value-path="type_id" 
-                                item-label-path="type_name" 
-                                hidden$="[[ !__comboPurposeRequired ]]" 
-                                required$="[[ __comboPurposeRequired ]]" 
-                                auto-validate 
-                                error-message="Purpose is required"></vaadin-combo-box>
-
-                            <paper-input 
-                                id="text-purpose" 
-                                label="Purpose" 
-                                value="{{ record.other_purpose }}" 
-                                hidden$="[[ __comboPurposeRequired ]]" 
-                                required$="[[ !__comboPurposeRequired ]]" 
-                                auto-validate 
-                                error-message="Purpose is required"></paper-input>
+                                    <paper-input 
+                                        id="text-purpose" 
+                                        label="Purpose" 
+                                        value="{{ record.other_purpose }}" 
+                                        hidden$="[[ __comboPurposeRequired ]]" 
+                                        required$="[[ !__comboPurposeRequired ]]" 
+                                        auto-validate 
+                                        error-message="Purpose is required"></paper-input>
+                                </div>
+                            </kct-column>
 
                             <kct-file-input label="Attachment" value="{{ record.attachment }}" file="{{ attachment }}"></kct-file-input>
                         </kct-form-validator>
@@ -95,7 +105,7 @@
                     
                 </paper-card>
 
-                <paper-card class="block" hidden="[[ ! record.id_adv ]]">
+                <paper-card class="block" hidden$="[[ __advanceIsPhantom ]]">
                     <div class="card-content">
                         <h3 class="block-title">Advance Items</h3>
                         <div class="m-b">
@@ -132,7 +142,7 @@
                     
                 </paper-card>
                 
-                <paper-card class="block" hidden="[[ record.id_adv ]]">
+                <paper-card class="block" hidden$="[[ !__advanceIsPhantom ]]">
                     <div class="card-content">
                         <kct-hbox>
                             <div class="flex">
@@ -148,7 +158,7 @@
             </div>
         </kct-vbox>
 
-        <div class="page-actions" hidden="[[ !record.id_adv ]]">
+        <div class="page-actions" hidden$="[[ __advanceIsPhantom ]]">
             <paper-fab class="fab-raised fab-blue-grey" icon="reply" title="Back to list" on-tap="__onBackTap" hidden$="[[ dialogMode ]]"></paper-fab>
         </div>
 
@@ -178,7 +188,7 @@
                             required 
                             auto-validate 
                             error-message="Currency is required"></vaadin-combo-box>
-                        <paper-input allowed-pattern="[0-9.]" label="Amounts" value="{{ item.amounts }}" required auto-validate error-message="Amounts is required"></paper-input>    
+                        <kct-input-number mask="#.###,00" label="Amounts" value="{{ item.amounts }}" required auto-validate error-message="Amounts is required"></kct-input-number>
                     </kct-form-validator>
                     
                 </div>
@@ -210,12 +220,14 @@
             static get observers() {
                 return [
                     '__purposesChanged(__purposes.*)',
-                    '__computeEmpty(items.*)'
+                    '__computeEmpty(items.*)',
+                    '__computePhantom(record.id_adv)'
                 ];
             }
             constructor() {
                 super();
 
+                this.__advanceIsPhantom = true;
                 this.__advanceIsEmpty = true;
                 this.__purposes = [];
                 this.__comboPurposeRequired = false;
@@ -289,6 +301,10 @@
             }
             __computeEmpty() {
                 this.set('__advanceIsEmpty', this.items.length == 0);
+            }
+            __computePhantom(id) {
+                let phantom = id ? false : true;
+                this.set('__advanceIsPhantom', phantom);
             }
             __handlePurpose() {
                 let purposes = [];
