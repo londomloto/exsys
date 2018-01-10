@@ -14,19 +14,30 @@
             _baseuri(trail = true) {
                 let host = this._hostname();
                 let path = (window.location.pathname || '');
-                let info, base;
+                let base = '';
+                let part;
 
-                if (/\.([0-9])/.test(host) || host == 'localhost') {
-                    info = path.match(/^\/([^/]+)\/([^/]+)/);
-                    if (info) {
-                        base = '/' + info[1] + '/' + info[2] + (trail ? '/' : '');
-                    }
-                } else {
-                    info = path.match(/^\/([^/]+)/);
-                    if (info) {
-                        base = '/' + info[1] + (trail ? '/' : '');
+                part = path.match(/[^/]+/g);
+                
+                if (part) {
+                    if (part.length > 2) {
+                        base = '/' + part[0] + '/' + part[1] + (trail ? '/' : '');
+                    } else {
+                        base = '/' + part[0] + (trail ? '/' : '');
                     }
                 }
+
+                // if (/\.([0-9])/.test(host) || host == 'localhost') {
+                //     info = path.match(/^\/([^/]+)\/([^/]+)/);
+                //     if (info) {
+                //         base = '/' + info[1] + '/' + info[2] + (trail ? '/' : '');
+                //     }
+                // } else {
+                //     info = path.match(/^\/([^/]+)/);
+                //     if (info) {
+                //         base = '/' + info[1] + (trail ? '/' : '');
+                //     }
+                // }
 
                 if ( ! base) {
                     base = trail ? '/' : '';

@@ -22,6 +22,12 @@ Router::group(array(
 ->post('/{id}/refund-approve', 'refundApproveById')
 ->post('/{id}/refund-returned', 'refundReturnedById');
 
+Router::get('/advance/submit-ax','App\Advance\Controllers\AdvanceController@submitAdv');
+// Router::post('/advance/ax-refund-submit','axRefundSubmit');
+// Router::post('/expense/ax-submit','axSubmit');
+// access nya http://IP-kita/exsys/api/v2/demo/ax-submit
+
+
 Router::group(array(
     'prefix' => '/advance/items',
     'handler' => 'App\Advance\Controllers\ItemsController',

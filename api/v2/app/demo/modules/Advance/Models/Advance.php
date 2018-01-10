@@ -303,6 +303,42 @@ class Advance extends \Micro\Model {
 
             if ($status == Status::val('final-approved')) {
                 $this->faSubmit('approval-request');
+                //generate api advance untuk ax -> simpan k table ax_api_data -> kirim k ax 
+                $json_data = json_encode(array(
+                    "SessionId" => date_timestamp_get(date_create()),
+                    "CompanyId" => "1",
+                    "AdvId" => $this->adv_no,
+                    "Date" => $this->date,
+                    "Nik" => $user['su_nip'],
+                    "Description" => $this->subject_adv,
+                    "TotalLine" => "1",
+                    "Value" => "sum(advance_item.amounts) by adv_id",
+                ));
+
+                $ax = new \App\Ax\Models\Ax();
+                $ax->ref_id = $this->id_adv;
+                $ax->ref_type = 'Advance';
+                $ax->ref_data = $json_data;
+                $ax->ref_date = date('Y-m-d H:i:s');
+                $ax->created_at = date('Y-m-d H:i:s');
+                $ax->ref_status = 0;
+                $ax->save();
+
+                //function untuk kirim
+                $server = $_SERVER['SERVER_NAME'];
+                $client = new \Micro\Client('http://'.$server.'/ax/submitadv.php','POST');
+                $client->headers['Connection']='close';
+                $client->headers['Content-Type']='application/json';
+                $client->headers['Content-Length']=strlen($json_data);  
+                $client->send($json_data);
+
+                $response = json_decode($client->getResponseBody());
+                
+                if($response->success==TRUE){
+                    $ax->ref_status=1;
+                    $ax->updated_at = date('Y-m-d H:i:s');
+                    $ax->save();
+                }
             }
         }
     }
@@ -390,6 +426,35 @@ class Advance extends \Micro\Model {
 
         $summary = array_values($summary);
         return $summary;
+    }
+
+    public function sendAdvanceToAx($params)
+    {
+        /*save to table api_ax_data*/
+        $ax = new \App\Ax\Models\Ax();
+        $ax->rev_id = $this->id_adv;
+        $ax->ref_type = 'Advance';
+        $ax->ref_data = $json_data;
+        $ax->ref_date = date('Y-m-d H:i:s');
+        $ax->ref_status = 0;
+        $ax->save();
+
+        // send to ax system
+        if($save){
+            $server = $_SERVER['SERVER_NAME'];
+            $client = new \Micro\Client('http://'.$server.'/ax/submitadv.php','POST');
+            $client->headers['Connection']='close';
+            $client->headers['Content-Type']='application/json';
+            $client->headers['Content-Length']=strlen($json_data);  
+            $client->send($json_data);
+
+            $response = json_decode($client->getResponseBody());
+            
+            if($response->success==TRUE){
+                $ax->ref_status=1;
+                $ax->save();
+            }
+        }
     }
 
 }

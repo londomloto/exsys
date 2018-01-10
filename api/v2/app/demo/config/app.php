@@ -2,17 +2,17 @@
 
 return array(
     
-    'name' => 'bpm-app',
+    'name' => 'exsys-app',
 
     'debug' => FALSE,
 
-    'title' => 'Business Process Model',
+    'title' => 'EASTWEST - Expense System',
 
     'description' => '',
 
     'keywords' => '',
 
-    'author' => 'Kreasindo Cipta Teknologi',
+    'author' => 'ALMAR',
 
     'env' => 'DEVELOPMENT',
 
