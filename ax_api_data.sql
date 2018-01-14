@@ -11,7 +11,7 @@
  Target Server Version : 50718
  File Encoding         : utf-8
 
- Date: 01/10/2018 10:30:07 AM
+ Date: 01/15/2018 02:31:45 AM
 */
 
 SET NAMES utf8;
@@ -22,14 +22,15 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- ----------------------------
 DROP TABLE IF EXISTS `ax_api_data`;
 CREATE TABLE `ax_api_data` (
-  `ref_id` varchar(255) NOT NULL,
+  `ref_id` int(11) NOT NULL AUTO_INCREMENT,
+  `ref_id_adv` varchar(255) DEFAULT NULL,
   `ref_type` varchar(255) DEFAULT NULL,
-  `ref_data` varchar(255) DEFAULT NULL,
+  `ref_data` text,
   `ref_status` int(11) DEFAULT NULL,
   `ref_date` datetime DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`ref_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
 
 SET FOREIGN_KEY_CHECKS = 1;
