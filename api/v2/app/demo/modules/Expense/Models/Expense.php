@@ -737,4 +737,33 @@ class Expense extends \Micro\Model {
 
         return isset($rows[0]) ? $rows[0] : NULL;
     }
+
+    public function sendAdvanceToAx($id, $url, $params)
+    {
+        /*save to table api_ax_data*/
+        $ax = new \App\Ax\Models\Ax();
+        $ax->ref_id_adv = $id;
+        $ax->ref_type = 'Expense';
+        $ax->ref_data = $params;
+        $ax->ref_date = date('Y-m-d H:i:s');
+        $ax->created_at = date('Y-m-d H:i:s');
+        $ax->ref_status = 0;
+        $ax->save();
+
+        //function untuk kirim
+        $server = $_SERVER['SERVER_NAME'];
+        $client = new \Micro\Client($url,'POST');
+        $client->headers['Connection']='close';
+        $client->headers['Content-Type']='application/json';
+        $client->headers['Content-Length']=strlen($params);  
+        $client->send($params);
+
+        $response = json_decode($client->getResponseBody());
+        
+        if($response->success==TRUE){
+            $ax->ref_status=1;
+            $ax->updated_at = date('Y-m-d H:i:s');
+            $ax->save();
+        }
+    }
 }

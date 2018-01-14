@@ -269,6 +269,7 @@ class AdvanceController extends \Micro\Controller {
 
         if ($advance) {
             $advance->approve($post);
+
         }
 
         return array(
@@ -424,11 +425,11 @@ class AdvanceController extends \Micro\Controller {
     }
 
     public function faApproveByIdAction($id) {
+        $user = \Micro\App::getDefault()->auth->user();
         $advance = Advance::get($id)->data;
         $post = $this->request->getJson();
 
         if ($advance) {
-            
             // delete tasks
             Task::dispose(Task::TYPE_ADVANCE_FINANCE, $advance, TRUE);
 
@@ -438,7 +439,29 @@ class AdvanceController extends \Micro\Controller {
             // update status
             $advance->status = $status;
             $advance->is_open = 1;
-            $advance->save();
+            if($advance->save()){
+                $user = \Micro\App::getDefault()->auth->user();
+                $items = $advance->items->filter(function($elem){ return $elem->toArray(); });
+                $summary = $advance->getSummary();
+                $params = json_encode(array(
+                    "SessionId" => date_timestamp_get(date_create()),
+                    "CompanyId" => "1",
+                    "AdvId" => $advance->adv_no,
+                    "Date" => $advance->date,
+                    "Nik" => $user['su_nip'],
+                    "Description" => $advance->subject_adv,
+                    "TotalLine" => count($items),
+                    "Value" => $summary[0]['currency_code'].';'.$summary[0]['summary_value'],
+                ));
+
+                if($_SERVER['SERVER_NAME']=='researchs.one'){
+                    $url = 'http://'.$_SERVER['SERVER_NAME'].'/ax/submitadv.php';
+                }else{
+                    $url = 'http://192.168.100.24:82/api/advance/submit/';
+                }
+
+                $advance->sendAdvanceToAx($id,$url,$params);
+            }
 
             // tambah history
             History::log('advance', $advance, $notes);
