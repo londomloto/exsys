@@ -751,7 +751,6 @@ class Expense extends \Micro\Model {
         $ax->save();
 
         //function untuk kirim
-        $server = $_SERVER['SERVER_NAME'];
         $client = new \Micro\Client($url,'POST');
         $client->headers['Connection']='close';
         $client->headers['Content-Type']='application/json';

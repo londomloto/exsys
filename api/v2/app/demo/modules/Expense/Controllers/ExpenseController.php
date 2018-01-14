@@ -6,6 +6,7 @@ use App\Expense\Models\Expense,
     App\System\Models\Autonumber,
     App\Users\Models\User,
     App\Tasks\Models\Task,
+    App\Items\Models\Item as mItem,
     App\Statuses\Models\Status;
 
 class ExpenseController extends \Micro\Controller {
@@ -183,6 +184,43 @@ class ExpenseController extends \Micro\Controller {
 
         if ($expense) {
             $expense->approve($post);
+
+            /*begin send to AX*/
+            $user = \Micro\App::getDefault()->auth->user();
+            $items = $expense->getGroupedItems();
+
+            $value='';
+            $totalItem = '';
+            foreach ($items as $key => $val) {
+                $totalItem = count($val['group_items']);
+                $x=0;
+                foreach ($val['group_items'] as $key => $expitem) {
+                    $coa = (isset($expitem['coa']))?$expitem['coa'].';':'';
+                    $value .= $coa.$expitem['currency_code'].';'.$expitem['amounts_formatted'];
+                    $x++;
+                    if($totalItem > $x) $value .='#';
+                }
+            }
+
+            $params = json_encode(array(
+                "SessionId" => date_timestamp_get(date_create()),
+                "CompanyId" => "1",
+                "AdvId" => $expense->exp_no,
+                "Date" => $expense->date,
+                "Nik" => $user['su_nip'],
+                "Description" => $expense->subject_exp,
+                "TotalLine" => count($totalItem),
+                "Value" => $value,
+            ));
+
+            if($_SERVER['SERVER_NAME']=='researchs.one'){
+                $url = 'http://'.$_SERVER['SERVER_NAME'].'/ax/submitadv.php';
+            }else{
+                $url = 'http://192.168.100.24:82/api/expense/submitaccr/';
+            }
+
+            $expense->sendAdvanceToAx($id,$url,$params);
+            /*end send to AX*/
         }
 
         return array(
@@ -279,6 +317,43 @@ class ExpenseController extends \Micro\Controller {
                 }
 
                 $expense->advance->save();
+                
+                /*begin send to AX*/
+                $user = \Micro\App::getDefault()->auth->user();
+                $items = $expense->getGroupedItems();
+
+                $value='';
+                $totalItem = '';
+                foreach ($items as $key => $val) {
+                    $totalItem = count($val['group_items']);
+                    $x=0;
+                    foreach ($val['group_items'] as $key => $expitem) {
+                        $coa = (isset($expitem['coa']))?$expitem['coa'].';':'';
+                        $value .= $coa.$expitem['currency_code'].';'.$expitem['amounts_formatted'];
+                        $x++;
+                        if($totalItem > $x) $value .='#';
+                    }
+                }
+
+                $params = json_encode(array(
+                    "SessionId" => date_timestamp_get(date_create()),
+                    "CompanyId" => "1",
+                    "AdvId" => $expense->exp_no,
+                    "Date" => $expense->date,
+                    "Nik" => $user['su_nip'],
+                    "Description" => $expense->subject_exp,
+                    "TotalLine" => count($totalItem),
+                    "Value" => $value,
+                ));
+                
+                if($_SERVER['SERVER_NAME']=='researchs.one'){
+                    $url = 'http://'.$_SERVER['SERVER_NAME'].'/ax/submitadv.php';
+                }else{
+                    $url = 'http://192.168.100.24:82/api/expense/submitsettl/';
+                }
+
+                $expense->sendAdvanceToAx($id,$url,$params);
+                /*end send to AX*/
             }
 
         }

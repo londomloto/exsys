@@ -105,6 +105,7 @@ class Item extends \Micro\Model {
 
         if ($this->masterItem) {
             $data['item_name'] = $this->masterItem->item_name;
+            $data['coa'] = $this->masterItem->coa;
             if ($this->masterItem->parent) {
                 $data['item_parent_id'] = $this->masterItem->parent->item_id;
                 $data['item_parent_name'] = $this->masterItem->parent->item_name;
