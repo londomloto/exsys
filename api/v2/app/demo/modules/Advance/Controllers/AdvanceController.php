@@ -521,4 +521,43 @@ class AdvanceController extends \Micro\Controller {
             'success' => TRUE
         );
     }
+
+    public function axSubmitAction()
+    {
+        $post = $this->request->getPost();
+        $query = Advance::findFirst(array(
+            "adv_no = :adv_no:",
+            'bind' => array(
+                'adv_no' => $post['adv_no']
+            )
+        ));
+        $params['status']=$post['code'];
+        if ($query) {
+            if($query->save($params)){
+                return json_encode(array('success'=>TRUE,'data'=>$query));
+            }else{
+                return json_encode(array('success'=>FALSE));
+            }
+        }
+    }
+
+    public function axReturnSubmitAction()
+    {
+        $post = $this->request->getPost();
+        $query = Advance::findFirst(array(
+            "adv_no = :adv_no:",
+            'bind' => array(
+                'adv_no' => $post['adv_no']
+            )
+        ));
+        $params['status']=$post['code'];
+        if ($query) {
+            if($query->save($params)){
+                // return json_encode(array('success'=>TRUE,'data'=>$query));
+                return json_encode(array('success'=>TRUE));
+            }else{
+                return json_encode(array('success'=>FALSE));
+            }
+        }
+    }
 }

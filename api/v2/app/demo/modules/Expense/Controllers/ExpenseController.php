@@ -338,7 +338,8 @@ class ExpenseController extends \Micro\Controller {
                 $params = json_encode(array(
                     "SessionId" => date_timestamp_get(date_create()),
                     "CompanyId" => "1",
-                    "AdvId" => $expense->exp_no,
+                    "ExpId" => $expense->exp_no,
+                    "AdvId" => isset($expense->adv_no)?$expense->adv_no:'',
                     "Date" => $expense->date,
                     "Nik" => $user['su_nip'],
                     "Description" => $expense->subject_exp,
@@ -569,5 +570,23 @@ class ExpenseController extends \Micro\Controller {
         );
     }
 
+    public function axSubmitAction()
+    {
+        $post = $this->request->getPost();
+        $query = Expense::findFirst(array(
+            "exp_no = :exp_no:",
+            'bind' => array(
+                'exp_no' => $post['exp_no']
+            )
+        ));
+        $params['status']=$post['code'];
+        if ($query) {
+            if($query->save($params)){
+                return json_encode(array('success'=>TRUE));
+            }else{
+                return json_encode(array('success'=>FALSE));
+            }
+        }
+    }
     
 }
