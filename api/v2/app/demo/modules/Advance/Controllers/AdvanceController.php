@@ -336,28 +336,6 @@ class AdvanceController extends \Micro\Controller {
 
         if ($advance) {
             $advance->returned($post);
-
-            $user = \Micro\App::getDefault()->auth->user();
-                $items = $advance->items->filter(function($elem){ return $elem->toArray(); });
-                $summary = $advance->getSummary();
-                $params = json_encode(array(
-                    "SessionId" => date_timestamp_get(date_create()),
-                    "CompanyId" => "1",
-                    "AdvId" => $advance->adv_no,
-                    "Date" => $advance->date,
-                    "Nik" => $user['su_nip'],
-                    "Description" => $advance->subject_adv,
-                    "TotalLine" => count($items),
-                    "Value" => $summary[0]['currency_code'].';'.$summary[0]['summary_value'],
-                ));
-
-                if($_SERVER['SERVER_NAME']=='researchs.one'){
-                    $url = 'http://'.$_SERVER['SERVER_NAME'].'/ax/submitadv.php';
-                }else{
-                    $url = 'http://192.168.100.24:82/api/advanceret/submit';
-                }
-
-                $advance->sendAdvanceToAx($id,$url,$params);
         }
 
         return array(
@@ -537,6 +515,28 @@ class AdvanceController extends \Micro\Controller {
             
             // create history
             History::log('advance', $advance, $notes);
+
+            $user = \Micro\App::getDefault()->auth->user();
+            $items = $advance->items->filter(function($elem){ return $elem->toArray(); });
+            $summary = $advance->getSummary();
+            $params = json_encode(array(
+                "SessionId" => date_timestamp_get(date_create()),
+                "CompanyId" => "1",
+                "AdvId" => $advance->adv_no,
+                "Date" => $advance->date,
+                "Nik" => $user['su_nip'],
+                "Description" => $advance->subject_adv,
+                "TotalLine" => count($items),
+                "Value" => $summary[0]['currency_code'].';'.$summary[0]['summary_value'],
+            ));
+
+            if($_SERVER['SERVER_NAME']=='researchs.one'){
+                $url = 'http://'.$_SERVER['SERVER_NAME'].'/ax/submitadv.php';
+            }else{
+                $url = 'http://192.168.100.24:82/api/advanceret/submit';
+            }
+
+            $advance->sendAdvanceToAx($id,$url,$params);
         }
         
         return array(
