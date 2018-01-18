@@ -397,6 +397,8 @@ class Expense extends \Micro\Model {
             }
         }
 
+
+
         // update status
         $this->status = $status;
 
@@ -738,7 +740,7 @@ class Expense extends \Micro\Model {
         return isset($rows[0]) ? $rows[0] : NULL;
     }
 
-    public function sendAdvanceToAx($id, $url, $params)
+    public function sendAExpenseToAx($id, $url, $params)
     {
         /*save to table api_ax_data*/
         $ax = new \App\Ax\Models\Ax();
